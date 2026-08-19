@@ -1,8 +1,6 @@
 package com.minictf.auth;
 
-import com.minictf.user.User;
 import com.minictf.user.UserRepository;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,36 +10,22 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwtService;
-    private final UserRepository userRepository;
-
-    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
-        this.jwtService = jwtService;
-        this.userRepository = userRepository;
-    }
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+    private final JwtService jwt;
+    private final UserRepository users;
+    public JwtAuthenticationFilter(JwtService jwt, UserRepository users) { this.jwt = jwt; this.users = users; }
+    @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             try {
-                Claims claims = jwtService.parse(header.substring(7));
-                String username = claims.getSubject();
-                userRepository.findByUsername(username).ifPresent(user -> {
-                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
-                    var authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), null, authorities);
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                });
-            } catch (RuntimeException ignored) {
-                SecurityContextHolder.clearContext();
-            }
+                String username = jwt.parse(header.substring(7)).getSubject();
+                users.findByUsername(username).ifPresent(user -> SecurityContextHolder.getContext().setAuthentication(
+                        new UsernamePasswordAuthenticationToken(username, null, List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole())))));
+            } catch (RuntimeException ignored) { SecurityContextHolder.clearContext(); }
         }
         chain.doFilter(request, response);
     }

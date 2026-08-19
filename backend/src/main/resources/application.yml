@@ -11,16 +11,9 @@ spring:
     hibernate:
       ddl-auto: validate
     properties:
-      hibernate:
-        jdbc:
-          time_zone: UTC
+      hibernate.jdbc.time_zone: UTC
   flyway:
     enabled: true
-  servlet:
-    multipart:
-      max-file-size: 20MB
-      max-request-size: 20MB
-
   security:
     oauth2:
       client:
@@ -73,7 +66,5 @@ app:
     success-redirect: ${OAUTH_SUCCESS_REDIRECT:http://localhost:5173/auth/callback}
 
 springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
+  api-docs.path: /v3/api-docs
+  swagger-ui.path: /swagger-ui.html

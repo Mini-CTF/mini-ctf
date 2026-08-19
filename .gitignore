@@ -3,6 +3,9 @@ backend/.gradle/
 backend/build/
 frontend/node_modules/
 frontend/dist/
+fastapi/.venv/
+fastapi/**/__pycache__/
+*.pyc
 *.log
 *.class
 out/

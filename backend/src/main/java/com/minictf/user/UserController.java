@@ -1,47 +1,35 @@
 package com.minictf.user;
 
-import com.minictf.auth.AuthDtos;
-import com.minictf.auth.AuthService;
 import com.minictf.challenge.Solve;
 import com.minictf.challenge.SolveRepository;
 import com.minictf.challenge.Submission;
 import com.minictf.challenge.SubmissionRepository;
 import com.minictf.common.ApiResponse;
+import com.minictf.auth.AuthDtos;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users/me")
 public class UserController {
-    private final UserRepository userRepository;
-    private final AuthService authService;
-    private final SolveRepository solveRepository;
-    private final SubmissionRepository submissionRepository;
+    private final UserRepository users;
+    private final SolveRepository solves;
+    private final SubmissionRepository submissions;
 
-    public UserController(UserRepository userRepository, AuthService authService,
-                          SolveRepository solveRepository, SubmissionRepository submissionRepository) {
-        this.userRepository = userRepository;
-        this.authService = authService;
-        this.solveRepository = solveRepository;
-        this.submissionRepository = submissionRepository;
+    public UserController(UserRepository users, SolveRepository solves, SubmissionRepository submissions) {
+        this.users = users; this.solves = solves; this.submissions = submissions;
     }
 
     @GetMapping
-    public ApiResponse<AuthDtos.UserView> me(Authentication authentication) {
-        return ApiResponse.ok(authService.toView(userRepository.findByUsername(authentication.getName()).orElseThrow()));
-    }
+    public ApiResponse<AuthDtos.UserView> me(Authentication auth) { return ApiResponse.ok(view(user(auth))); }
 
     @GetMapping("/solves")
-    public ApiResponse<List<Solve>> solves(Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
-        return ApiResponse.ok(solveRepository.findByUserIdOrderBySolvedAtDesc(user.getId()));
-    }
+    public ApiResponse<?> mySolves(Authentication auth) { return ApiResponse.ok(solves.findByUserId(user(auth).getId())); }
 
     @GetMapping("/submissions")
-    public ApiResponse<List<Submission>> submissions(Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
-        return ApiResponse.ok(submissionRepository.findTop100ByUserIdOrderBySubmittedAtDesc(user.getId(), org.springframework.data.domain.PageRequest.of(0, 100)));
-    }
+    public ApiResponse<?> mySubmissions(Authentication auth) { return ApiResponse.ok(submissions.findByUserId(user(auth).getId(), PageRequest.of(0, 100))); }
+
+    private User user(Authentication auth) { return users.findByUsername(auth.getName()).orElseThrow(); }
+    private AuthDtos.UserView view(User user) { return new AuthDtos.UserView(user.getId(), user.getUsername(), user.getNickname(), user.getRole(), user.getScore()); }
 }

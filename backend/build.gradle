@@ -5,19 +5,9 @@ plugins {
 }
 
 group = 'com.minictf'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.0'
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-}
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -33,12 +23,9 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
     runtimeOnly 'org.bouncycastle:bcprov-jdk18on:1.78.1'
     runtimeOnly 'org.postgresql:postgresql'
-
+    runtimeOnly 'com.h2database:h2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
-    runtimeOnly 'com.h2database:h2'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
+tasks.named('test') { useJUnitPlatform() }
