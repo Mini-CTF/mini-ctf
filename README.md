@@ -1092,3 +1092,45 @@ Community 기능의 개수를 늘리는 것보다 CTF 문제 풀이 기능과 Co
 > **회원가입 → 로그인 → 문제 선택 → Artifact 분석 → FLAG 제출 → 점수 → Ranking**
 
 그리고 이 전체 흐름이 **안전하게 동작하는 것**이 프로젝트의 가장 중요한 목표입니다.
+# 0. 2인 팀 프로젝트 협업 기준
+
+이 저장소는 개인 바이브코딩 프로젝트에서 2인 팀 프로젝트로 전환되었다. 아래 역할과 작업 경계를 현재 기준으로 사용한다.
+
+## 팀 역할
+
+| 담당 | 책임 영역 | 우선 작업 경로 |
+|---|---|---|
+| 사용자 | 백엔드 담당 | `backend/`, `fastapi/` 또는 FastAPI 서비스 디렉터리, `backend/src/main/resources/db/`, REST API 계약 |
+| 팀원 | 프론트엔드 담당 | `frontend/`, React 컴포넌트, 페이지, 상태 관리, API client, UI 구현 |
+| 공동 | 통합·운영 | `README.md`, `DESIGN.md`, `AGENTS.md`, Docker, 테스트, Git/GitHub, API 계약 검토 |
+
+## 백엔드 구성 결정
+
+백엔드는 Java/Spring Boot와 FastAPI를 함께 사용한다. 역할을 섞어 같은 업무 API를 중복 구현하지 않는다.
+
+- Java/Spring Boot: 인증·권한, 사용자, Challenge, FLAG 검증, 점수, 랭킹, 관리자 기능, PostgreSQL 트랜잭션을 담당하는 주 공개 REST API
+- FastAPI: 문제 실행기, 파일 분석기, 보안 학습용 보조 기능처럼 격리할 수 있는 내부 REST 서비스 담당
+- PostgreSQL: 기존 DB를 유지하며 업무 데이터의 기준 저장소는 Java/Spring Boot가 소유한다.
+- FastAPI는 사용자 인증·JWT 발급·점수 계산·Solve 생성·스키마 변경을 직접 담당하지 않는다. 필요한 경우 Spring Boot가 인증된 내부 요청으로 호출한다.
+- React는 공개 REST API 계약에 따라 Java/Spring Boot를 호출하고, FastAPI 내부 주소를 브라우저에 노출하지 않는다.
+
+따라서 전체 구성은 `React + TypeScript → Java/Spring Boot REST API → PostgreSQL`이며, 필요한 기능에 한해 `Java/Spring Boot → FastAPI 내부 REST API`가 추가된다.
+
+## Codex 역할 전환 문장
+
+Codex에게 다음과 같이 말하면 해당 담당 영역의 기존 작업물을 먼저 읽고 작업한다.
+
+- `나는 백엔드 담당이야`: `AGENTS.md`, `README.md`, `DESIGN.md`를 확인한 뒤 `backend/`, FastAPI 서비스, DB 마이그레이션, REST API 계약과 백엔드 테스트를 우선 읽는다. 프론트엔드는 API 계약에 필요한 경우에만 확인한다.
+- `나는 프론트엔드 담당이야`: 공통 문서를 확인한 뒤 `frontend/`, API client, 타입 정의, React 페이지·컴포넌트와 디자인 토큰을 우선 읽는다. 백엔드는 API 계약 확인에 필요한 범위만 확인한다.
+- 역할 문장이 없으면 Codex는 변경 요청의 파일 위치를 기준으로 담당 영역을 판단하고, 영역이 걸치면 먼저 작업 범위를 짧게 보고한다.
+
+## Git 협업 기본
+
+`main`에는 직접 큰 기능을 섞어 올리지 않고 담당별 브랜치를 사용한다.
+
+```text
+backend/<feature-name>
+frontend/<feature-name>
+```
+
+API 경로나 응답 형식을 바꾸는 경우 양쪽 담당자가 먼저 문서와 타입을 함께 확인한 뒤 통합한다. Secret, 비밀번호, OAuth Client Secret, JWT Secret, FLAG 원문은 커밋하지 않는다.
