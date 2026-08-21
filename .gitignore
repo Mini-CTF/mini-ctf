@@ -1,5 +1,6 @@
 # Local secrets
 .env
+.env.local
 .mvp-flags.properties
 challenges/mvp/
 

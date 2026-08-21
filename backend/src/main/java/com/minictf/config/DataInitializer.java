@@ -22,13 +22,17 @@ public class DataInitializer {
         throw new IllegalStateException("ADMIN_PASSWORD must contain at least 12 characters");
       if (!username.matches("[A-Za-z0-9_]{3,50}"))
         throw new IllegalStateException("ADMIN_USERNAME format is invalid");
-      if (users.existsByUsernameIgnoreCase(username)) return;
-      User u = new User();
-      u.setUsername(username);
-      u.setNickname(username);
+      User u = users.findByUsernameIgnoreCase(username).orElseGet(User::new);
+      if (u.getId() == null) {
+        u.setUsername(username);
+        u.setNickname(username);
+        u.setScore(0);
+      }
       u.setPasswordHash(encoder.encode(password));
       u.setRole("ADMIN");
-      u.setScore(0);
+      u.setStatus("ACTIVE");
+      u.setSuspensionReason(null);
+      u.setSuspendedAt(null);
       users.save(u);
     };
   }
