@@ -22,7 +22,7 @@
 .text-link { font-size: 16px; }
 
 .stat span { font-size: 15px; color: #e1e7ef; }
-.stat small { font-size: 13px; color: #aeb9c8; }
+.stat small { font-size: 14px; color: #aeb9c8; }
 .live-badge { font-size: 14px; color: #bdc8d8; }
 .row-main strong { font-size: 19px; }
 .row-main small,
@@ -41,13 +41,25 @@
 .panel-heading,
 .submit-kicker,
 .challenge-count { font-size: 14px; }
+.card-bottom,
+.row-meta > b,
+.solved,
+.empty-state p,
+.artifact-file small,
+.feedback,
+.rate-note,
+.auth-form input,
+.flag-input input { font-size: 15px; }
+.category-number,
+.file-size,
+.detail-id,
+.operator small { font-size: 13px; }
 .challenge-card h3 { font-size: 23px; line-height: 1.2; }
 .card-bottom > strong { font-size: 20px; }
 .card-bottom > strong small { font-size: 12px; }
 .detail-header h1 { line-height: 1.05; }
 .detail-score span,
-.detail-score small,
-.file-size { font-size: 13px; }
+.detail-score small { font-size: 14px; }
 .auth-card h1 { line-height: 1.08; }
 
 .alert {
@@ -58,9 +70,9 @@
   padding: 12px 14px;
 }
 
-.site-footer { font-size: 14px; color: #aeb9c8; }
-.site-footer strong { font-size: 14px; color: #e8edf5; }
-.footer-status { font-size: 14px; color: #aeb9c8; }
+.site-footer { font-size: 15px; color: #aeb9c8; }
+.site-footer strong { font-size: 15px; color: #e8edf5; }
+.footer-status { font-size: 15px; color: #aeb9c8; }
 .mobile-auth { display: none; }
 
 @media (max-width: 620px) {
@@ -82,7 +94,7 @@
   .challenge-card h3 { font-size: 21px; }
   .site-footer,
   .site-footer strong,
-  .footer-status { font-size: 13px; }
+  .footer-status { font-size: 14px; }
 }
 
 @media (max-width: 620px) {
