@@ -10,21 +10,21 @@
   line-height: 1.45;
 }
 
-.eyebrow { font-size: 12px; color: #c5cfdd; }
+.eyebrow { font-size: 13px; color: #c5cfdd; }
 .nav-button,
-.header-login { font-size: 14px; }
-.button { font-size: 14px; }
-.hero-actions .button { font-size: 15px; }
+.header-login { font-size: 16px; }
+.button { font-size: 16px; }
+.hero-actions .button { font-size: 16px; }
 .hero-description,
-.page-intro > p:last-child { font-size: 17px; line-height: 1.65; color: #bdc8d8; }
+.page-intro > p:last-child { font-size: 18px; line-height: 1.7; color: #bdc8d8; }
 .section-heading h2,
 .content-section h2 { font-size: clamp(30px, 3vw, 38px); line-height: 1.15; }
-.text-link { font-size: 14px; }
+.text-link { font-size: 16px; }
 
-.stat span { font-size: 13px; color: #e1e7ef; }
-.stat small { font-size: 12px; color: #aeb9c8; }
-.live-badge { font-size: 12px; color: #bdc8d8; }
-.row-main strong { font-size: 17px; }
+.stat span { font-size: 15px; color: #e1e7ef; }
+.stat small { font-size: 13px; color: #aeb9c8; }
+.live-badge { font-size: 14px; color: #bdc8d8; }
+.row-main strong { font-size: 19px; }
 .row-main small,
 .challenge-card > p,
 .detail-header p,
@@ -33,21 +33,21 @@
 .submit-panel > p,
 .auth-description,
 .auth-form label,
-.auth-footnote { font-size: 14px; line-height: 1.6; }
+.auth-footnote { font-size: 16px; line-height: 1.65; }
 .badge,
 .filter-tab,
 .card-open,
 .back-link,
 .panel-heading,
 .submit-kicker,
-.challenge-count { font-size: 12px; }
+.challenge-count { font-size: 14px; }
 .challenge-card h3 { font-size: 23px; line-height: 1.2; }
 .card-bottom > strong { font-size: 20px; }
 .card-bottom > strong small { font-size: 12px; }
 .detail-header h1 { line-height: 1.05; }
 .detail-score span,
 .detail-score small,
-.file-size { font-size: 11px; }
+.file-size { font-size: 13px; }
 .auth-card h1 { line-height: 1.08; }
 
 .alert {
@@ -58,18 +58,18 @@
   padding: 12px 14px;
 }
 
-.site-footer { font-size: 12px; color: #aeb9c8; }
-.site-footer strong { font-size: 12px; color: #e8edf5; }
-.footer-status { font-size: 12px; color: #aeb9c8; }
+.site-footer { font-size: 14px; color: #aeb9c8; }
+.site-footer strong { font-size: 14px; color: #e8edf5; }
+.footer-status { font-size: 14px; color: #aeb9c8; }
 .mobile-auth { display: none; }
 
 @media (max-width: 620px) {
-  .eyebrow { font-size: 11px; letter-spacing: .12em; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; }
   .hero-description,
-  .page-intro > p:last-child { font-size: 16px; }
+  .page-intro > p:last-child { font-size: 17px; }
   .section-heading h2,
   .content-section h2 { font-size: 30px; }
-  .row-main strong { font-size: 16px; }
+  .row-main strong { font-size: 18px; }
   .row-main small,
   .challenge-card > p,
   .detail-header p,
@@ -78,11 +78,11 @@
   .submit-panel > p,
   .auth-description,
   .auth-form label,
-  .auth-footnote { font-size: 14px; }
+  .auth-footnote { font-size: 15px; }
   .challenge-card h3 { font-size: 21px; }
   .site-footer,
   .site-footer strong,
-  .footer-status { font-size: 12px; }
+  .footer-status { font-size: 13px; }
 }
 
 @media (max-width: 620px) {
