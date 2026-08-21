@@ -1,10 +1,10 @@
 import os
 
-os.environ.setdefault("INTERNAL_SERVICE_KEY", "test-internal-key-that-is-at-least-32-chars")
-
 from fastapi.testclient import TestClient
 
-from app.main import app, settings
+os.environ.setdefault("INTERNAL_SERVICE_KEY", "test-internal-key-that-is-at-least-32-chars")
+
+from app.main import app, settings  # noqa: I001
 
 
 client = TestClient(app)
@@ -22,7 +22,10 @@ def test_artifact_analysis_requires_key_and_blocks_traversal(tmp_path) -> None:
     artifact = tmp_path / "sample.txt"
     artifact.write_text("mini-ctf", encoding="utf-8")
 
-    assert client.post("/internal/artifacts/analyze", json={"relative_path": "sample.txt"}).status_code == 401
+    assert (
+        client.post("/internal/artifacts/analyze", json={"relative_path": "sample.txt"}).status_code
+        == 401
+    )
     response = client.post(
         "/internal/artifacts/analyze",
         headers={"X-Internal-Service-Key": KEY},

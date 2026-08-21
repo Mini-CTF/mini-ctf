@@ -36,8 +36,12 @@ class ChallengeExecutionRequest(BaseModel):
 
 
 def require_internal_key(x_internal_service_key: str | None = Header(default=None)) -> None:
-    if x_internal_service_key is None or not secrets.compare_digest(x_internal_service_key, settings.internal_service_key):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal service key")
+    if x_internal_service_key is None or not secrets.compare_digest(
+        x_internal_service_key, settings.internal_service_key
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal service key"
+        )
 
 
 @app.get("/internal/health")
@@ -45,7 +49,11 @@ def health() -> dict[str, str]:
     return {"status": "ok", "service": "fastapi-internal"}
 
 
-@app.post("/internal/artifacts/analyze", response_model=ArtifactAnalysisResponse, dependencies=[Depends(require_internal_key)])
+@app.post(
+    "/internal/artifacts/analyze",
+    response_model=ArtifactAnalysisResponse,
+    dependencies=[Depends(require_internal_key)],
+)
 def analyze_artifact(request: ArtifactAnalysisRequest) -> ArtifactAnalysisResponse:
     root = settings.artifact_storage_root.resolve()
     target = (root / request.relative_path).resolve()
@@ -66,4 +74,6 @@ def analyze_artifact(request: ArtifactAnalysisRequest) -> ArtifactAnalysisRespon
 @app.post("/internal/challenges/execute", dependencies=[Depends(require_internal_key)])
 def execute_challenge(request: ChallengeExecutionRequest) -> dict[str, object]:
     # 실제 격리 실행기가 연결되기 전에는 실행 요청을 성공으로 위장하지 않는다.
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Challenge runner is not configured")
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Challenge runner is not configured"
+    )

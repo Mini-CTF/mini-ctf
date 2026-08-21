@@ -1,1329 +1,194 @@
-# DESIGN.md — Mini CTF Platform UI/UX Design
+# Mini CTF UI/UX 기준
 
-# 1. 디자인 목표
+## 목표
 
-Mini CTF Platform은 현대적인 사이버 보안 플랫폼 분위기를 가지되, 과도한 해커 영화 스타일은 피한다.
+Mini CTF는 화려한 해킹 연출보다 실제로 사용할 수 있는 현대적인 보안 학습 서비스처럼 보여야 합니다. 핵심 흐름인 `문제 탐색 → 분석 → FLAG 제출 → 결과 확인`을 빠르고 명확하게 제공하고, 마우스 없이도 주요 기능을 사용할 수 있어야 합니다.
 
-```text
-Dark
-+
-Security
-+
-Developer
-+
-Clean
-+
-Modern
-```
+이 문서는 화면의 시각·상호작용 기준만 정의합니다. API 형식은 `docs/API_CONTRACT.md`, 구현 여부는 `docs/IMPLEMENTATION_STATUS.md`를 따릅니다.
 
-특정 서비스를 그대로 복제하지 않는다.
+## 디자인 원칙
 
----
+1. 어두운 배경과 녹색 Accent를 일관되게 사용합니다.
+2. 정보 구조와 상태 전달을 장식보다 우선합니다.
+3. 같은 기능은 같은 컴포넌트와 문구 패턴을 재사용합니다.
+4. 정상, 로딩, 빈 상태, 오류, 권한 부족 상태를 모두 설계합니다.
+5. 모바일과 키보드 사용자를 별도 예외가 아닌 기본 사용자로 취급합니다.
 
-# 개발 환경 및 AI 도구
+## 디자인 토큰
 
-```text
-Editor: VS Code
-AI Tools: Codex, Cursor
-```
-
-VS Code를 기본 개발 환경으로 사용한다. Codex와 Cursor는 컴포넌트 구현, 코드 설명, 리팩터링, 테스트 보조에 사용하며 최종 반영 전 개발자가 접근성·보안·반응형 동작을 직접 검토한다.
-
-Secret, 비밀번호, FLAG 원문과 같은 민감한 정보는 AI 도구에 입력하지 않는다.
-
----
-
-# 2. 핵심 디자인 원칙
-
-* Dark Theme
-* 높은 가독성
-* 정보 중심
-* 일관된 Component
-* Responsive Design
-* Keyboard Accessibility
-* 명확한 사용자 Feedback
-
----
-
-# 3. 색상 시스템
+현재 `frontend/src/styles.css`의 값을 기준으로 합니다.
 
 ```css
 :root {
-  --background-primary: #0b0f14;
-  --background-secondary: #111820;
-  --card: #151d27;
-  --border: #263241;
-  --text-primary: #f4f7fa;
-  --text-secondary: #99a6b5;
-  --accent: #39d98a;
-  --danger: #ff5c5c;
-  --warning: #f7b955;
+  --color-bg: #0b0f14;
+  --color-surface: #151d27;
+  --color-border: #263241;
+  --color-text: #f4f7fa;
+  --color-text-soft: #dbe3ea;
+  --color-muted: #99a6b5;
+  --color-accent: #39d98a;
+  --color-accent-dark: #113326;
+  --color-score: #f7b955;
+  --color-error-bg: #3b1d24;
+  --color-error: #ffb0b0;
+  --radius-control: 8px;
+  --radius-card: 12px;
 }
 ```
 
-기본 방향:
+- 본문 글꼴: `Inter, ui-sans-serif, system-ui, sans-serif`
+- 본문 최소 크기: `16px`
+- 본문 줄 높이: `1.5` 이상
+- 소스, 명령, FLAG: 고정폭 글꼴
+- Accent는 주요 행동, 선택, 성공, Focus에 사용하고 긴 본문에는 사용하지 않습니다.
+
+새 색상이나 간격을 임의로 늘리기 전에 기존 토큰으로 해결합니다. 구현 시 CSS Custom Property로 옮겨 중복 값을 줄이는 것을 권장합니다.
+
+## 전체 레이아웃
+
+- Header 높이: `72px`
+- 콘텐츠 최대 너비: `1180px`
+- 데스크톱 콘텐츠 여백: `72px 24px 120px`
+- 주요 카드: Surface 배경, 1px Border, 12px Radius
+- 페이지 제목은 Eyebrow, H1, 설명 순서를 유지합니다.
+
+Header 기본 메뉴:
 
 ```text
-Dark Background
-+
-Neutral Text
-+
-Green / Teal Accent
+MINICTF | Challenges | Community | Ranking | 계정 메뉴
 ```
 
----
+- 비로그인: Login, Sign Up
+- 로그인: My Page, Logout
+- 관리자: My Page, Admin, Logout
 
-# 4. Typography
+현재 구현되지 않은 경로는 메뉴에 노출하기 전에 실제 Route와 화면을 먼저 추가합니다.
 
-```css
-:root {
-  font-family: Inter, system-ui, sans-serif;
-}
+## 공통 컴포넌트
 
-code, pre {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-}
-```
+### Button
 
-외부 Font가 없어도 UI가 깨지지 않아야 한다.
+- Primary: 녹색 배경, 어두운 글자
+- Secondary: 투명 배경, Border, 밝은 글자
+- Danger: 삭제처럼 되돌리기 어려운 행동에만 사용
+- Disabled와 Loading은 색상뿐 아니라 `disabled`, 텍스트 또는 Spinner로 구분
+- 최소 높이 `44px`, 명확한 Focus Ring 제공
 
----
+### Form
 
-# 5. 키보드 접근성
+- Label과 입력을 항상 연결합니다.
+- Placeholder를 Label 대신 사용하지 않습니다.
+- 클라이언트 검증은 빠른 피드백용이며 서버 오류를 그대로 처리할 수 있어야 합니다.
+- 제출 중 중복 클릭을 막고 완료 후 성공·오류 상태를 가까운 위치에 표시합니다.
 
-보안/개발 관련 사용자는 마우스뿐 아니라 `Tab`, `Shift + Tab`, `Enter` 등을 이용해 빠르게 인터페이스를 탐색하는 경우가 많다.
+### Badge
 
-모든 주요 인터랙션 요소는 키보드로 접근할 수 있어야 한다.
+- Category, Difficulty, Role, Solved처럼 짧은 상태에만 사용합니다.
+- 색상만으로 의미를 전달하지 않고 텍스트를 함께 표시합니다.
 
-대상:
+### Alert
 
-* Navigation
-* Button
-* Link
-* Form Input
-* Challenge Card Link
-* Modal
-* FLAG Submit
-* Download Button
+- Success, Error, Warning, Info를 구분합니다.
+- 내부 Stack Trace나 서버 경로를 표시하지 않습니다.
+- `RATE_LIMITED`는 `Retry-After`를 이용해 재시도 가능 시간을 안내합니다.
 
-키보드 Focus가 시각적으로 명확해야 한다.
+### Data state
 
-```tsx
-<button type="submit" aria-label="Submit Flag">
-  Submit Flag
-</button>
-```
+- Loading: 영역의 목적을 유지한 Skeleton 또는 `불러오는 중…`
+- Empty: 이유와 가능한 다음 행동 제공
+- Error: 사용자용 설명과 재시도 버튼 제공
+- Unauthorized: 로그인 화면으로 이동할 명확한 행동 제공
+- Forbidden: 권한 부족을 로그인 필요와 구분
 
-브라우저의 기본 Focus 표시를 제거하지 않으며, 커스텀 Focus Ring을 추가할 때도 충분한 대비를 유지한다.
+## 화면 기준
 
-금지:
+### Home
 
-```css
-/* 전역적으로 outline을 제거하지 않는다. */
-*:focus {
-  outline: none;
-}
-```
+- 서비스 목적을 한 문장으로 설명합니다.
+- `Explore challenges`를 Primary CTA로 둡니다.
+- 활성 문제, 사용자, Solve 통계를 `/api/stats`와 연결할 수 있습니다.
 
-사용자가 `Tab`을 눌렀을 때 현재 위치를 명확하게 확인할 수 있어야 한다.
+### Authentication
 
----
+- Login과 Register는 좁은 단일 카드 레이아웃을 사용합니다.
+- 비밀번호를 다시 표시하거나 로그에 기록하지 않습니다.
+- OAuth 버튼은 `/api/auth/oauth/providers` 결과에 있는 Provider만 표시합니다.
+- OAuth callback은 URL fragment의 token을 읽고 즉시 주소에서 제거합니다.
 
-# 6. 전체 Layout
+### Challenges
 
-Desktop 최대 Content Width:
+- 카드에 Category, Difficulty, 제목, 점수, Solved, Artifact 유무를 표시합니다.
+- 카드 전체를 키보드로 선택할 수 있어야 합니다.
+- 목록이 커지면 Category·Difficulty·Solved 필터를 추가합니다.
+
+### Challenge Detail
+
+정보 순서:
 
 ```text
-1200px ~ 1400px
-```
-
-기본:
-
-```text
-┌─────────────────────────────────────────────┐
-│ HEADER                                      │
-│ Logo  Challenges  Ranking        Login      │
-├─────────────────────────────────────────────┤
-│                                             │
-│                MAIN CONTENT                 │
-│                                             │
-├─────────────────────────────────────────────┤
-│ FOOTER                                      │
-└─────────────────────────────────────────────┘
-```
-
----
-
-# 7. Header
-
-비로그인:
-
-```text
-MiniCTF
-Challenges
-Ranking
-Login
-Sign Up
-```
-
-로그인 페이지에는 일반 로그인과 소셜 로그인 선택지를 함께 제공한다.
-
-```text
-Username
-Password
-[ Login ]
-
-──────── or ────────
-
-[ Continue with Google ]
-[ Continue with GitHub ]
-[ Continue with Kakao ]
-[ Continue with Naver ]
-``` 
-
-Google 로그인을 기본 제공하고 GitHub·Kakao·Naver는 설정된 Provider만 노출한다. 소셜 로그인 버튼에는 Provider 이름을 명확히 표시하고, 키보드 Focus·로딩·실패 상태를 제공한다. OAuth Provider의 Client Secret은 프론트엔드에 포함하지 않는다.
-
-로그인:
-
-```text
-MiniCTF
-Challenges
-Ranking
-My Page
-Logout
-```
-
-관리자:
-
-```text
-MiniCTF
-Challenges
-Ranking
-My Page
-Admin
-Logout
-```
-
----
-
-# 8. Home Page
-
-Hero:
-
-```text
-┌───────────────────────────────────────────┐
-│                                           │
-│       Learn Security by Solving           │
-│                                           │
-│   다양한 보안 문제에 도전하고              │
-│   실력을 성장시켜보세요.                   │
-│                                           │
-│ [ Start Challenges ]   [ View Ranking ]   │
-│                                           │
-└───────────────────────────────────────────┘
-```
-
-Statistics:
-
-```text
-┌────────────┐ ┌────────────┐ ┌────────────┐
-│ Challenges │ │   Solves   │ │   Users    │
-│     12     │ │    183     │ │     27     │
-└────────────┘ └────────────┘ └────────────┘
-```
-
-Category:
-
-```text
-WEB
-CRYPTO
-FORENSICS
-MISC
-```
-
----
-
-# 9. Login Page
-
-```text
-┌──────────────────────────────┐
-│           Login              │
-│                              │
-│ Username                     │
-│ [________________________]   │
-│                              │
-│ Password                     │
-│ [________________________]   │
-│                              │
-│ [          Login          ]  │
-│                              │
-│ Don't have an account?       │
-│ Sign Up                      │
-└──────────────────────────────┘
-```
-
-오류:
-
-```text
-아이디 또는 비밀번호가 올바르지 않습니다.
-```
-
----
-
-# 10. Register Page
-
-필드:
-
-```text
-Username
-Nickname
-Password
-Confirm Password
-```
-
-Validation 오류는 해당 입력 필드 가까이에 표시한다.
-
----
-
-# 11. Challenges Page
-
-```text
-Challenges                        7 / 12 Solved
-```
-
-Category Filter:
-
-```text
-[ ALL ] [ WEB ] [ CRYPTO ] [ FORENSICS ] [ MISC ]
-```
-
-Difficulty:
-
-```text
-Difficulty: All ▼
-```
-
-Status:
-
-```text
-Status: All ▼
-```
-
----
-
-# 12. Challenge Card
-
-```text
-┌──────────────────────────┐
-│ WEB            EASY      │
-│                          │
-│ Hidden Message           │
-│                          │
-│ 문제 파일 안에 숨겨진     │
-│ FLAG를 찾아보세요.        │
-│                          │
-│ 100 pts          ✓ SOLVED│
-└──────────────────────────┘
-```
-
-필수:
-
-* Category
-* Title
-* Short Description
-* Difficulty
-* Score
-* Solve Status
-
----
-
-# 13. Badge
-
-Category:
-
-```text
-WEB
-CRYPTO
-FORENSICS
-MISC
-```
-
-Difficulty:
-
-```text
-EASY
-MEDIUM
-HARD
-```
-
-색상과 Text를 함께 사용한다.
-
----
-
-# 14. Challenge Detail
-
-기본:
-
-```text
-┌─────────────────────────────────────────┐
-│ WEB     EASY                     100 pts│
-│                                         │
-│ Hidden Message                          │
-│                                         │
-│ 문제 파일 어딘가에 FLAG가 숨겨져        │
-│ 있습니다.                                │
-│                                         │
-│ Challenge File                          │
-│ [ ↓ Download challenge.zip ]            │
-│                                         │
-├─────────────────────────────────────────┤
-│ Submit Flag                             │
-│                                         │
-│ [ CTF{__________________________} ]     │
-│ [ Submit Flag ]                         │
-│                                         │
-│ [ Inline Feedback ]                     │
-└─────────────────────────────────────────┘
-```
-
-## 문제 Artifact
-
-파일이 있는 경우:
-
-```text
-Challenge Files
-
-challenge.zip       2.4 MB
-[ Download ]
-```
-
-다운로드 버튼은 Secondary Button과 구분되는 **파일 전용 Action 스타일**을 사용할 수 있다.
-
-필수 요소:
-
-* 파일명
-* 다운로드 아이콘 또는 텍스트
-* 파일 크기 가능 시 표시
-* 명확한 Download Label
-
-파일 전체 서버 경로는 표시하지 않는다.
-
----
-
-# 15. 코드 블록 / 명령어 디자인
-
-CTF 문제 설명에는 코드, Shell Command, Log 등이 포함될 수 있다.
-
-Inline Code:
-
-```text
-Use the <code>strings</code> command.
-```
-
-Block Code:
-
-```text
-GET /admin HTTP/1.1
-Host: example.local
-```
-
-권장 스타일:
-
-```tsx
-<pre className="code-view" aria-label="Challenge code">
-  {code}
-</pre>
-```
-
-```css
-.code-view {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  overflow-x: auto;
-  white-space: pre;
-}
-```
-
-긴 코드가 페이지 폭을 깨지 않도록:
-
-```text
-Horizontal Scroll
-```
-
-을 허용한다.
-
-코드 영역은 일반 Description과 쉽게 구별되어야 한다.
-
----
-
-# 16. FLAG 제출 결과 피드백
-
-FLAG 제출 결과는 **Toast보다 Inline Alert 방식을 기본으로 사용한다.**
-
-이유:
-
-* FLAG 입력과 결과의 관계가 명확함
-* 구현이 단순함
-* 사용자가 메시지를 놓치기 어려움
-* 접근성 관리가 쉬움
-
-위치:
-
-```text
-FLAG Input
-Submit Button
-↓
-Inline Alert
-```
-
-## Correct
-
-```text
-┌────────────────────────────────────┐
-│ ✓ Correct!                         │
-│ 문제를 해결했습니다. +100 Points   │
-└────────────────────────────────────┘
-```
-
-## Incorrect
-
-```text
-┌────────────────────────────────────┐
-│ ✕ Incorrect Flag                   │
-│ FLAG를 다시 확인해주세요.           │
-└────────────────────────────────────┘
-```
-
-## Already Solved
-
-```text
-┌────────────────────────────────────┐
-│ ✓ Already Solved                   │
-│ 이미 해결한 문제입니다.             │
-└────────────────────────────────────┘
-```
-
-## Rate Limited
-
-```text
-┌────────────────────────────────────┐
-│ ⚠ Too Many Requests                │
-│ 잠시 후 다시 시도해주세요.           │
-└────────────────────────────────────┘
-```
-
-페이지 새로고침 없이 표시한다.
-
-API 요청이 다시 시작되면 필요에 따라 이전 오류 메시지를 초기화한다.
-
-Toast는 다음과 같은 전역적이고 일시적인 이벤트에만 선택적으로 사용할 수 있다.
-
-```text
-Profile Updated
-Challenge Created
-Challenge Deleted
-```
-
-FLAG 정답/오답 결과에는 기본적으로 사용하지 않는다.
-
----
-
-# 17. Ranking Page
-
-```text
-┌──────┬──────────────────┬─────────┬────────┐
-│ Rank │ User             │ Solved  │ Score  │
-├──────┼──────────────────┼─────────┼────────┤
-│  1   │ hacker01         │   10    │  2100  │
-│  2   │ security_student │    8    │  1700  │
-│  3   │ coder            │    7    │  1500  │
-└──────┴──────────────────┴─────────┴────────┘
-```
-
-상위 3명은 약간 강조한다.
-
-현재 로그인 사용자의 행도 구분할 수 있다.
-
----
-
-# 18. My Page
-
-```text
-security_student
-
-Rank #4
-
-1,300 Points
-7 Challenges Solved
-```
-
-Stats:
-
-```text
-┌────────────┐
-│ SCORE      │
-│ 1,300      │
-└────────────┘
-
-┌────────────┐
-│ SOLVED     │
-│ 7          │
-└────────────┘
-
-┌────────────┐
-│ RANK       │
-│ #4         │
-└────────────┘
-```
-
-그 아래:
-
-```text
-Solved Challenges
-Recent Submissions
-```
-
----
-
-# 19. Admin Page
-
-```text
-Admin Dashboard
-
-[ Add Challenge ]
-
-Challenges
-────────────────────────────────────────
-
-Hidden Message     WEB       EDIT   DELETE
-Caesar Cipher      CRYPTO    EDIT   DELETE
-Image Secret       FORENSICS EDIT   DELETE
-```
-
-문제 Form:
-
-```text
-Title
-Category
-Difficulty
-Score
+Category / Difficulty
+Title / Score / Solved
 Description
-Flag
-Artifact
-Active
+Artifact download
+FLAG form
+General / Solver Discussion
 ```
 
-FLAG는 일반 사용자 화면에서 절대 표시하지 않는다.
+- Artifact는 JWT를 포함한 API 요청으로 내려받습니다.
+- FLAG 입력 결과는 입력창 가까이에 표시하고 정답 후 화면의 Solved 상태를 갱신합니다.
+- Solver Discussion은 API가 `403`이면 내용을 렌더링하지 않습니다.
 
----
+### Ranking
 
-# 20. Empty State
+- 서버가 제공한 `rank`를 표시하며 배열 index로 순위를 다시 계산하지 않습니다.
+- Rank, 사용자, 점수, 해결 수를 제공합니다.
+- 모바일에서는 가로 스크롤 또는 정보 우선순위가 적용된 카드로 전환합니다.
 
-```text
-No Challenges
+### My Page
 
-현재 등록된 문제가 없습니다.
-새로운 문제가 곧 추가될 예정입니다.
-```
+- Profile, Rank, Score, Solved Count를 첫 영역에 둡니다.
+- Solve 목록과 최근 Submission을 분리합니다.
+- 다른 사용자의 민감한 제출 기록으로 이동할 수 있는 UI를 만들지 않습니다.
 
----
+### Community
 
-# 21. Loading State
+- Category: `FREE`, `QUESTION`, `CTF`, `NOTICE`
+- 목록: Category, 제목, 작성자, 댓글 수, 조회 수, 작성일
+- 상세: 본문, 작성자/관리자 Edit·Delete, 댓글 목록과 입력
+- 사용자 콘텐츠는 JSX 텍스트 보간으로 렌더링하고 `dangerouslySetInnerHTML`을 사용하지 않습니다.
+- `NOTICE` 작성 기능은 관리자에게만 표시합니다.
 
-```text
-Loading challenges...
-```
+### Admin
 
-또는 Skeleton UI.
+- 일반 사용자에게 메뉴를 숨기되 최종 권한 판단은 서버 응답을 따릅니다.
+- Challenge 생성·수정과 Artifact 업로드를 분리해 실패 지점을 명확히 합니다.
+- 파일 업로드는 진행·성공·실패 상태와 허용 확장자·25MB 제한을 표시합니다.
+- 삭제는 기록 보존형 비활성화임을 설명하고 확인 단계를 둡니다.
 
----
+## 접근성
 
-# 22. Error State
+- 모든 주요 기능은 `Tab`, `Shift + Tab`, `Enter`, `Space`로 동작해야 합니다.
+- Focus Ring을 제거하지 않습니다.
+- `<button>`과 `<a>`를 역할에 맞게 사용하고 클릭 가능한 `<div>`를 만들지 않습니다.
+- 아이콘 단독 버튼은 `aria-label`을 제공합니다.
+- 입력 오류는 색상과 텍스트를 함께 사용하고 필요한 경우 `aria-describedby`로 연결합니다.
+- 비동기 결과는 적절한 `aria-live` 영역으로 알립니다.
+- 텍스트와 배경은 WCAG AA 대비를 목표로 합니다.
+- 모션 감소 설정(`prefers-reduced-motion`)을 존중합니다.
 
-```text
-문제를 불러오지 못했습니다.
+## 반응형 기준
 
-[ Retry ]
-```
+- Desktop: `> 1024px`
+- Tablet: `681px ~ 1024px`
+- Mobile: `<= 680px`
 
-서버 내부 오류는 표시하지 않는다.
+모바일에서는 Header 메뉴를 단순히 숨겨 기능을 없애지 말고 메뉴 버튼이나 별도 Navigation으로 제공합니다. FLAG Form, Action Button, Community 메타데이터는 한 열로 재배치하고 가로 스크롤이 필요한 표에는 접근 가능한 대안을 제공합니다.
 
----
+## 프론트 구현 완료 조건
 
-# 23. Button
-
-Primary:
-
-```text
-Start Challenge
-Submit Flag
-Login
-Create Challenge
-```
-
-Secondary:
-
-```text
-Cancel
-Back
-View Ranking
-Download Artifact
-```
-
-Danger:
-
-```text
-Delete Challenge
-```
-
-Delete는 확인 절차를 사용한다.
-
----
-
-# 24. Form
-
-모든 Input에는 Label을 제공한다.
-
-권장:
-
-```text
-Username
-[ Enter username ]
-```
-
-Validation 오류는 Input 근처에 표시한다.
-
----
-
-# 25. 반응형
-
-Desktop:
-
-```text
-Challenge Grid
-3 Columns
-```
-
-Tablet:
-
-```text
-2 Columns
-```
-
-Mobile:
-
-```text
-1 Column
-```
-
----
-
-# 26. 접근성
-
-기본적으로 다음을 고려한다.
-
-* 충분한 색 대비
-* 명확한 접근성 역할과 이름
-* Form Label
-* Keyboard Navigation
-* Focus Ring
-* Button / Link 구분
-* 색상만으로 의미 전달하지 않음
-* Enter를 통한 Form Submit
-* semantic HTML과 ARIA 접근성 적용
-
-Inline Alert는 가능하면 보조 기술에서도 상태 변화를 확인할 수 있도록 설계한다.
-
----
-
-# 27. 애니메이션
-
-허용:
-
-```text
-Button Hover
-Card Hover
-Modal Fade
-Loading
-```
-
-피해야 할 것:
-
-```text
-과도한 Neon Glow
-Matrix Background
-지속적인 화면 흔들림
-과도한 3D
-불필요한 움직임
-```
-
----
-
-# 28. 공통 Component
-
-```text
-Header
-Footer
-Button
-Card
-ChallengeCard
-Badge
-Input
-Modal
-InlineAlert
-Toast
-Loading
-EmptyState
-StatCard
-RankingTable
-CodeBlock
-ArtifactDownload
-```
-
-동일 Component의 디자인을 페이지마다 새로 만들지 않는다.
-
----
-
-# 29. 최종 사용자 흐름
-
-```text
-Home
- ↓
-Sign Up
- ↓
-Login
- ↓
-Challenges
- ↓
-Challenge Detail
- ↓
-Artifact Download
- ↓
-Solve
- ↓
-Submit Flag
- ↓
-Inline Feedback
- ↓
-Score Update
- ↓
-Ranking
- ↓
-My Page
-```
-
-사용자가 다음 행동을 쉽게 이해할 수 있어야 한다.
-
----
-
-# 30. 구현 우선순위
-
-```text
-1. Header / Layout
-
-2. Home
-
-3. Login
-
-4. Register
-
-5. Challenges
-
-6. Challenge Detail
-
-7. Inline FLAG Feedback
-
-8. Artifact Download UI
-
-9. Ranking
-
-10. My Page
-
-11. Admin
-```
-
----
-
----
-
-# Community UI/UX
-
-## 1. Navigation
-
-Community 기능 추가 후 기본 Navigation은 다음과 같이 구성한다.
-
-```text
-MiniCTF
-
-Challenges
-Community
-Ranking
-My Page
-```
-
-비로그인 상태에서는 기존 Login / Sign Up 버튼을 유지한다.
-
----
-
-## 2. Challenge Discussion
-
-Challenge Detail 페이지 하단에 Discussion 영역을 배치한다.
-
-```text
-Challenge Detail
-
-Problem
-Artifact
-FLAG Submit
-
-────────────────────────────
-
-Discussion
-
-[ General ] [ Solver Discussion 🔒 ]
-```
-
-General과 Solver Discussion은 Tab 형태로 구분한다.
-
----
-
-## 3. General Discussion
-
-문제를 해결하지 않은 사용자도 접근할 수 있다.
-
-```text
-General Discussion
-────────────────────────────────
-
-user01                         10:32
-문제 파일이 정상적으로 열리지 않습니다.
-
-user02                         10:35
-저는 정상적으로 다운로드됩니다.
-
-────────────────────────────────
-
-[ 댓글을 입력하세요...                 ]
-[ Comment ]
-```
-
-각 댓글에는 다음 정보를 표시한다.
-
-- 작성자
-- 작성 시간
-- 내용
-
-본인의 댓글에는 필요에 따라 Edit / Delete 버튼을 제공한다.
-
----
-
-## 4. Solver Discussion
-
-Challenge를 해결하지 않은 사용자는 다음과 같은 잠금 상태를 보여준다.
-
-```text
-Solver Discussion 🔒
-
-┌────────────────────────────────────┐
-│ 🔒 Solver Only                     │
-│                                    │
-│ 문제를 해결한 후 풀이 토론을       │
-│ 확인할 수 있습니다.                │
-└────────────────────────────────────┘
-```
-
-Challenge를 해결한 사용자:
-
-```text
-Solver Discussion
-────────────────────────────────
-
-user03
-저는 먼저 파일 구조를 확인한 뒤...
-
-user04
-다른 방식으로도 해결할 수 있습니다.
-
-────────────────────────────────
-
-[ 풀이 관련 내용을 작성하세요...       ]
-[ Comment ]
-```
-
-잠금 상태와 접근 가능한 상태가 명확하게 구분되어야 한다.
-
----
-
-## 5. Spoiler 안내
-
-Solver Discussion에는 풀이 관련 스포일러가 포함될 수 있음을 명확히 표시한다.
-
-예:
-
-```text
-⚠ Solver Discussion
-
-이 영역에는 문제 풀이와 관련된
-스포일러가 포함될 수 있습니다.
-```
-
-General Discussion에는 직접적인 FLAG나 풀이 방법을 작성하지 않도록 안내할 수 있다.
-
----
-
-## 6. Community Main Page
-
-기본 Layout:
-
-```text
-Community
-
-보안과 CTF에 대한 이야기를 나눠보세요.
-
-[ All ] [ Free ] [ Question ] [ CTF ] [ Notice ]
-
-                                      [ Write ]
-
-─────────────────────────────────────────────
-Category     Title                 User     Date
-─────────────────────────────────────────────
-QUESTION     Base64 관련 질문       user01   10:24
-CTF          이번 CTF 후기           user02   09:50
-NOTICE       Mini-CTF 이용 안내      admin    Aug 18
-FREE         안녕하세요              user03   Aug 17
-─────────────────────────────────────────────
-```
-
-Desktop에서는 Table 또는 List 형태를 기본으로 사용한다.
-
-Mobile에서는 Card 또는 간소화된 List 형태로 변경한다.
-
----
-
-## 7. Community Category
-
-Category는 Badge 형태로 표시한다.
-
-```text
-FREE
-QUESTION
-CTF
-NOTICE
-```
-
-NOTICE는 다른 게시글보다 약간 강조할 수 있다.
-
-색상만으로 Category를 표현하지 않고 반드시 텍스트도 함께 표시한다.
-
----
-
-## 8. Community Post Detail
-
-```text
-QUESTION
-
-Base64 관련 질문
-
-user01 · 2026.08.18 10:24
-────────────────────────────────────
-
-게시글 내용...
-
-────────────────────────────────────
-
-Comments 3
-
-user02
-댓글 내용...
-
-user03
-댓글 내용...
-
-────────────────────────────────────
-
-[ 댓글을 입력하세요...                 ]
-[ Comment ]
-```
-
-본인 게시글에는:
-
-```text
-Edit
-Delete
-```
-
-Action을 제공한다.
-
----
-
-## 9. Community Write Page
-
-필드:
-
-```text
-Category
-Title
-Content
-```
-
-예:
-
-```text
-Write Post
-
-Category
-[ QUESTION ▼ ]
-
-Title
-[________________________________]
-
-Content
-┌────────────────────────────────┐
-│                                │
-│                                │
-│                                │
-└────────────────────────────────┘
-
-[ Cancel ]               [ Post ]
-```
-
-입력값 Validation Error는 해당 입력 필드 가까이에 Inline 방식으로 표시한다.
-
----
-
-## 10. Comment Component
-
-Challenge Discussion과 Community 댓글은 가능한 한 동일한 Comment Component를 사용한다.
-
-```text
-┌──────────────────────────────────────┐
-│ user01                    10:35      │
-│                                      │
-│ 댓글 내용                            │
-│                                      │
-│                         Edit Delete  │
-└──────────────────────────────────────┘
-```
-
-본인이 작성하지 않은 댓글에는 일반적으로 Edit / Delete 버튼을 표시하지 않는다.
-
-실제 수정/삭제 권한 검사는 반드시 Backend에서 수행한다.
-
----
-
-## 11. 댓글 작성 Feedback
-
-댓글 작성 후 전체 페이지를 새로고침하지 않는 방식을 권장한다.
-
-성공한 댓글은 댓글 목록에 즉시 추가한다.
-
-오류는 댓글 입력창 근처에 Inline Alert로 표시한다.
-
-일반 오류:
-
-```text
-⚠ 댓글을 등록하지 못했습니다.
-잠시 후 다시 시도해주세요.
-```
-
-Rate Limit:
-
-```text
-⚠ 너무 빠르게 댓글을 작성하고 있습니다.
-잠시 후 다시 시도해주세요.
-```
-
----
-
-## 12. Empty State
-
-게시글이 없는 경우:
-
-```text
-아직 작성된 게시글이 없습니다.
-
-첫 번째 글을 작성해보세요.
-
-[ Write Post ]
-```
-
-댓글이 없는 경우:
-
-```text
-아직 댓글이 없습니다.
-첫 번째 의견을 남겨보세요.
-```
-
----
-
-## 13. Loading / Error State
-
-Community 데이터를 불러오는 동안 Loading 상태를 표시한다.
-
-예:
-
-```text
-Loading posts...
-```
-
-오류가 발생하면:
-
-```text
-게시글을 불러오지 못했습니다.
-
-[ Retry ]
-```
-
-와 같이 표시한다.
-
-서버 내부 오류나 Stack Trace는 UI에 표시하지 않는다.
-
----
-
-## 14. Pagination
-
-게시글 수 증가를 고려하여 Pagination을 지원할 수 있는 Layout으로 설계한다.
-
-예:
-
-```text
-← Previous
-
-1  2  3  4  5
-
-Next →
-```
-
-초기 버전에서는 단순한 Previous / Next 방식도 허용한다.
-
----
-
-## 15. Search
-
-추후 Community 검색 기능을 추가할 수 있도록 상단에 Search 영역을 고려한다.
-
-```text
-[ Search posts...                    ] [ Search ]
-```
-
-검색 기능은 초기 MVP 필수 기능이 아니다.
-
----
-
-## 16. Community 키보드 접근성
-
-다음 Community 기능은 모두 키보드로 접근할 수 있어야 한다.
-
-- Category Tab
-- Discussion Tab
-- 게시글 링크
-- Write 버튼
-- Edit / Delete 버튼
-- 댓글 입력창
-- Comment 버튼
-- Pagination
-- Search
-
-기존 Focus Ring 규칙을 동일하게 적용한다.
-
-```tsx
-<nav aria-label="Community navigation">
-  {/* Category and Discussion tabs remain keyboard accessible. */}
-</nav>
-```
-
-키보드 사용자가 `Tab`, `Shift + Tab`, `Enter`를 이용해 Community의 주요 기능을 사용할 수 있어야 한다.
-
-Discussion Tab 역시 현재 선택된 상태와 Focus 상태를 명확하게 구분한다.
-
----
-
-## 17. Community Responsive Design
-
-Desktop:
-
-```text
-게시글 Table / List
-넓은 Discussion Layout
-```
-
-Tablet:
-
-```text
-간소화된 List
-```
-
-Mobile:
-
-```text
-게시글 Card / List
-작성자와 날짜는 두 번째 줄에 표시
-```
-
-모바일에서도 다음 기능이 정상적으로 제공되어야 한다.
-
-- 글 작성
-- 게시글 조회
-- 댓글 작성
-- Category 선택
-- Discussion 전환
-
----
-
-## 18. Community 디자인 원칙
-
-Community는 Mini-CTF와 동일한 디자인 시스템을 사용한다.
-
-Community만 별도의 다른 사이트처럼 보이면 안 된다.
-
-다음 요소를 기존 디자인과 통일한다.
-
-- Dark Theme
-- Accent Color
-- Typography
-- Button
-- Badge
-- Input
-- Card
-- Inline Alert
-- Focus Ring
-- Loading State
-- Empty State
-- Error State
-
-최종적으로 Challenge와 Community가 하나의 통합된 보안 학습 플랫폼처럼 보여야 한다.
-# 31. 최종 디자인 방향
-
-최종 결과물은
-
-> **깔끔하고 현대적인 Dark Theme 기반 보안 학습 플랫폼**
-
-을 목표로 한다.
-
-특히 CTF 문제를 탐색하고, 파일 또는 코드를 분석하고, FLAG를 제출하는 흐름이 빠르고 직관적이어야 한다.
-
-마우스를 사용하지 않고도 `Tab`, `Shift + Tab`, `Enter` 등을 이용해 주요 기능을 사용할 수 있을 정도의 키보드 접근성을 확보한다.
-
-화려함보다 **실제로 사용할 수 있는 보안 학습 서비스처럼 보이는 것**을 우선한다.
-# 0. 2인 팀 역할과 디자인 협업
-
-이 문서는 기존 개인 개발 기준을 2인 팀 기준으로 확장한다. 현재 색감, 다크 테마, 카드형 레이아웃, 보안 학습 플랫폼의 분위기는 유지한다.
-
-## 담당 범위
-
-- 백엔드 담당: Java/Spring Boot REST API, FastAPI 내부 REST 서비스, PostgreSQL 연동, 인증·권한·문제·점수·랭킹 기능
-- 프론트엔드 담당: React/TypeScript 화면, 라우팅, API client, 상태·로딩·오류 처리, 반응형 UI와 접근성
-- 공동 담당: API 응답 계약, 사용자 흐름, 보안 상태 표시, 테스트 시나리오, Git/GitHub 통합
-
-## 디자인 변경 원칙
-
-- 기존 색상 시스템과 스타일 토큰을 기본값으로 유지한다.
-- 프론트엔드 담당자가 시각적 변경을 주도하며, 백엔드 담당자는 API 상태와 데이터 구조가 화면에 미치는 영향만 제안한다.
-- API 변경이 필요한 UI 변경은 먼저 요청·응답 예시와 오류 코드를 문서화한 뒤 구현한다.
-- FastAPI는 내부 서비스이므로 브라우저 화면에 직접 URL을 노출하지 않는다. 화면은 Java/Spring Boot 공개 REST API만 호출한다.
-- 모든 화면은 정상, 로딩, 빈 상태, 오류, 인증 만료 상태를 디자인한다.
-
-## Codex 작업 전환
-
-사용자가 `나는 백엔드 담당이야`라고 말하면 디자인 문서에서는 API 계약, 오류 상태, 인증 흐름, 데이터 표시 요구사항만 우선 참고한다.
-
-사용자가 `나는 프론트엔드 담당이야`라고 말하면 이 문서의 색상·타이포그래피·컴포넌트·반응형 규칙과 기존 `frontend/` 구현을 우선 참고한다. 새 스타일을 만들기 전에 기존 토큰과 컴포넌트를 재사용한다.
+- 실제 API 타입과 응답 상태가 일치합니다.
+- 모든 Route에 정상·로딩·빈 상태·오류가 있습니다.
+- JWT 만료 시 인증 상태가 정리되고 Login으로 복구할 수 있습니다.
+- Artifact download, multipart upload, Rate Limit을 올바르게 처리합니다.
+- Home, Challenge, Ranking, My Page, Community, Admin의 핵심 흐름을 키보드로 사용할 수 있습니다.
+- `npm run build`와 주요 브라우저 통합 흐름이 통과합니다.

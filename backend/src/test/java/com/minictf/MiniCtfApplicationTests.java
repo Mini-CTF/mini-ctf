@@ -7,5 +7,6 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles("test")
 class MiniCtfApplicationTests {
-    @Test void contextLoads() {}
+  @Test
+  void contextLoads() {}
 }

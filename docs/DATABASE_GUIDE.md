@@ -13,8 +13,8 @@ V3__backend_completion.sql   입력 길이·Artifact 경로·OAuth·랭킹 인�
 이미 실행된 마이그레이션 파일은 수정하지 않습니다. 변경이 필요하면 다음 번호의 파일을 추가합니다.
 
 ```text
-V3__add_password_reset.sql
-V4__add_refresh_tokens.sql
+V4__add_password_reset.sql
+V5__add_refresh_tokens.sql
 ```
 
 ## 처음 실행
@@ -25,7 +25,7 @@ V4__add_refresh_tokens.sql
 4. PostgreSQL을 시작합니다.
 
 ```powershell
-cd D:\mini-ctf
+cd <repository-path>
 Copy-Item .env.example .env
 docker compose up -d postgres
 ```
@@ -45,7 +45,7 @@ Spring Boot가 시작되면 Flyway가 V1, V2, V3 순서로 자동 적용합니�
 ## 확인 방법
 
 ```powershell
-cd D:\mini-ctf\backend
+cd <repository-path>\backend
 $env:JAVA_HOME='C:\Path\To\JDK-21'
 .\gradlew.bat clean test
 ```

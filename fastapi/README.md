@@ -34,5 +34,7 @@ uvicorn app.main:app --reload --port 8000
 
 ```powershell
 pip install -r requirements-dev.txt
+ruff format --check .
+ruff check .
 python -m pytest -q
 ```

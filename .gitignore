@@ -1,11 +1,30 @@
+# Local secrets
 .env
+
+# Java / Gradle
 backend/.gradle/
 backend/build/
-frontend/node_modules/
-frontend/dist/
-fastapi/.venv/
-fastapi/**/__pycache__/
-*.pyc
-*.log
 *.class
 out/
+
+# Node / Vite
+frontend/node_modules/
+frontend/dist/
+
+# Python
+fastapi/.venv/
+fastapi/.pytest_cache/
+fastapi/**/__pycache__/
+*.pyc
+.coverage
+htmlcov/
+
+# Runtime data
+challenges/uploads/
+*.log
+
+# Editor / OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
