@@ -31,6 +31,7 @@ export const api = {
   login: (payload: { username: string; password: string }) =>
     request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
   me: () => request<User>('/auth/me'),
+  oauthProviders: () => request<string[]>('/auth/oauth/providers'),
   stats: () => request<Stats>('/stats'),
   challenges: () => request<ChallengeSummary[]>('/challenges'),
   challenge: (id: number) => request<ChallengeDetail>(`/challenges/${id}`),
