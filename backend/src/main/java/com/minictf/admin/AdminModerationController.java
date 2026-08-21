@@ -68,4 +68,45 @@ public class AdminModerationController {
   public ApiResponse<?> auditLogs() {
     return ApiResponse.ok(service.logs());
   }
+
+  @GetMapping("/security-events")
+  public ApiResponse<?> securityEvents() {
+    return ApiResponse.ok(service.securityEvents());
+  }
+
+  @PatchMapping("/audit-logs/{id}/redact")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void redactAuditLog(
+      @PathVariable Long id,
+      @Valid @RequestBody AdminDtos.LogControlRequest request,
+      Authentication auth) {
+    service.redactAuditLog(id, request, auth.getName());
+  }
+
+  @DeleteMapping("/audit-logs/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void hideAuditLog(
+      @PathVariable Long id,
+      @Valid @RequestBody AdminDtos.LogControlRequest request,
+      Authentication auth) {
+    service.hideAuditLog(id, request, auth.getName());
+  }
+
+  @PatchMapping("/security-events/{id}/redact")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void redactSecurityEvent(
+      @PathVariable Long id,
+      @Valid @RequestBody AdminDtos.LogControlRequest request,
+      Authentication auth) {
+    service.redactSecurityEvent(id, request, auth.getName());
+  }
+
+  @DeleteMapping("/security-events/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void hideSecurityEvent(
+      @PathVariable Long id,
+      @Valid @RequestBody AdminDtos.LogControlRequest request,
+      Authentication auth) {
+    service.hideSecurityEvent(id, request, auth.getName());
+  }
 }

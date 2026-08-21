@@ -71,6 +71,8 @@ public class SecurityConfig {
                         "/api/challenges/*/comments",
                         "/api/ranking",
                         "/api/stats",
+                        "/api/users/*/profile",
+                        "/api/users/*/avatar",
                         "/api/community/**")
                     .permitAll()
                     .anyRequest()

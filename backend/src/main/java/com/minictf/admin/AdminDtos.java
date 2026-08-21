@@ -44,9 +44,21 @@ public final class AdminDtos {
       String detail,
       Instant createdAt) {}
 
+  public record SecurityEventView(
+      Long id,
+      String username,
+      String eventType,
+      String subject,
+      String detail,
+      Instant createdAt,
+      Instant redactedAt) {}
+
+  public record LogControlRequest(@NotBlank @Size(max = 500) String reason) {}
+
   public record Dashboard(
       List<UserView> users,
       List<SubmissionView> recentSubmissions,
       List<AntiCheatEventView> antiCheatEvents,
-      List<AuditLogView> auditLogs) {}
+      List<AuditLogView> auditLogs,
+      List<SecurityEventView> securityEvents) {}
 }

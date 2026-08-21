@@ -1,0 +1,150 @@
+package com.minictf.user;
+
+import com.minictf.challenge.SolveRepository;
+import jakarta.persistence.EntityNotFoundException;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
+import javax.imageio.ImageIO;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+@Service
+public class UserProfileService {
+  private static final long MAX_AVATAR_SIZE = 2L * 1024 * 1024;
+  private static final Set<String> IMAGE_EXTENSIONS = Set.of("png", "jpg", "jpeg");
+  private final UserRepository users;
+  private final SolveRepository solves;
+  private final Path storageRoot;
+
+  public UserProfileService(
+      UserRepository users,
+      SolveRepository solves,
+      @Value("${app.profile.storage-root}") String storageRoot) {
+    this.users = users;
+    this.solves = solves;
+    this.storageRoot = Paths.get(storageRoot).toAbsolutePath().normalize();
+  }
+
+  @Transactional
+  public UserDtos.Profile update(User current, UserDtos.ProfileUpdateRequest request) {
+    if (request.nickname() != null && !request.nickname().isBlank())
+      current.setNickname(request.nickname().trim());
+    current.setStatusMessage(cleanOptional(request.statusMessage(), 160));
+    return profile(current);
+  }
+
+  @Transactional
+  public UserDtos.Profile uploadAvatar(User current, MultipartFile upload) {
+    if (upload == null || upload.isEmpty() || upload.getSize() > MAX_AVATAR_SIZE)
+      throw new IllegalArgumentException("Invalid avatar size");
+    String original = upload.getOriginalFilename();
+    if (original == null) throw new IllegalArgumentException("Avatar filename is required");
+    String fileName = Paths.get(original).getFileName().toString();
+    int dot = fileName.lastIndexOf('.');
+    if (dot < 1 || dot == fileName.length() - 1)
+      throw new IllegalArgumentException("Invalid avatar format");
+    String extension = fileName.substring(dot + 1).toLowerCase(Locale.ROOT);
+    if (!IMAGE_EXTENSIONS.contains(extension))
+      throw new IllegalArgumentException("Avatar must be PNG or JPEG");
+    try (var input = upload.getInputStream()) {
+      BufferedImage image = ImageIO.read(input);
+      if (image == null
+          || image.getWidth() < 1
+          || image.getHeight() < 1
+          || image.getWidth() > 4096
+          || image.getHeight() > 4096) throw new IllegalArgumentException("Invalid avatar image");
+    } catch (IOException ex) {
+      throw new IllegalArgumentException("Invalid avatar image");
+    }
+    String relative = "avatars/" + current.getId() + "/" + UUID.randomUUID() + "." + extension;
+    Path target = storageRoot.resolve(relative).normalize();
+    if (!target.startsWith(storageRoot)) throw new IllegalArgumentException("Invalid avatar path");
+    try {
+      Files.createDirectories(target.getParent());
+      try (var input = upload.getInputStream()) {
+        Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
+      }
+      deleteManagedAvatar(current);
+      current.setAvatarPath(relative);
+      return profile(current);
+    } catch (IOException ex) {
+      throw new IllegalStateException("Could not store avatar", ex);
+    }
+  }
+
+  @Transactional
+  public void deleteAvatar(User current) {
+    deleteManagedAvatar(current);
+    current.setAvatarPath(null);
+  }
+
+  @Transactional(readOnly = true)
+  public UserDtos.PublicProfile publicProfile(String username) {
+    User user = byUsername(username);
+    return new UserDtos.PublicProfile(
+        user.getUsername(),
+        user.getNickname(),
+        user.getScore(),
+        solves.countByUser(user.getId()),
+        user.getStatusMessage(),
+        avatarUrl(user));
+  }
+
+  @Transactional(readOnly = true)
+  public Path avatar(String username) {
+    User user = byUsername(username);
+    if (user.getAvatarPath() == null) throw new EntityNotFoundException("Avatar not found");
+    Path file = storageRoot.resolve(user.getAvatarPath()).normalize();
+    if (!file.startsWith(storageRoot) || !Files.isRegularFile(file))
+      throw new EntityNotFoundException("Avatar not found");
+    return file;
+  }
+
+  public UserDtos.Profile profile(User user) {
+    return new UserDtos.Profile(
+        user.getId(),
+        user.getUsername(),
+        user.getNickname(),
+        user.getRole(),
+        user.getScore(),
+        users.countByScoreGreaterThan(user.getScore()) + 1,
+        solves.countByUser(user.getId()),
+        user.getStatusMessage(),
+        avatarUrl(user));
+  }
+
+  private User byUsername(String username) {
+    return users
+        .findByUsernameIgnoreCase(username)
+        .orElseThrow(() -> new EntityNotFoundException("User not found"));
+  }
+
+  private String avatarUrl(User user) {
+    return user.getAvatarPath() == null ? null : "/api/users/" + user.getUsername() + "/avatar";
+  }
+
+  private String cleanOptional(String value, int max) {
+    if (value == null || value.isBlank()) return null;
+    String cleaned = value.trim();
+    if (cleaned.length() > max) throw new IllegalArgumentException("Text is too long");
+    return cleaned;
+  }
+
+  private void deleteManagedAvatar(User user) {
+    String relative = user.getAvatarPath();
+    if (relative == null || !relative.startsWith("avatars/" + user.getId() + "/")) return;
+    Path existing = storageRoot.resolve(relative).normalize();
+    if (!existing.startsWith(storageRoot)) return;
+    try {
+      Files.deleteIfExists(existing);
+    } catch (IOException ex) {
+      throw new IllegalStateException("Could not replace avatar", ex);
+    }
+  }
+}

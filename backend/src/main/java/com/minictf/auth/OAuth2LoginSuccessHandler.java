@@ -1,5 +1,6 @@
 package com.minictf.auth;
 
+import com.minictf.admin.SecurityEventService;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import jakarta.servlet.ServletException;
@@ -23,15 +24,18 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
   private final UserRepository users;
   private final JwtService jwt;
   private final String redirect;
+  private final SecurityEventService securityEvents;
 
   public OAuth2LoginSuccessHandler(
       OAuthAccountRepository accounts,
       UserRepository users,
       JwtService jwt,
+      SecurityEventService securityEvents,
       @Value("${app.oauth.success-redirect}") String redirect) {
     this.accounts = accounts;
     this.users = users;
     this.jwt = jwt;
+    this.securityEvents = securityEvents;
     this.redirect = redirect;
   }
 
@@ -57,6 +61,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
       response.sendError(403, "This account is suspended");
       return;
     }
+    securityEvents.record(
+        user, "OAUTH_LOGIN_SUCCESS", user.getUsername(), request.getRemoteAddr(), provider);
     response.sendRedirect(
         redirect
             + "#token="

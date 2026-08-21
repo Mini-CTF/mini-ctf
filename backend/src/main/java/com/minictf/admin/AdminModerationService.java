@@ -19,21 +19,24 @@ public class AdminModerationService {
   private final SubmissionRepository submissions;
   private final AntiCheatEventRepository antiCheatEvents;
   private final AdminAuditLogRepository auditLogs;
+  private final SecurityEventRepository securityEvents;
 
   public AdminModerationService(
       UserRepository users,
       SubmissionRepository submissions,
       AntiCheatEventRepository antiCheatEvents,
-      AdminAuditLogRepository auditLogs) {
+      AdminAuditLogRepository auditLogs,
+      SecurityEventRepository securityEvents) {
     this.users = users;
     this.submissions = submissions;
     this.antiCheatEvents = antiCheatEvents;
     this.auditLogs = auditLogs;
+    this.securityEvents = securityEvents;
   }
 
   @Transactional(readOnly = true)
   public AdminDtos.Dashboard dashboard() {
-    return new AdminDtos.Dashboard(users(), submissions(), events(), logs());
+    return new AdminDtos.Dashboard(users(), submissions(), events(), logs(), securityEvents());
   }
 
   @Transactional(readOnly = true)
@@ -119,7 +122,7 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public List<AdminDtos.AuditLogView> logs() {
-    return auditLogs.findTop100ByOrderByCreatedAtDesc().stream()
+    return auditLogs.findTop100ByHiddenFalseOrderByCreatedAtDesc().stream()
         .map(
             log ->
                 new AdminDtos.AuditLogView(
@@ -131,6 +134,56 @@ public class AdminModerationService {
                     log.getDetail(),
                     log.getCreatedAt()))
         .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<AdminDtos.SecurityEventView> securityEvents() {
+    return securityEvents.findTop100ByHiddenFalseOrderByCreatedAtDesc().stream()
+        .map(
+            event ->
+                new AdminDtos.SecurityEventView(
+                    event.getId(),
+                    event.getUser() == null ? null : event.getUser().getUsername(),
+                    event.getEventType(),
+                    event.getSubject(),
+                    event.getDetail(),
+                    event.getCreatedAt(),
+                    event.getRedactedAt()))
+        .toList();
+  }
+
+  @Transactional
+  public void redactAuditLog(Long id, AdminDtos.LogControlRequest request, String adminUsername) {
+    AdminAuditLog log =
+        auditLogs.findById(id).orElseThrow(() -> new EntityNotFoundException("Log not found"));
+    log.redact(request.reason().trim());
+    audit(adminUsername, "REDACT_AUDIT_LOG", "AUDIT_LOG", id, request.reason().trim());
+  }
+
+  @Transactional
+  public void hideAuditLog(Long id, AdminDtos.LogControlRequest request, String adminUsername) {
+    AdminAuditLog log =
+        auditLogs.findById(id).orElseThrow(() -> new EntityNotFoundException("Log not found"));
+    log.setHidden(true);
+    audit(adminUsername, "HIDE_AUDIT_LOG", "AUDIT_LOG", id, request.reason().trim());
+  }
+
+  @Transactional
+  public void redactSecurityEvent(
+      Long id, AdminDtos.LogControlRequest request, String adminUsername) {
+    SecurityEvent event =
+        securityEvents.findById(id).orElseThrow(() -> new EntityNotFoundException("Log not found"));
+    event.redact(request.reason().trim());
+    audit(adminUsername, "REDACT_SECURITY_EVENT", "SECURITY_EVENT", id, request.reason().trim());
+  }
+
+  @Transactional
+  public void hideSecurityEvent(
+      Long id, AdminDtos.LogControlRequest request, String adminUsername) {
+    SecurityEvent event =
+        securityEvents.findById(id).orElseThrow(() -> new EntityNotFoundException("Log not found"));
+    event.setHidden(true);
+    audit(adminUsername, "HIDE_SECURITY_EVENT", "SECURITY_EVENT", id, request.reason().trim());
   }
 
   private User target(Long id) {

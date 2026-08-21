@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minictf.admin.AdminDtos;
 import com.minictf.admin.AdminModerationService;
+import com.minictf.admin.SecurityEventRepository;
 import com.minictf.anticheat.AntiCheatEventRepository;
 import com.minictf.auth.JwtService;
 import com.minictf.auth.OAuthAccountRepository;
@@ -45,10 +46,12 @@ class BackendIntegrationTests {
   @Autowired JwtService jwt;
   @Autowired ChallengeService challengeService;
   @Autowired AntiCheatEventRepository antiCheatEvents;
+  @Autowired SecurityEventRepository securityEvents;
   @Autowired AdminModerationService moderation;
 
   @BeforeEach
   void cleanDatabase() {
+    securityEvents.deleteAll();
     challengeComments.deleteAll();
     postComments.deleteAll();
     posts.deleteAll();
@@ -65,25 +68,29 @@ class BackendIntegrationTests {
         """
                 {"username":"Student_1","nickname":"학생","password":"strong-password","passwordConfirmation":"strong-password"}
                 """;
+    String uniqueUsername = "Student_" + System.nanoTime();
+    body = body.replace("Student_1", uniqueUsername);
     mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.data.token").isNotEmpty());
 
-    User saved = users.findByUsernameIgnoreCase("student_1").orElseThrow();
+    User saved = users.findByUsernameIgnoreCase(uniqueUsername).orElseThrow();
     assertThat(saved.getPasswordHash()).isNotEqualTo("strong-password");
     assertThat(encoder.matches("strong-password", saved.getPasswordHash())).isTrue();
 
     mvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body.replace("Student_1", "student_1")))
+                .content(body.replace(uniqueUsername, uniqueUsername.toLowerCase())))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.error.code").value("USERNAME_EXISTS"));
     mvc.perform(
             post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"student_1\",\"password\":\"wrong-password\"}"))
+                .content(
+                    "{\"username\":\"%s\",\"password\":\"wrong-password\"}"
+                        .formatted(uniqueUsername)))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error.code").value("INVALID_CREDENTIALS"));
     mvc.perform(get("/api/users/me"))

@@ -89,4 +89,39 @@ export type AdminDashboard = {
     createdAt: string
   }[]
   auditLogs: { id: number; adminUsername: string; action: string; detail: string; createdAt: string }[]
+  securityEvents: {
+    id: number
+    username: string | null
+    eventType: string
+    subject: string | null
+    detail: string | null
+    createdAt: string
+    redactedAt: string | null
+  }[]
+}
+
+export type Profile = User & {
+  rank: number
+  solvedCount: number
+  statusMessage: string | null
+  avatarUrl: string | null
+}
+
+export type Friend = {
+  username: string
+  nickname: string
+  statusMessage: string | null
+  avatarUrl: string | null
+  relationshipStatus: 'PENDING' | 'ACCEPTED' | 'DECLINED' | string
+  incomingRequest: boolean
+  requestedAt: string
+}
+
+export type DirectMessage = {
+  id: number
+  sender: string
+  recipient: string
+  content: string
+  createdAt: string
+  read: boolean
 }

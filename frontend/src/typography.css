@@ -137,6 +137,38 @@
 .severity.medium { color: #ffcc7a; border-color: rgba(255, 204, 122, .45); }
 .severity.low { color: #b7c8db; }
 
+.profile-layout { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 24px; padding-top: 40px; }
+.profile-editor { padding: 24px; }
+.profile-editor h2,
+.social-panel h2 { margin: 0 0 20px; color: #fff; font-size: 26px; }
+.profile-editor form { display: grid; gap: 15px; }
+.profile-editor label { display: grid; gap: 8px; color: #ccd1da; font-size: 16px; }
+.profile-editor input,
+.profile-editor textarea,
+.friend-request input,
+.message-panel textarea { border: 1px solid var(--line); background: #0c0f15; color: #fff; padding: 12px; font: inherit; }
+.profile-editor textarea { min-height: 90px; resize: vertical; }
+.avatar-upload { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 22px; }
+.avatar-large { overflow: hidden; }
+.avatar-large img,
+.mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.status-message { color: #c8d2df; font-size: 17px; margin: 12px 0 0; }
+.social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
+.friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
+.friend-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+.friend-row > button:first-child { display: flex; min-width: 0; align-items: center; gap: 10px; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; }
+.friend-row strong,.friend-row small { display: block; }
+.friend-row strong { color: #fff; }
+.friend-row small { color: var(--muted); font-size: 13px; }
+.message-panel { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 18px; }
+.message-panel h3 { color: #fff; font-size: 18px; }
+.message-list { max-height: 300px; overflow-y: auto; display: grid; gap: 8px; margin-bottom: 12px; }
+.message { width: fit-content; max-width: 88%; margin: 0; padding: 9px 11px; color: #eaf1fa; line-height: 1.45; white-space: pre-wrap; }
+.message.sent { justify-self: end; background: #254161; }
+.message.received { background: #202733; }
+.message-panel form { display: grid; gap: 8px; }
+.message-panel textarea { min-height: 74px; resize: vertical; }
+
 .site-footer { font-size: 15px; color: #aeb9c8; }
 .site-footer strong { font-size: 15px; color: #e8edf5; }
 .footer-status { font-size: 15px; color: #aeb9c8; }
@@ -165,6 +197,7 @@
   .community-toolbar { align-items: stretch; }
   .community-toolbar .filter-tabs { width: 100%; }
   .admin-row { align-items: flex-start; flex-direction: column; }
+  .profile-layout { grid-template-columns: 1fr; }
   .challenge-card h3 { font-size: 21px; }
   .site-footer,
   .site-footer strong,

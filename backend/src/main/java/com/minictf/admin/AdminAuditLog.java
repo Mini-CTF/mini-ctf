@@ -30,6 +30,15 @@ public class AdminAuditLog {
   @Column(length = 1000)
   private String detail;
 
+  @Column(name = "is_hidden", nullable = false)
+  private boolean hidden;
+
+  @Column(name = "redacted_at")
+  private Instant redactedAt;
+
+  @Column(name = "redaction_reason", length = 500)
+  private String redactionReason;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -80,6 +89,28 @@ public class AdminAuditLog {
 
   public void setDetail(String value) {
     detail = value;
+  }
+
+  public boolean isHidden() {
+    return hidden;
+  }
+
+  public void setHidden(boolean value) {
+    hidden = value;
+  }
+
+  public Instant getRedactedAt() {
+    return redactedAt;
+  }
+
+  public String getRedactionReason() {
+    return redactionReason;
+  }
+
+  public void redact(String reason) {
+    detail = "[redacted]";
+    redactedAt = Instant.now();
+    redactionReason = reason;
   }
 
   public Instant getCreatedAt() {

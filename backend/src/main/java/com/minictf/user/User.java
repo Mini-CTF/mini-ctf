@@ -36,6 +36,12 @@ public class User {
   @Column(name = "suspended_at")
   private Instant suspendedAt;
 
+  @Column(name = "status_message", length = 160)
+  private String statusMessage;
+
+  @Column(name = "avatar_path", length = 500)
+  private String avatarPath;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -114,5 +120,21 @@ public class User {
 
   public Instant getCreatedAt() {
     return createdAt;
+  }
+
+  public String getStatusMessage() {
+    return statusMessage;
+  }
+
+  public void setStatusMessage(String value) {
+    statusMessage = value;
+  }
+
+  public String getAvatarPath() {
+    return avatarPath;
+  }
+
+  public void setAvatarPath(String value) {
+    avatarPath = value;
   }
 }

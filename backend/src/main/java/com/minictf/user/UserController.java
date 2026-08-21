@@ -3,9 +3,12 @@ package com.minictf.user;
 import com.minictf.challenge.SolveRepository;
 import com.minictf.challenge.SubmissionRepository;
 import com.minictf.common.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users/me")
@@ -13,18 +16,40 @@ public class UserController {
   private final UserRepository users;
   private final SolveRepository solves;
   private final SubmissionRepository submissions;
+  private final UserProfileService profiles;
 
   public UserController(
-      UserRepository users, SolveRepository solves, SubmissionRepository submissions) {
+      UserRepository users,
+      SolveRepository solves,
+      SubmissionRepository submissions,
+      UserProfileService profiles) {
     this.users = users;
     this.solves = solves;
     this.submissions = submissions;
+    this.profiles = profiles;
   }
 
   @GetMapping
   public ApiResponse<UserDtos.Profile> me(Authentication auth) {
-    User current = user(auth);
-    return ApiResponse.ok(profile(current));
+    return ApiResponse.ok(profiles.profile(user(auth)));
+  }
+
+  @PutMapping("/profile")
+  public ApiResponse<UserDtos.Profile> updateProfile(
+      @Valid @RequestBody UserDtos.ProfileUpdateRequest request, Authentication auth) {
+    return ApiResponse.ok(profiles.update(user(auth), request));
+  }
+
+  @PostMapping(value = "/avatar", consumes = "multipart/form-data")
+  public ApiResponse<UserDtos.Profile> uploadAvatar(
+      @RequestPart("file") MultipartFile file, Authentication auth) {
+    return ApiResponse.ok(profiles.uploadAvatar(user(auth), file));
+  }
+
+  @DeleteMapping("/avatar")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteAvatar(Authentication auth) {
+    profiles.deleteAvatar(user(auth));
   }
 
   @GetMapping("/solves")
@@ -57,7 +82,7 @@ public class UserController {
     User current = user(auth);
     return ApiResponse.ok(
         new UserDtos.Dashboard(
-            profile(current),
+            profiles.profile(current),
             solves.findByUserId(current.getId()).stream()
                 .map(
                     s ->
@@ -80,16 +105,5 @@ public class UserController {
 
   private User user(Authentication auth) {
     return users.findByUsername(auth.getName()).orElseThrow();
-  }
-
-  private UserDtos.Profile profile(User user) {
-    return new UserDtos.Profile(
-        user.getId(),
-        user.getUsername(),
-        user.getNickname(),
-        user.getRole(),
-        user.getScore(),
-        users.countByScoreGreaterThan(user.getScore()) + 1,
-        solves.countByUser(user.getId()));
   }
 }

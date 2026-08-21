@@ -37,14 +37,15 @@ public class AuthController {
   public ResponseEntity<ApiResponse<AuthDtos.AuthResponse>> register(
       @Valid @RequestBody AuthDtos.RegisterRequest req, HttpServletRequest http) {
     rateLimits.check("register", http.getRemoteAddr(), 10, 60);
-    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(service.register(req)));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.ok(service.register(req, http.getRemoteAddr())));
   }
 
   @PostMapping("/login")
   public ApiResponse<AuthDtos.AuthResponse> login(
       @Valid @RequestBody AuthDtos.LoginRequest req, HttpServletRequest http) {
     rateLimits.check("login", http.getRemoteAddr(), 20, 60);
-    return ApiResponse.ok(service.login(req));
+    return ApiResponse.ok(service.login(req, http.getRemoteAddr()));
   }
 
   @GetMapping("/me")

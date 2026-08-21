@@ -8,6 +8,9 @@ import type {
   PostComment,
   PostDetail,
   PostSummary,
+  Profile,
+  Friend,
+  DirectMessage,
   RankingRow,
   Stats,
   User,
@@ -70,6 +73,33 @@ export const api = {
     request(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) }),
   reinstateUser: (id: number) => request(`/admin/users/${id}/reinstate`, { method: 'POST' }),
   deactivateUser: (id: number) => request<void>(`/admin/users/${id}`, { method: 'DELETE' }),
+  redactAuditLog: (id: number, reason: string) =>
+    request<void>(`/admin/audit-logs/${id}/redact`, { method: 'PATCH', body: JSON.stringify({ reason }) }),
+  hideAuditLog: (id: number, reason: string) =>
+    request<void>(`/admin/audit-logs/${id}`, { method: 'DELETE', body: JSON.stringify({ reason }) }),
+  redactSecurityEvent: (id: number, reason: string) =>
+    request<void>(`/admin/security-events/${id}/redact`, { method: 'PATCH', body: JSON.stringify({ reason }) }),
+  hideSecurityEvent: (id: number, reason: string) =>
+    request<void>(`/admin/security-events/${id}`, { method: 'DELETE', body: JSON.stringify({ reason }) }),
+  profile: () => request<Profile>('/users/me'),
+  updateProfile: (payload: { nickname?: string; statusMessage?: string }) =>
+    request<Profile>('/users/me/profile', { method: 'PUT', body: JSON.stringify(payload) }),
+  async uploadAvatar(file: File): Promise<Profile> {
+    const token = localStorage.getItem('mini-ctf-token')
+    const form = new FormData()
+    form.append('file', file)
+    const response = await fetch(`${baseUrl}/users/me/avatar`, { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : undefined, body: form })
+    const body = await response.json().catch(() => null)
+    if (!response.ok) throw new Error(body?.error?.message ?? 'Could not upload avatar.')
+    return body.data as Profile
+  },
+  deleteAvatar: () => request<void>('/users/me/avatar', { method: 'DELETE' }),
+  friends: () => request<Friend[]>('/social/friends'),
+  requestFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(username)}`, { method: 'POST' }),
+  acceptFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(username)}/accept`, { method: 'POST' }),
+  removeFriend: (username: string) => request<void>(`/social/friends/${encodeURIComponent(username)}`, { method: 'DELETE' }),
+  messages: (username: string) => request<DirectMessage[]>(`/social/messages/${encodeURIComponent(username)}`),
+  sendMessage: (username: string, content: string) => request<DirectMessage>(`/social/messages/${encodeURIComponent(username)}`, { method: 'POST', body: JSON.stringify({ content }) }),
   async downloadArtifact(id: number) {
     const token = localStorage.getItem('mini-ctf-token')
     const response = await fetch(`${baseUrl}/challenges/${id}/artifact`, {

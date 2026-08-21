@@ -1,5 +1,6 @@
 package com.minictf.user;
 
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
 
@@ -13,7 +14,20 @@ public final class UserDtos {
       String role,
       int score,
       long rank,
-      long solvedCount) {}
+      long solvedCount,
+      String statusMessage,
+      String avatarUrl) {}
+
+  public record ProfileUpdateRequest(
+      @Size(max = 80) String nickname, @Size(max = 160) String statusMessage) {}
+
+  public record PublicProfile(
+      String username,
+      String nickname,
+      int score,
+      long solvedCount,
+      String statusMessage,
+      String avatarUrl) {}
 
   public record SolveView(Long challengeId, String title, int score, Instant solvedAt) {}
 

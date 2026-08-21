@@ -3,6 +3,7 @@
 .env.local
 .mvp-flags.properties
 challenges/mvp/
+profiles/
 
 # Java / Gradle
 backend/.gradle/
