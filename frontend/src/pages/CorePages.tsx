@@ -8,6 +8,24 @@ export function HomePage() {
   return (
     <section className="hero">
       <p className="eyebrow">SECURITY LEARNING PLATFORM</p>
+      <div className="hero-security-icon" aria-hidden="true">
+        <svg viewBox="0 0 120 140" fill="none">
+          <path
+            d="M60 8 105 25v37c0 31-18 55-45 70C33 117 15 93 15 62V25L60 8Z"
+            stroke="currentColor"
+            strokeWidth="6"
+          />
+          <path d="M39 65h42v30H39z" stroke="currentColor" strokeWidth="5" />
+          <path
+            d="M47 65V52c0-17 26-17 26 0v13"
+            stroke="currentColor"
+            strokeWidth="5"
+            strokeLinecap="round"
+          />
+          <circle cx="60" cy="79" r="4" fill="currentColor" />
+          <path d="M60 83v7" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      </div>
       <h1>
         Think like an attacker.
         <br />
