@@ -17,7 +17,7 @@ cd D:\mini-ctf\fastapi
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-$env:INTERNAL_SERVICE_KEY="change-this-internal-key"
+$env:INTERNAL_SERVICE_KEY="replace-with-at-least-32-random-characters"
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -27,3 +27,12 @@ uvicorn app.main:app --reload --port 8000
 - OpenAPI: `http://localhost:8000/docs`
 
 운영 환경에서는 `INTERNAL_SERVICE_KEY`를 반드시 강한 랜덤 값으로 설정하고 외부에 포트를 공개하지 않는다.
+
+격리 실행기가 아직 연결되지 않았으므로 `/internal/challenges/execute`는 성공 응답을 가장하지 않고 `501 Not Implemented`를 반환한다.
+
+테스트:
+
+```powershell
+pip install -r requirements-dev.txt
+python -m pytest -q
+```

@@ -4,6 +4,8 @@
 
 REST API와 React 웹 클라이언트로 다양한 정보보안 문제를 풀고 FLAG를 제출하여 점수와 랭킹을 얻을 수 있는 **웹 기반 미니 CTF 학습 플랫폼**입니다.
 
+현재 백엔드 구현 상태와 프론트 연결 계약은 [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md), [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)를 기준으로 합니다.
+
 Dreamhack과 같은 보안 학습 서비스에서 아이디어를 얻었으며, 단순 문제 풀이 사이트를 넘어 **플랫폼 자체의 보안까지 고려한 웹 애플리케이션**을 목표로 합니다.
 
 ---
@@ -353,6 +355,12 @@ POST /api/challenges/{id}/submit
 GET /api/ranking
 ```
 
+## Statistics
+
+```text
+GET /api/stats
+```
+
 ## User
 
 ```text
@@ -367,6 +375,8 @@ GET /api/users/me/submissions
 POST   /api/admin/challenges
 PUT    /api/admin/challenges/{id}
 DELETE /api/admin/challenges/{id}
+POST   /api/admin/challenges/{id}/artifact
+DELETE /api/admin/challenges/{id}/artifact
 ```
 
 ---

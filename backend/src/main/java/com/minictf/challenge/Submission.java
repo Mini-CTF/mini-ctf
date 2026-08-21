@@ -10,5 +10,5 @@ import java.time.Instant;
     @Column(name="is_correct",nullable=false) private boolean correct;
     @Column(name="submitted_at",nullable=false) private Instant submittedAt;
     @PrePersist void create(){if(submittedAt==null)submittedAt=Instant.now();}
-    public void setUser(User v){user=v;} public void setChallenge(Challenge v){challenge=v;} public void setCorrect(boolean v){correct=v;} public boolean isCorrect(){return correct;} public Instant getSubmittedAt(){return submittedAt;}
+    public void setUser(User v){user=v;} public void setChallenge(Challenge v){challenge=v;} public void setCorrect(boolean v){correct=v;} public boolean isCorrect(){return correct;} public Instant getSubmittedAt(){return submittedAt;} public Long getChallengeId(){return challenge.getId();} public String getChallengeTitle(){return challenge.getTitle();}
 }

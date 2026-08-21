@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import secrets
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
@@ -9,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    internal_service_key: str = "dev-internal-key-change-me"
+    internal_service_key: str = Field(min_length=32)
     artifact_storage_root: Path = Path("../challenges")
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -35,7 +36,7 @@ class ChallengeExecutionRequest(BaseModel):
 
 
 def require_internal_key(x_internal_service_key: str | None = Header(default=None)) -> None:
-    if x_internal_service_key != settings.internal_service_key:
+    if x_internal_service_key is None or not secrets.compare_digest(x_internal_service_key, settings.internal_service_key):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal service key")
 
 
@@ -64,6 +65,5 @@ def analyze_artifact(request: ArtifactAnalysisRequest) -> ArtifactAnalysisRespon
 
 @app.post("/internal/challenges/execute", dependencies=[Depends(require_internal_key)])
 def execute_challenge(request: ChallengeExecutionRequest) -> dict[str, object]:
-    # 실행기 도입 전까지는 허용된 작업만 계획 상태로 반환한다.
-    # 임의의 셸 명령이나 사용자 입력을 실행하지 않는다.
-    return {"challenge_id": request.challenge_id, "operation": request.operation, "status": "accepted"}
+    # 실제 격리 실행기가 연결되기 전에는 실행 요청을 성공으로 위장하지 않는다.
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Challenge runner is not configured")

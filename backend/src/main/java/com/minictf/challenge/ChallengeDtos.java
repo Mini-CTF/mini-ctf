@@ -1,9 +1,20 @@
 package com.minictf.challenge;
 import jakarta.validation.constraints.*;
+import java.time.Instant;
 public final class ChallengeDtos { private ChallengeDtos(){}
     public record Summary(Long id,String title,String category,String difficulty,int score,boolean solved,boolean artifactAvailable){}
     public record Detail(Long id,String title,String description,String category,String difficulty,int score,boolean solved,boolean artifactAvailable){}
     public record SubmitRequest(@NotBlank @Size(max=200) String flag){}
     public record SubmitResult(String result,int awardedScore){}
-    public record AdminRequest(@NotBlank @Size(max=160)String title,@NotBlank String description,@NotBlank String category,@NotBlank String difficulty,@Min(1)int score,@NotBlank String flag,@Size(max=500)String artifactPath,boolean active){}
+    public record AdminRequest(@NotBlank @Size(max=160)String title,
+                               @NotBlank @Size(max=20_000) String description,
+                               @NotBlank @Pattern(regexp="(?i)WEB|CRYPTO|FORENSICS|MISC|REVERSING|PWN") String category,
+                               @NotBlank @Pattern(regexp="(?i)EASY|MEDIUM|HARD|INSANE") String difficulty,
+                               @Min(1) @Max(1_000_000) int score,
+                               @Size(max=200) String flag,
+                               @Size(max=500) String artifactPath,
+                               boolean active){}
+    public record AdminView(Long id,String title,String description,String category,String difficulty,int score,
+                            String artifactPath,boolean active,boolean flagConfigured,Instant createdAt,Instant updatedAt){}
+    public record ArtifactView(String filename,long sizeBytes){}
 }

@@ -8,5 +8,11 @@ dependencies = [
   "pydantic-settings==2.8.1",
 ]
 
+[project.optional-dependencies]
+test = [
+  "pytest==8.3.5",
+  "httpx==0.28.1",
+]
+
 [tool.ruff]
 line-length = 100

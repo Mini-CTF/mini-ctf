@@ -17,9 +17,9 @@ public class JwtService {
         if (secret == null || secret.length() < 32) throw new IllegalArgumentException("JWT_SECRET must contain at least 32 characters");
         key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)); this.expiration = expiration;
     }
-    public String createToken(String username, String role) {
+    public String createToken(Long userId, String role) {
         Date now = new Date();
-        return Jwts.builder().subject(username).claim("role", role).issuedAt(now)
+        return Jwts.builder().subject(userId.toString()).claim("role", role).issuedAt(now)
                 .expiration(new Date(now.getTime() + expiration)).signWith(key).compact();
     }
     public Claims parse(String token) { return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload(); }

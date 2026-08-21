@@ -1,6 +1,7 @@
 package com.minictf.user;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 
 @Entity
@@ -9,7 +10,7 @@ public class User {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(nullable = false, unique = true, length = 50) private String username;
     @Column(length = 80) private String nickname;
-    @Column(name = "password_hash") private String passwordHash;
+    @JsonIgnore @Column(name = "password_hash") private String passwordHash;
     @Column(nullable = false, length = 20) private String role = "USER";
     @Column(nullable = false) private int score;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
