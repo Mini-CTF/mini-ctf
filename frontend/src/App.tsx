@@ -17,6 +17,8 @@ function App() {
   const [ranking, setRanking] = useState<RankingRow[]>([])
   const [selected, setSelected] = useState<ChallengeDetail | null>(null)
   const [category, setCategory] = useState<Filter>('ALL')
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [compactLayout, setCompactLayout] = useState(() => window.innerWidth <= 620)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -56,6 +58,12 @@ function App() {
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    const updateLayout = () => setCompactLayout(window.innerWidth <= 620)
+    window.addEventListener('resize', updateLayout)
+    return () => window.removeEventListener('resize', updateLayout)
+  }, [])
+
   const visibleChallenges = useMemo(
     () => challenges.filter((item) => category === 'ALL' || item.category === category),
     [category, challenges],
@@ -63,6 +71,7 @@ function App() {
   const navigate = (next: View) => {
     setSelected(null)
     setView(next)
+    setMobileNavOpen(false)
     setError('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -91,13 +100,15 @@ function App() {
   return <div className="app-shell">
     <header className="site-header">
       <button className="brand" type="button" onClick={() => navigate('home')}>MINI<span className="brand-accent">/</span>CTF</button>
-      <nav className="primary-nav" aria-label="Primary navigation">
+      {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
+      <nav id="primary-navigation" className={mobileNavOpen ? 'primary-nav is-open' : 'primary-nav'} aria-label="Primary navigation">
         <NavButton active={view === 'home'} onClick={() => navigate('home')}>Home</NavButton>
         <NavButton active={view === 'challenges'} onClick={() => navigate('challenges')}>Challenges</NavButton>
         <NavButton active={view === 'ranking'} onClick={() => navigate('ranking')}>Ranking</NavButton>
         <NavButton active={view === 'profile'} onClick={() => navigate('profile')}>My Page</NavButton>
+        {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>Sign out</button> : <button className="nav-button mobile-auth" type="button" onClick={() => navigate('login')}>Sign in</button>}
       </nav>
-      <div className="header-actions">{user ? <><span className="header-login">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>Sign out</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>Sign in</button>}</div>
+      <div className="header-actions">{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>Sign out</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>Sign in</button>}</div>
     </header>
     <main>
       {error && <div className="page"><p className="alert error">{error}</p></div>}

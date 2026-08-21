@@ -1,207 +1,108 @@
-.eyebrow { font-size: 11px; }
-.hero-copy .eyebrow,
-.content-section > .section-heading .eyebrow { font-size: 14px; color: #c4cfdd; }
-.nav-button,
-.header-login { font-size: 15px; }
-.button { font-size: 14px; }
-.hero-actions .button,
-.text-link { font-size: 17px; }
-.text-link,
-.filter-tab,
-.card-open,
-.back-link { font-size: 12px; }
-.muted-label,
-.detail-id,
+/* A small, predictable type scale keeps dense security UI readable at every size. */
+.eyebrow,
 .panel-heading,
 .submit-kicker,
-.rate-note,
-.footer-status,
-.site-footer { font-size: 24px; color: #b9c5d3; }
-
-.site-footer strong { font-size: 24px; color: #e5edf7; }
-.footer-status { font-size: 21px; color: #b9c5d3; }
-.live-badge { font-size: 16px; color: #c4cfdd; }
-.visual-label { font-size: 14px; color: #b5c3d2; }
-
-.row-main small,
-.category-tile p,
-.challenge-card > p,
-.tag-list span,
-.card-bottom,
-.select-filters label,
-.select-filters select,
-.challenge-count,
-.detail-header p,
-.problem-panel > p,
-.hint-box small,
-.artifact-file small,
-.submit-panel > p,
-.feedback small,
-.discussion-preview > span,
-.streak-panel > p,
-.auth-description,
-.auth-form label,
- .auth-footnote { font-size: 13px; }
-
 .badge,
 .filter-tab,
-.text-link,
-.card-open,
-.back-link,
-.visual-label,
-.select-filters select { font-size: 12px; }
+.challenge-count,
+.live-badge,
+.footer-status {
+  line-height: 1.45;
+}
 
-.stat small,
-.category-number,
-.file-size,
-.operator small,
-.streak-panel > small:last-child { font-size: 10px; }
-
-.category-tile h3,
-.row-main strong,
-.artifact-file strong,
-.feedback strong { font-size: 18px; }
-
-.category-tile p,
-.challenge-card > p,
-.row-main small { font-size: 16px; }
-.category-tile h3 { font-size: 20px; }
-.row-main strong { font-size: 21px; }
-.challenge-card h3 { font-size: 28px; }
+.eyebrow { font-size: 12px; color: #c5cfdd; }
+.nav-button,
+.header-login { font-size: 14px; }
+.button { font-size: 14px; }
+.hero-actions .button { font-size: 15px; }
+.hero-description,
+.page-intro > p:last-child { font-size: 17px; line-height: 1.65; color: #bdc8d8; }
 .section-heading h2,
-.content-section h2 { font-size: 36px; }
-.hero-description { font-size: 19px; }
-.page-intro > p:last-child { font-size: 18px; }
-.problem-panel h2,
-.submit-panel h2,
-.discussion-preview h2 { font-size: 28px; }
-.problem-panel > p { font-size: 15px; }
-.hint-box strong,
-.artifact-file strong { font-size: 13px; }
-.hint-box small,
+.content-section h2 { font-size: clamp(30px, 3vw, 38px); line-height: 1.15; }
+.text-link { font-size: 14px; }
+
+.stat span { font-size: 13px; color: #e1e7ef; }
+.stat small { font-size: 12px; color: #aeb9c8; }
+.live-badge { font-size: 12px; color: #bdc8d8; }
+.row-main strong { font-size: 17px; }
+.row-main small,
+.challenge-card > p,
+.detail-header p,
+.problem-panel > p,
 .artifact-file small,
 .submit-panel > p,
-.feedback small { font-size: 13px; }
-.stat span { font-size: 13px; }
-.stat small { font-size: 11px; }
+.auth-description,
+.auth-form label,
+.auth-footnote { font-size: 14px; line-height: 1.6; }
+.badge,
+.filter-tab,
+.card-open,
+.back-link,
+.panel-heading,
+.submit-kicker,
+.challenge-count { font-size: 12px; }
+.challenge-card h3 { font-size: 23px; line-height: 1.2; }
+.card-bottom > strong { font-size: 20px; }
+.card-bottom > strong small { font-size: 12px; }
+.detail-header h1 { line-height: 1.05; }
+.detail-score span,
+.detail-score small,
+.file-size { font-size: 11px; }
+.auth-card h1 { line-height: 1.08; }
 
-.row-meta > b { font-size: 15px; }
-.card-bottom > strong { font-size: 24px; }
-.card-bottom > strong small { font-size: 13px; }
-.text-link { font-size: 17px; }
-.visual-label { font-size: 14px; }
-
-.visual-label,
-.tag-list span,
-.file-size,
-.category-number,
-.detail-id { color: #aab7c6; }
-
-/* Clear, consistent authentication controls and security artwork. */
-.brand-mark {
-  display: grid;
-  place-items: center;
-  transform: none;
+.alert {
+  border: 1px solid #a95b68;
+  background: rgba(169, 91, 104, .14);
+  color: #ffd4da;
+  line-height: 1.5;
+  padding: 12px 14px;
 }
 
-.brand-mark .shield-icon {
-  width: 19px;
-  height: 22px;
-}
-
-.auth-brand .brand-mark {
-  width: 34px;
-  height: 34px;
-}
-
-.auth-brand .brand-mark .shield-icon {
-  width: 21px;
-  height: 24px;
-}
-
-.hero-symbol {
-  width: 150px;
-  height: 170px;
-  display: grid;
-  place-items: center;
-  transform: translate(-50%, -50%);
-}
-
-.hero-symbol .shield-icon {
-  width: 150px;
-  height: 170px;
-  color: var(--accent);
-  filter: drop-shadow(0 0 22px rgba(99, 169, 255, .45));
-}
-
-.social-buttons {
-  display: grid;
-  gap: 10px;
-}
-
-.social-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  min-height: 48px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: border-color .2s, background .2s;
-}
-
-.social-button:hover {
-  border-color: #657080;
-  background: rgba(255, 255, 255, .04);
-}
-
-.social-button > span:last-child {
-  min-width: 176px;
-  text-align: left;
-}
-
-.social-logo {
-  width: 21px;
-  height: 21px;
-  flex: none;
-}
-
-.github-logo { color: #f3f6fb; }
-
-.auth-footnote button { cursor: pointer; }
+.site-footer { font-size: 12px; color: #aeb9c8; }
+.site-footer strong { font-size: 12px; color: #e8edf5; }
+.footer-status { font-size: 12px; color: #aeb9c8; }
+.mobile-auth { display: none; }
 
 @media (max-width: 620px) {
-  .eyebrow { font-size: 10px; }
-  .hero-copy .eyebrow,
-  .content-section > .section-heading .eyebrow { font-size: 12px; }
-  .live-badge { font-size: 13px; }
-  .visual-label { font-size: 11px; }
+  .eyebrow { font-size: 11px; letter-spacing: .12em; }
+  .hero-description,
+  .page-intro > p:last-child { font-size: 16px; }
+  .section-heading h2,
+  .content-section h2 { font-size: 30px; }
+  .row-main strong { font-size: 16px; }
   .row-main small,
-  .category-tile p,
   .challenge-card > p,
-  .card-bottom,
-  .select-filters label,
-  .select-filters select,
-  .challenge-count,
   .detail-header p,
   .problem-panel > p,
-  .hint-box small,
   .artifact-file small,
   .submit-panel > p,
-  .feedback small,
-  .discussion-preview > span,
-  .streak-panel > p,
   .auth-description,
   .auth-form label,
-  .auth-footnote { font-size: 13px; }
-  .challenge-card h3 { font-size: 24px; }
-  .row-main strong { font-size: 19px; }
-  .content-section h2 { font-size: 30px; }
-  .hero-description { font-size: 17px; }
-  .site-footer { font-size: 18px; }
-  .site-footer strong { font-size: 18px; }
-  .footer-status { font-size: 16px; }
-  .hero-symbol { width: 118px; height: 138px; }
-  .hero-symbol .shield-icon { width: 118px; height: 138px; }
-  .social-button > span:last-child { min-width: 164px; }
+  .auth-footnote { font-size: 14px; }
+  .challenge-card h3 { font-size: 21px; }
+  .site-footer,
+  .site-footer strong,
+  .footer-status { font-size: 12px; }
+}
+
+@media (max-width: 620px) {
+  .site-header { display: block; padding: 0; }
+  .brand { position: absolute; top: 24px; left: 20px; }
+  .menu-toggle { position: fixed; top: 21px; right: 20px; z-index: 10; display: block; min-width: auto; margin: 0; color: #e8edf5; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; }
+  .header-actions { display: none !important; }
+  .header-login { font-size: 13px; white-space: nowrap; }
+  .header-identity { display: none; }
+  .mobile-auth { display: block; }
+  .page { width: 100%; max-width: 100%; padding-right: 40px; overflow-x: clip; }
+  .hero-section { min-height: auto; padding: 0 0 60px; }
+  .hero-copy { width: 100%; min-width: 0; padding: 68px 0 0; max-width: 100%; }
+  .hero-copy h1 { font-size: clamp(42px, 12.5vw, 50px); letter-spacing: -.055em; overflow-wrap: anywhere; }
+  .hero-description { width: calc(100% - 20px); max-width: calc(100% - 20px); overflow-wrap: anywhere; margin: 24px 0 30px; }
+  .hero-actions { width: 100%; min-width: 0; max-width: none; }
+  .hero-actions .button { width: calc(100% - 20px); max-width: calc(100% - 20px); min-height: 52px; margin-right: 20px; }
+  .stat-strip { margin-top: 0; }
+  .stat { gap: 11px; padding: 16px 0; }
+  .stat strong { font-size: 27px; }
+  .live-badge { margin: 12px 0 2px; }
+  .page-intro { padding-top: 54px; }
 }
