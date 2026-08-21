@@ -95,7 +95,7 @@ public class SecurityConfig {
       @Value("${app.cors.allowed-origins}") String origins) {
     CorsConfiguration c = new CorsConfiguration();
     c.setAllowedOrigins(Arrays.stream(origins.split(",")).map(String::trim).toList());
-    c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    c.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     c.setAllowedHeaders(List.of("Authorization", "Content-Type"));
     c.setExposedHeaders(List.of("Retry-After", "Content-Disposition"));
     UrlBasedCorsConfigurationSource s = new UrlBasedCorsConfigurationSource();
