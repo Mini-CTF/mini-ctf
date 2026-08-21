@@ -5,6 +5,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minictf.admin.AdminDtos;
+import com.minictf.admin.AdminModerationService;
+import com.minictf.anticheat.AntiCheatEventRepository;
 import com.minictf.auth.JwtService;
 import com.minictf.auth.OAuthAccountRepository;
 import com.minictf.challenge.*;
@@ -41,6 +44,8 @@ class BackendIntegrationTests {
   @Autowired PasswordEncoder encoder;
   @Autowired JwtService jwt;
   @Autowired ChallengeService challengeService;
+  @Autowired AntiCheatEventRepository antiCheatEvents;
+  @Autowired AdminModerationService moderation;
 
   @BeforeEach
   void cleanDatabase() {
@@ -256,6 +261,28 @@ class BackendIntegrationTests {
     mvc.perform(get("/api/community/posts/{id}", postId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content").value("내용"));
+  }
+
+  @Test
+  void adminCanSuspendAndReinstateUsersAndRapidSignalsRequireReview() throws Exception {
+    User admin = user("moderator", "ADMIN");
+    User learner = user("learner", "USER");
+    Challenge challenge = challenge(true, "CTF{review}");
+    String learnerToken = jwt.createToken(learner.getId(), learner.getRole());
+
+    challengeService.submit(challenge.getId(), learner.getUsername(), "CTF{review}", "test-ip");
+    assertThat(antiCheatEvents.findTop100ByOrderByCreatedAtDesc())
+        .anyMatch(event -> event.getEventType().equals("SOLVE_WITHOUT_ACTIVITY"));
+
+    moderation.suspend(
+        learner.getId(), new AdminDtos.SuspensionRequest("Manual review"), admin.getUsername());
+    assertThat(users.findById(learner.getId()).orElseThrow().getStatus()).isEqualTo("SUSPENDED");
+    mvc.perform(get("/api/users/me").header("Authorization", bearer(learnerToken)))
+        .andExpect(status().isUnauthorized());
+
+    moderation.reinstate(learner.getId(), admin.getUsername());
+    assertThat(users.findById(learner.getId()).orElseThrow().getStatus()).isEqualTo("ACTIVE");
+    assertThat(moderation.logs()).anyMatch(log -> log.action().equals("REINSTATE_USER"));
   }
 
   private User user(String username, String role) {

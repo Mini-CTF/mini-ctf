@@ -49,6 +49,10 @@ public class Submission {
     return correct;
   }
 
+  public User getUser() {
+    return user;
+  }
+
   public Instant getSubmittedAt() {
     return submittedAt;
   }

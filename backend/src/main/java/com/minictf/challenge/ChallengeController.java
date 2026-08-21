@@ -29,6 +29,16 @@ public class ChallengeController {
     return ApiResponse.ok(service.detail(id, auth == null ? null : auth.getName()));
   }
 
+  @PostMapping("/{id}/activity")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void activity(
+      @PathVariable Long id,
+      @Valid @RequestBody ChallengeDtos.ActivityRequest request,
+      Authentication auth,
+      HttpServletRequest http) {
+    service.recordActivity(id, auth.getName(), request.type(), http.getRemoteAddr());
+  }
+
   @PostMapping("/{id}/submit")
   public ApiResponse<ChallengeDtos.SubmitResult> submit(
       @PathVariable Long id,
@@ -39,8 +49,9 @@ public class ChallengeController {
   }
 
   @GetMapping("/{id}/artifact")
-  public ResponseEntity<Resource> artifact(@PathVariable Long id) {
-    Path p = service.artifact(id);
+  public ResponseEntity<Resource> artifact(
+      @PathVariable Long id, Authentication auth, HttpServletRequest request) {
+    Path p = service.artifact(id, auth.getName(), request.getRemoteAddr());
     ContentDisposition disposition =
         ContentDisposition.attachment()
             .filename(p.getFileName().toString(), java.nio.charset.StandardCharsets.UTF_8)

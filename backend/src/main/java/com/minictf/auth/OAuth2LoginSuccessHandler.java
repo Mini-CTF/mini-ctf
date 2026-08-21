@@ -53,6 +53,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             .findByProviderAndProviderSubject(provider, subject)
             .map(OAuthAccount::getUser)
             .orElseGet(() -> create(provider, subject, principal));
+    if (!"ACTIVE".equals(user.getStatus())) {
+      response.sendError(403, "This account is suspended");
+      return;
+    }
     response.sendRedirect(
         redirect
             + "#token="

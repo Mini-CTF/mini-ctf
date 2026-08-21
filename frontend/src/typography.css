@@ -94,6 +94,49 @@
 .oauth-provider-fallback { width: 22px; height: 22px; flex: none; }
 .oauth-provider-fallback { display: grid; place-items: center; border-radius: 50%; background: currentColor; color: #10141b; font-size: 13px; }
 
+.community-toolbar,
+.inline-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.community-toolbar { justify-content: space-between; padding: 28px 0; border-bottom: 1px solid var(--line); }
+.community-editor,
+.comment-writer { display: grid; gap: 12px; width: 100%; border: 1px solid var(--line); background: var(--surface); padding: 18px; }
+.community-editor input,
+.community-editor select,
+.community-editor textarea,
+.comment-writer textarea { width: 100%; border: 1px solid var(--line); background: #0c0f15; color: #fff; padding: 13px; font: inherit; }
+.community-editor textarea,
+.comment-writer textarea { min-height: 130px; resize: vertical; line-height: 1.55; }
+.community-editor > div { display: flex; gap: 10px; justify-content: flex-end; }
+.community-list { border-top: 1px solid var(--line); }
+.community-post-row { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) 140px 155px; align-items: center; gap: 14px; padding: 20px 8px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; text-align: left; }
+.community-post-row:hover { background: rgba(255,255,255,.025); }
+.community-post-row strong { color: #fff; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.community-post-row > span,
+.community-post-row small { color: var(--muted); font-size: 14px; }
+.community-detail { padding: 54px 0 36px; border-bottom: 1px solid var(--line); }
+.community-detail h1 { color: #fff; font-size: clamp(34px, 5vw, 58px); letter-spacing: -.05em; margin: 16px 0 10px; }
+.community-content { color: #d5dce7; font-size: 17px; line-height: 1.8; white-space: pre-wrap; margin: 30px 0; }
+.comment-section { padding: 38px 0 80px; max-width: 800px; }
+.comment-section h2,
+.admin-section h2 { font-size: 27px; color: #fff; margin: 0 0 18px; }
+.comment { border-bottom: 1px solid var(--line); padding: 18px 0; }
+.comment strong { color: #fff; display: block; }
+.comment small { color: var(--muted); font-size: 13px; }
+.comment p { color: #d7dce4; line-height: 1.65; white-space: pre-wrap; }
+.comment-actions { display: flex; gap: 12px; }
+.comment-actions button { border: 0; background: transparent; color: var(--accent); padding: 0; font: inherit; font-size: 14px; }
+.admin-section { margin-top: 42px; }
+.admin-table { border-top: 1px solid var(--line); }
+.admin-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); padding: 16px 8px; }
+.admin-row > div { display: grid; gap: 4px; }
+.admin-row strong { color: #fff; }
+.admin-row small { color: var(--muted); font-size: 14px; }
+.danger-button { border-color: #9e4f60 !important; color: #ffd1d7 !important; }
+.danger-text { color: #ffb8c1 !important; }
+.success-text { color: var(--accent); }
+.severity { font-family: var(--mono); font-size: 13px; padding: 5px 8px; border: 1px solid var(--line); }
+.severity.medium { color: #ffcc7a; border-color: rgba(255, 204, 122, .45); }
+.severity.low { color: #b7c8db; }
+
 .site-footer { font-size: 15px; color: #aeb9c8; }
 .site-footer strong { font-size: 15px; color: #e8edf5; }
 .footer-status { font-size: 15px; color: #aeb9c8; }
@@ -116,6 +159,12 @@
   .auth-form label,
   .auth-footnote { font-size: 15px; }
   .social-button { font-size: 15px; }
+  .community-post-row { grid-template-columns: auto minmax(0, 1fr); }
+  .community-post-row > span,
+  .community-post-row small { display: none; }
+  .community-toolbar { align-items: stretch; }
+  .community-toolbar .filter-tabs { width: 100%; }
+  .admin-row { align-items: flex-start; flex-direction: column; }
   .challenge-card h3 { font-size: 21px; }
   .site-footer,
   .site-footer strong,

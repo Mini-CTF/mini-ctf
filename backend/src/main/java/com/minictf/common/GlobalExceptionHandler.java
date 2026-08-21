@@ -51,6 +51,11 @@ public class GlobalExceptionHandler {
     return response(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "아이디 또는 비밀번호가 올바르지 않습니다.");
   }
 
+  @ExceptionHandler(AuthService.AccountSuspendedException.class)
+  ResponseEntity<ErrorResponse> accountSuspended() {
+    return response(HttpStatus.FORBIDDEN, "ACCOUNT_SUSPENDED", "This account has been suspended.");
+  }
+
   @ExceptionHandler(AuthService.DuplicateUsernameException.class)
   ResponseEntity<ErrorResponse> duplicateUsername() {
     return response(HttpStatus.CONFLICT, "USERNAME_EXISTS", "이미 사용 중인 username입니다.");

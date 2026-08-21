@@ -34,13 +34,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         users
             .findById(userId)
             .ifPresent(
-                user ->
+                user -> {
+                  if ("ACTIVE".equals(user.getStatus()))
                     SecurityContextHolder.getContext()
                         .setAuthentication(
                             new UsernamePasswordAuthenticationToken(
                                 user.getUsername(),
                                 null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole())))));
+                                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))));
+                });
       } catch (RuntimeException ignored) {
         SecurityContextHolder.clearContext();
       }

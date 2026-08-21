@@ -2,6 +2,12 @@ import type {
   AuthResponse,
   ChallengeDetail,
   ChallengeSummary,
+  AdminDashboard,
+  CommunityCategory,
+  PageView,
+  PostComment,
+  PostDetail,
+  PostSummary,
   RankingRow,
   Stats,
   User,
@@ -41,6 +47,29 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ flag }),
     }),
+  challengeActivity: (id: number, type: 'OPENED' | 'FOCUS_LOST' | 'FOCUS_RESTORED') =>
+    request<void>(`/challenges/${id}/activity`, { method: 'POST', body: JSON.stringify({ type }) }),
+  communityPosts: (category?: CommunityCategory) =>
+    request<PageView<PostSummary>>(`/community/posts${category ? `?category=${category}` : ''}`),
+  communityPost: (id: number) => request<PostDetail>(`/community/posts/${id}`),
+  createPost: (payload: { title: string; content: string; category: CommunityCategory }) =>
+    request<PostDetail>('/community/posts', { method: 'POST', body: JSON.stringify(payload) }),
+  updatePost: (id: number, payload: { title: string; content: string; category: CommunityCategory }) =>
+    request<PostDetail>(`/community/posts/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deletePost: (id: number) => request<void>(`/community/posts/${id}`, { method: 'DELETE' }),
+  postComments: (postId: number) => request<PostComment[]>(`/community/posts/${postId}/comments`),
+  createPostComment: (postId: number, content: string) =>
+    request<PostComment>(`/community/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
+  updatePostComment: (id: number, content: string) =>
+    request<PostComment>(`/community/comments/${id}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+  deletePostComment: (id: number) => request<void>(`/community/comments/${id}`, { method: 'DELETE' }),
+  adminDashboard: () => request<AdminDashboard>('/admin/dashboard'),
+  updateAdminUser: (id: number, nickname: string) =>
+    request(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ nickname }) }),
+  suspendUser: (id: number, reason: string) =>
+    request(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  reinstateUser: (id: number) => request(`/admin/users/${id}/reinstate`, { method: 'POST' }),
+  deactivateUser: (id: number) => request<void>(`/admin/users/${id}`, { method: 'DELETE' }),
   async downloadArtifact(id: number) {
     const token = localStorage.getItem('mini-ctf-token')
     const response = await fetch(`${baseUrl}/challenges/${id}/artifact`, {

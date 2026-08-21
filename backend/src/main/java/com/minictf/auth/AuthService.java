@@ -42,6 +42,7 @@ public class AuthService {
         users
             .findByUsernameIgnoreCase(request.username().trim())
             .orElseThrow(InvalidCredentialsException::new);
+    if (!"ACTIVE".equals(user.getStatus())) throw new AccountSuspendedException();
     if (user.getPasswordHash() == null
         || !encoder.matches(request.password(), user.getPasswordHash()))
       throw new InvalidCredentialsException();
@@ -58,6 +59,8 @@ public class AuthService {
   }
 
   public static class InvalidCredentialsException extends RuntimeException {}
+
+  public static class AccountSuspendedException extends RuntimeException {}
 
   public static class DuplicateUsernameException extends RuntimeException {}
 }

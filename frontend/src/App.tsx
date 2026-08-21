@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { api } from './api/client'
-import type { ChallengeDetail, ChallengeSummary, RankingRow, Stats, User } from './types/api'
+import type { AdminDashboard, ChallengeDetail, ChallengeSummary, CommunityCategory, PostComment, PostDetail, PostSummary, RankingRow, Stats, User } from './types/api'
 import './App.css'
 import './typography.css'
 
-type View = 'home' | 'challenges' | 'ranking' | 'profile' | 'login'
+type View = 'home' | 'challenges' | 'ranking' | 'profile' | 'community' | 'admin' | 'login'
 type Filter = 'ALL' | 'WEB' | 'CRYPTO' | 'FORENSICS' | 'MISC'
 
 const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
@@ -105,7 +105,9 @@ function App() {
         <NavButton active={view === 'home'} onClick={() => navigate('home')}>Home</NavButton>
         <NavButton active={view === 'challenges'} onClick={() => navigate('challenges')}>Challenges</NavButton>
         <NavButton active={view === 'ranking'} onClick={() => navigate('ranking')}>Ranking</NavButton>
+        <NavButton active={view === 'community'} onClick={() => navigate('community')}>Community</NavButton>
         <NavButton active={view === 'profile'} onClick={() => navigate('profile')}>My Page</NavButton>
+        {user?.role === 'ADMIN' && <NavButton active={view === 'admin'} onClick={() => navigate('admin')}>Admin</NavButton>}
         {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>Sign out</button> : <button className="nav-button mobile-auth" type="button" onClick={() => navigate('login')}>Sign in</button>}
       </nav>
       <div className="header-actions">{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>Sign out</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>Sign in</button>}</div>
@@ -117,6 +119,8 @@ function App() {
       {!loading && view === 'challenges' && (selected ? <ChallengeDetailView item={selected} loggedIn={Boolean(user)} onBack={() => setSelected(null)} onLogin={() => navigate('login')} onSubmitted={refresh} /> : <ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} onOpen={openChallenge} />)}
       {!loading && view === 'ranking' && <RankingView rows={ranking} />}
       {!loading && view === 'profile' && <ProfileView user={user} onChallenges={() => navigate('challenges')} onLogin={() => navigate('login')} />}
+      {!loading && view === 'community' && <CommunityView user={user} onLogin={() => navigate('login')} />}
+      {!loading && view === 'admin' && user?.role === 'ADMIN' && <AdminView />}
       {!loading && view === 'login' && <LoginView onBack={() => navigate('home')} onAuth={completeAuth} />}
     </main>
     <footer className="site-footer"><span><strong>MINI/CTF</strong> · learn by breaking things safely</span><span className="footer-status">live API connection</span></footer>
@@ -142,6 +146,13 @@ function ChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: {
   const [flag, setFlag] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  useEffect(() => {
+    if (!loggedIn) return
+    void api.challengeActivity(item.id, 'OPENED').catch(() => undefined)
+    const visibility = () => void api.challengeActivity(item.id, document.hidden ? 'FOCUS_LOST' : 'FOCUS_RESTORED').catch(() => undefined)
+    document.addEventListener('visibilitychange', visibility)
+    return () => document.removeEventListener('visibilitychange', visibility)
+  }, [item.id, loggedIn])
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     try { const result = await api.submitFlag(item.id, flag); setMessage(result.result === 'correct' ? `Correct flag — ${result.awardedScore} points awarded.` : result.result === 'already_solved' ? 'You have already solved this challenge.' : result.result); setFlag(''); onSubmitted() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Submission failed.') }
@@ -153,6 +164,60 @@ function ChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: {
 function RankingView({ rows }: { rows: RankingRow[] }) { return <div className="page"><PageIntro eyebrow="GLOBAL RANKING" title="Earn your place." description="Live scores and solve counts from the API." /><section className="panel ranking-panel"><div className="ranking-head"><span>RANK</span><span>OPERATOR</span><span>SOLVED</span><span>SCORE</span></div>{rows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><div className="operator"><span className="mini-avatar">{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><span>{row.nickname || row.username}</span></div><span>{row.solvedCount}</span><b>{row.score}</b></div>)}{rows.length === 0 && <EmptyState />}</section></div> }
 
 function ProfileView({ user, onChallenges, onLogin }: { user: User | null; onChallenges: () => void; onLogin: () => void }) { if (!user) return <div className="page"><PageIntro eyebrow="YOUR PROGRESS" title="Sign in to track your progress." description="Your score and solved challenges are tied to your authenticated account." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>; return <div className="page"><div className="profile-hero"><div className="profile-avatar">{user.nickname.slice(0, 2).toUpperCase()}</div><div><p className="eyebrow">OPERATOR PROFILE</p><h1>{user.nickname || user.username}</h1><p className="muted">@{user.username}</p></div></div><div className="profile-stats"><Stat value={user.score} label="Score" detail="total points" /><Stat value={0} label="Solves" detail="see challenges" /></div><section className="content-section"><button className="button secondary" type="button" onClick={onChallenges}>Browse challenges</button></section></div> }
+
+function CommunityView({ user, onLogin }: { user: User | null; onLogin: () => void }) {
+  const [category, setCategory] = useState<CommunityCategory | undefined>()
+  const [posts, setPosts] = useState<PostSummary[]>([])
+  const [selected, setSelected] = useState<PostDetail | null>(null)
+  const [error, setError] = useState('')
+  const refresh = useCallback(() => api.communityPosts(category).then((data) => setPosts(data.content)).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load community posts.')), [category])
+  useEffect(() => { void refresh() }, [refresh])
+  if (selected) return <CommunityPostView post={selected} user={user} onBack={() => { setSelected(null); void refresh() }} />
+  return <div className="page community-page"><PageIntro eyebrow="COMMUNITY" title="Learn together." description="Ask questions, share safe write-ups, and discuss the Mini CTF training labs." /><div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0 }, ...current]); setSelected(post) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>{error && <p className="alert error">{error}</p>}<div className="community-list">{posts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => api.communityPost(post.id).then(setSelected).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not open post.'))}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span>{post.authorNickname || post.author}</span><small>{post.commentCount} comments · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{posts.length === 0 && <EmptyState />}</div></div>
+}
+
+function CommunityWriter({ onCreated }: { onCreated: (post: PostDetail) => void }) {
+  const [open, setOpen] = useState(false)
+  const [error, setError] = useState('')
+  const submit = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); try { const post = await api.createPost({ title: String(form.get('title')), content: String(form.get('content')), category: String(form.get('category')) as CommunityCategory }); onCreated(post) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not publish post.') } }
+  if (!open) return <button type="button" className="button secondary" onClick={() => setOpen(true)}>Write a post</button>
+  return <form className="community-editor" onSubmit={submit}><input name="title" placeholder="Post title" maxLength={200} required /><select name="category" defaultValue="FREE"><option value="FREE">Free</option><option value="QUESTION">Question</option><option value="CTF">CTF</option></select><textarea name="content" placeholder="Write plain text only. Do not post live flags or solutions in public threads." maxLength={20000} required /><div><button type="button" className="button ghost" onClick={() => setOpen(false)}>Cancel</button><button className="button primary" type="submit">Publish</button></div>{error && <p className="alert error">{error}</p>}</form>
+}
+
+function CommunityPostView({ post, user, onBack }: { post: PostDetail; user: User | null; onBack: () => void }) {
+  const [current, setCurrent] = useState(post)
+  const [comments, setComments] = useState<PostComment[]>([])
+  const [editing, setEditing] = useState(false)
+  const [error, setError] = useState('')
+  const refreshComments = useCallback(() => api.postComments(current.id).then(setComments).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load comments.')), [current.id])
+  useEffect(() => { void refreshComments() }, [refreshComments])
+  const deletePost = async () => { if (!window.confirm('Delete this post?')) return; try { await api.deletePost(current.id); onBack() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete post.') } }
+  return <div className="page community-page"><button className="back-link" type="button" onClick={onBack}>← Back to community</button><article className="community-detail"><div className="badge-line"><Badge tone={current.category}>{current.category}</Badge></div>{editing ? <PostEditor post={current} onSaved={(next) => { setCurrent(next); setEditing(false) }} onCancel={() => setEditing(false)} /> : <><h1>{current.title}</h1><p className="muted">by {current.authorNickname || current.author} · {new Date(current.createdAt).toLocaleString()}</p><p className="community-content">{current.content}</p>{current.editable && <div className="inline-actions"><button className="button secondary" type="button" onClick={() => setEditing(true)}>Edit</button><button className="button ghost danger-button" type="button" onClick={() => void deletePost()}>Delete</button></div>}</>}</article><section className="comment-section"><h2>Comments</h2>{user ? <CommentWriter postId={current.id} onCreated={(comment) => setComments((items) => [...items, comment])} /> : <p className="muted">Sign in to join the conversation.</p>}{error && <p className="alert error">{error}</p>}{comments.map((comment) => <article className="comment" key={comment.id}><strong>{comment.authorNickname || comment.author}</strong><small>{new Date(comment.createdAt).toLocaleString()}</small><p>{comment.content}</p>{comment.editable && <div className="comment-actions"><button type="button" onClick={async () => { const content = window.prompt('Edit comment', comment.content); if (!content) return; try { const next = await api.updatePostComment(comment.id, content); setComments((items) => items.map((item) => item.id === next.id ? next : item)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not edit comment.') } }}>Edit</button><button type="button" onClick={async () => { if (!window.confirm('Delete this comment?')) return; try { await api.deletePostComment(comment.id); setComments((items) => items.filter((item) => item.id !== comment.id)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete comment.') } }}>Delete</button></div>}</article>)}</section></div>
+}
+
+function PostEditor({ post, onSaved, onCancel }: { post: PostDetail; onSaved: (post: PostDetail) => void; onCancel: () => void }) {
+  const submit = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); onSaved(await api.updatePost(post.id, { title: String(form.get('title')), content: String(form.get('content')), category: String(form.get('category')) as CommunityCategory })) }
+  return <form className="community-editor" onSubmit={(event) => void submit(event)}><input name="title" defaultValue={post.title} maxLength={200} required /><select name="category" defaultValue={post.category}><option value="FREE">Free</option><option value="QUESTION">Question</option><option value="CTF">CTF</option><option value="NOTICE">Notice</option></select><textarea name="content" defaultValue={post.content} maxLength={20000} required /><div><button className="button ghost" type="button" onClick={onCancel}>Cancel</button><button className="button primary" type="submit">Save</button></div></form>
+}
+
+function CommentWriter({ postId, onCreated }: { postId: number; onCreated: (comment: PostComment) => void }) {
+  const [content, setContent] = useState('')
+  const [error, setError] = useState('')
+  const submit = async (event: FormEvent) => { event.preventDefault(); try { onCreated(await api.createPostComment(postId, content)); setContent('') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not post comment.') } }
+  return <form className="comment-writer" onSubmit={(event) => void submit(event)}><textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Add a constructive comment" maxLength={2000} required /><button type="submit" className="button primary">Comment</button>{error && <p className="alert error">{error}</p>}</form>
+}
+
+function AdminView() {
+  const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
+  const [error, setError] = useState('')
+  const refresh = () => api.adminDashboard().then(setDashboard).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load administrator data.'))
+  useEffect(() => { void refresh() }, [])
+  const editUser = async (id: number, nickname: string) => { const next = window.prompt('Display name', nickname); if (!next) return; try { await api.updateAdminUser(id, next); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update user.') } }
+  const suspend = async (id: number) => { const reason = window.prompt('Suspension reason (shown to the user)'); if (!reason) return; try { await api.suspendUser(id, reason); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not suspend user.') } }
+  const reinstate = async (id: number) => { try { await api.reinstateUser(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reinstate user.') } }
+  const deactivate = async (id: number) => { if (!window.confirm('Deactivate and anonymize this account? This cannot be undone from the dashboard.')) return; try { await api.deactivateUser(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not deactivate user.') } }
+  return <div className="page admin-page"><PageIntro eyebrow="ADMINISTRATION" title="Platform control." description="Review moderation actions and suspicious CTF activity. Signals are for human review; they never suspend learners automatically." />{error && <p className="alert error">{error}</p>}{!dashboard ? <p className="muted">Loading administrator dashboard…</p> : <><section className="admin-section"><h2>Users</h2><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.role}</small>{item.suspensionReason && <small className="danger-text">Suspended: {item.suspensionReason}</small>}</div>{item.role !== 'ADMIN' && <div className="inline-actions"><button type="button" className="button secondary" onClick={() => void editUser(item.id, item.nickname)}>Edit</button>{item.status === 'ACTIVE' ? <><button type="button" className="button ghost danger-button" onClick={() => void suspend(item.id)}>Suspend</button><button type="button" className="button ghost danger-button" onClick={() => void deactivate(item.id)}>Deactivate</button></> : <button type="button" className="button secondary" onClick={() => void reinstate(item.id)}>Reinstate</button>}</div>}</div>)}</div></section><section className="admin-section"><h2>Suspicious activity review</h2>{dashboard.antiCheatEvents.length === 0 ? <p className="muted">No review signals recorded yet.</p> : <div className="admin-table">{dashboard.antiCheatEvents.map((event) => <div className="admin-row" key={event.id}><div><strong>{event.eventType} · {event.username}</strong><small>{event.challengeTitle || 'Platform'} · {event.detail}</small></div><span className={`severity ${event.severity.toLowerCase()}`}>{event.severity}</span></div>)}</div>}</section><section className="admin-section"><h2>Recent submissions</h2><div className="admin-table">{dashboard.recentSubmissions.map((submission, index) => <div className="admin-row" key={`${submission.username}-${submission.submittedAt}-${index}`}><span>{submission.username}</span><span>{submission.challengeTitle}</span><span className={submission.correct ? 'success-text' : 'danger-text'}>{submission.correct ? 'Correct' : 'Incorrect'}</span></div>)}</div></section><section className="admin-section"><h2>Moderation audit log</h2><div className="admin-table">{dashboard.auditLogs.map((log) => <div className="admin-row" key={log.id}><strong>{log.action}</strong><span>{log.adminUsername}</span><small>{log.detail}</small></div>)}</div></section></>}</div>
+}
 
 function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void }) {
   const [registering, setRegistering] = useState(false)

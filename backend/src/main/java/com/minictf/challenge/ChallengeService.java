@@ -1,5 +1,6 @@
 package com.minictf.challenge;
 
+import com.minictf.anticheat.AntiCheatService;
 import com.minictf.common.RateLimitService;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
@@ -25,6 +26,7 @@ public class ChallengeService {
   private final SolveRepository solves;
   private final PasswordEncoder encoder;
   private final RateLimitService rateLimits;
+  private final AntiCheatService antiCheat;
   private final Path artifactRoot;
 
   public ChallengeService(
@@ -35,6 +37,7 @@ public class ChallengeService {
       SolveRepository solves,
       PasswordEncoder encoder,
       RateLimitService rateLimits,
+      AntiCheatService antiCheat,
       @Value("${app.artifact.storage-root}") String root) {
     this.challenges = challenges;
     this.users = users;
@@ -43,6 +46,7 @@ public class ChallengeService {
     this.solves = solves;
     this.encoder = encoder;
     this.rateLimits = rateLimits;
+    this.antiCheat = antiCheat;
     this.artifactRoot = Paths.get(root).toAbsolutePath().normalize();
   }
 
@@ -89,7 +93,17 @@ public class ChallengeService {
     solve.setChallenge(c);
     solves.save(solve);
     u.setScore(u.getScore() + c.getScore());
+    antiCheat.assessCorrectSubmission(u, c);
     return new ChallengeDtos.SubmitResult("correct", c.getScore());
+  }
+
+  @Transactional
+  public void recordActivity(Long id, String username, String type, String ip) {
+    if (username == null) return;
+    Challenge c = getActive(id);
+    User user = users.findByUsernameIgnoreCase(username).orElseThrow();
+    rateLimits.check("challenge-activity", user.getId() + ":" + ip + ":" + id, 120, 60);
+    antiCheat.recordActivity(user, c, type, ip);
   }
 
   @Transactional
@@ -169,6 +183,13 @@ public class ChallengeService {
     Path file = artifactRoot.resolve(c.getArtifactPath()).normalize();
     if (!file.startsWith(artifactRoot) || !Files.isRegularFile(file))
       throw new EntityNotFoundException("Artifact not found");
+    return file;
+  }
+
+  @Transactional
+  public Path artifact(Long id, String username, String ip) {
+    Path file = artifact(id);
+    recordActivity(id, username, "ARTIFACT_DOWNLOADED", ip);
     return file;
   }
 

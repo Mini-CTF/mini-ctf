@@ -29,3 +29,64 @@ export type RankingRow = {
 }
 
 export type Stats = { challenges: number; solves: number; users: number }
+
+export type CommunityCategory = 'FREE' | 'QUESTION' | 'CTF' | 'NOTICE'
+
+export type PostSummary = {
+  id: number
+  title: string
+  category: CommunityCategory
+  author: string
+  authorNickname: string
+  viewCount: number
+  commentCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type PostDetail = PostSummary & { content: string; editable: boolean }
+
+export type PostComment = {
+  id: number
+  content: string
+  author: string
+  authorNickname: string
+  editable: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type PageView<T> = {
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export type AdminUser = {
+  id: number
+  username: string
+  nickname: string
+  role: string
+  status: 'ACTIVE' | 'SUSPENDED' | string
+  suspensionReason: string | null
+  score: number
+  createdAt: string
+  suspendedAt: string | null
+}
+
+export type AdminDashboard = {
+  users: AdminUser[]
+  recentSubmissions: { username: string; challengeTitle: string; correct: boolean; submittedAt: string }[]
+  antiCheatEvents: {
+    id: number
+    username: string
+    challengeTitle: string | null
+    eventType: string
+    severity: string
+    detail: string
+    createdAt: string
+  }[]
+  auditLogs: { id: number; adminUsername: string; action: string; detail: string; createdAt: string }[]
+}

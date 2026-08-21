@@ -27,6 +27,15 @@ public class User {
   @Column(nullable = false)
   private int score;
 
+  @Column(nullable = false, length = 20)
+  private String status = "ACTIVE";
+
+  @Column(name = "suspension_reason", length = 500)
+  private String suspensionReason;
+
+  @Column(name = "suspended_at")
+  private Instant suspendedAt;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -77,5 +86,33 @@ public class User {
 
   public void setScore(int value) {
     score = value;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String value) {
+    status = value;
+  }
+
+  public String getSuspensionReason() {
+    return suspensionReason;
+  }
+
+  public void setSuspensionReason(String value) {
+    suspensionReason = value;
+  }
+
+  public Instant getSuspendedAt() {
+    return suspendedAt;
+  }
+
+  public void setSuspendedAt(Instant value) {
+    suspendedAt = value;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
   }
 }

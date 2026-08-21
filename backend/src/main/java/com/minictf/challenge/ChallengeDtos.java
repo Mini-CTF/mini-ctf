@@ -29,6 +29,9 @@ public final class ChallengeDtos {
 
   public record SubmitResult(String result, int awardedScore) {}
 
+  public record ActivityRequest(
+      @NotBlank @Pattern(regexp = "OPENED|FOCUS_LOST|FOCUS_RESTORED") String type) {}
+
   public record AdminRequest(
       @NotBlank @Size(max = 160) String title,
       @NotBlank @Size(max = 20_000) String description,
