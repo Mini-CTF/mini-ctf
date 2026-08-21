@@ -5,16 +5,17 @@ frontend after a successful provider login. Provider access tokens are not expos
 
 ## Local development
 
-The Vite development server proxies `/api`, `/oauth2`, and `/login` to Spring Boot. Register these
-exact redirect URLs in the provider consoles:
+The Vite development server starts OAuth through its proxy, but Spring Boot receives the provider
+callback directly on port `8080`. Register these exact redirect URLs in the provider consoles:
 
 | Provider | Redirect URL |
 |---|---|
-| Google | `http://localhost:5173/login/oauth2/code/google` |
-| GitHub | `http://localhost:5173/login/oauth2/code/github` |
+| Google | `http://localhost:8080/login/oauth2/code/google` |
+| GitHub | `http://localhost:8080/login/oauth2/code/github` |
 
-For Google, create an OAuth 2.0 **Web application** client. For GitHub, create an OAuth App with
-the callback URL above. Do not enable callback URL wildcard matching.
+For Google, create an OAuth 2.0 **Web application** client. If its consent screen is in **Testing**,
+add the Google account used for login under **Test users**. For GitHub, create an OAuth App with the
+callback URL above. Do not enable callback URL wildcard matching.
 
 Add the issued values to the local `.env` file only:
 
@@ -30,7 +31,7 @@ Restart the backend after changing `.env`. The login page queries
 
 ## Deployment
 
-Use HTTPS and replace `localhost:5173` with the public frontend origin in both provider consoles.
+Use HTTPS and replace `localhost:8080` with the public backend origin in both provider consoles.
 Set `OAUTH_SUCCESS_REDIRECT` to `<frontend-origin>/auth/callback` and configure the reverse proxy
 to forward `/api`, `/oauth2`, and `/login` to Spring Boot. Keep client secrets in the deployment
 secret store; never commit them.
