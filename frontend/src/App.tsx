@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { api } from './api/client'
 import { subscribeToDirectMessages } from './api/realtime'
 import type { AdminDashboard, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, PostComment, PostDetail, PostSummary, Profile, RankingRow, Stats, User } from './types/api'
@@ -15,6 +15,8 @@ const initialLoginError = initialOAuthError
     ? 'OAuth session expired. Open the login page on localhost and try again.'
     : 'OAuth sign-in could not be completed. Please try again.'
   : ''
+type Theme = 'dark' | 'light'
+const initialTheme: Theme = localStorage.getItem('mini-ctf-theme') === 'light' ? 'light' : 'dark'
 
 function App() {
   const [view, setView] = useState<View>(initialOAuthError ? 'login' : 'home')
@@ -28,6 +30,7 @@ function App() {
   const [compactLayout, setCompactLayout] = useState(() => window.innerWidth <= 620)
   const [error, setError] = useState(initialLoginError)
   const [loading, setLoading] = useState(true)
+  const [theme, setTheme] = useState<Theme>(initialTheme)
 
   const refresh = async () => {
     setLoading(true)
@@ -73,6 +76,11 @@ function App() {
     window.addEventListener('resize', updateLayout)
     return () => window.removeEventListener('resize', updateLayout)
   }, [])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('mini-ctf-theme', theme)
+  }, [theme])
 
   const visibleChallenges = useMemo(
     () => challenges.filter((item) => category === 'ALL' || item.category === category),
@@ -120,7 +128,7 @@ function App() {
         {user?.role === 'ADMIN' && <NavButton active={view === 'admin'} onClick={() => navigate('admin')}>Admin</NavButton>}
         {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>Sign out</button> : <button className="nav-button mobile-auth" type="button" onClick={() => navigate('login')}>Sign in</button>}
       </nav>
-      <div className="header-actions">{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>Sign out</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>Sign in</button>}</div>
+      <div className="header-actions">{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="theme-toggle" type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span><span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button><button className="header-login" type="button" onClick={logout}>Sign out</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>Sign in</button>}</div>
     </header>
     <main>
       {error && <div className="page"><p className="alert error">{error}</p></div>}
@@ -179,6 +187,7 @@ function ProfileView({ user, onChallenges, onLogin }: { user: User | null; onCha
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null)
   const [messages, setMessages] = useState<DirectMessage[]>([])
   const [error, setError] = useState('')
+  const avatarInput = useRef<HTMLInputElement>(null)
   const refresh = useCallback(() => Promise.all([api.profile(), api.friends()]).then(([nextProfile, nextFriends]) => { setProfile(nextProfile); setFriends(nextFriends) }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load profile.')), [])
   useEffect(() => { if (user) void refresh() }, [user, refresh])
   useEffect(() => { if (selectedFriend) void api.messages(selectedFriend).then(setMessages).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load messages.')) }, [selectedFriend])
@@ -192,10 +201,23 @@ function ProfileView({ user, onChallenges, onLogin }: { user: User | null; onCha
   if (!user) return <div className="page"><PageIntro eyebrow="YOUR PROGRESS" title="Sign in to track your progress." description="Your score and solved challenges are tied to your authenticated account." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
   const current = profile ?? { ...user, rank: 0, solvedCount: 0, statusMessage: null, avatarUrl: null }
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); try { setProfile(await api.updateProfile({ nickname: String(form.get('nickname')), statusMessage: String(form.get('statusMessage')) })); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save profile.') } }
-  const uploadAvatar = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const file = new FormData(event.currentTarget).get('avatar'); if (!(file instanceof File) || file.size === 0) return; try { setProfile(await api.uploadAvatar(file)); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not upload avatar.') } }
+  const uploadAvatar = async (file: File) => { try { setProfile(await api.uploadAvatar(file)); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not upload avatar.') } }
+  const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.currentTarget.value = ''; if (file) void uploadAvatar(file) }
   const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const username = String(new FormData(event.currentTarget).get('username')); try { await api.requestFriend(username); await refresh(); (event.currentTarget as HTMLFormElement).reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!selectedFriend) return; const form = new FormData(event.currentTarget); try { const sent = await api.sendMessage(selectedFriend, String(form.get('content'))); setMessages((currentMessages) => [...currentMessages, sent]); (event.currentTarget as HTMLFormElement).reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send message.') } }
-  return <div className="page profile-page"><div className="profile-hero"><div className="profile-avatar avatar-large">{current.avatarUrl ? <img src={current.avatarUrl} alt="" /> : (current.nickname || current.username).slice(0, 2).toUpperCase()}</div><div><p className="eyebrow">OPERATOR PROFILE</p><h1>{current.nickname || current.username}</h1><p className="muted">@{current.username}</p><p className="status-message">{current.statusMessage || 'No status message yet.'}</p></div></div><div className="profile-stats"><Stat value={current.score} label="Score" detail="total points" /><Stat value={current.solvedCount} label="Solves" detail={`rank #${current.rank || '—'}`} /></div><section className="profile-layout"><div><section className="panel profile-editor"><h2>Customize profile</h2><form onSubmit={(event) => void saveProfile(event)}><label>Display name<input name="nickname" defaultValue={current.nickname} maxLength={80} /></label><label>Status message<textarea name="statusMessage" defaultValue={current.statusMessage || ''} maxLength={160} placeholder="What are you working on?" /></label><button className="button primary" type="submit">Save profile</button></form><form className="avatar-upload" onSubmit={(event) => void uploadAvatar(event)}><label>Profile photo<input type="file" name="avatar" accept="image/png,image/jpeg" /></label><button className="button secondary" type="submit">Upload photo</button>{current.avatarUrl && <button className="button ghost" type="button" onClick={async () => { try { await api.deleteAvatar(); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove avatar.') } }}>Remove photo</button>}</form></section><section className="content-section"><button className="button secondary" type="button" onClick={onChallenges}>Browse challenges</button></section></div><aside className="social-panel"><h2>Friends</h2><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Username to add" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={async () => { try { await api.acceptFriend(friend.username); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not accept request.') } }}>Accept</button> : <button type="button" className="text-link" onClick={async () => { if (!window.confirm('Remove this friend?')) return; try { await api.removeFriend(friend.username); if (selectedFriend === friend.username) setSelectedFriend(null); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove friend.') } }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list">{messages.map((message) => <p className={message.sender === current.username ? 'message sent' : 'message received'} key={message.id}>{message.content}</p>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</aside></section>{error && <p className="alert error">{error}</p>}</div>
+  return <div className="page profile-page">
+    <div className="profile-hero">
+      <button className="profile-avatar avatar-large avatar-picker" type="button" onClick={() => avatarInput.current?.click()} aria-label="Upload profile photo">
+        {current.avatarUrl ? <img src={current.avatarUrl} alt="" /> : (current.nickname || current.username).slice(0, 2).toUpperCase()}
+        <span className="avatar-picker-label">Change photo</span>
+      </button>
+      <input ref={avatarInput} className="sr-only" type="file" accept="image/png,image/jpeg" onChange={selectAvatar} />
+      <div><p className="eyebrow">OPERATOR PROFILE</p><h1>{current.nickname || current.username}</h1><p className="muted">@{current.username}</p><p className="status-message">{current.statusMessage || 'No status message yet.'}</p></div>
+    </div>
+    <div className="profile-stats"><Stat value={current.score} label="Score" detail="total points" /><Stat value={current.solvedCount} label="Solves" detail={`rank #${current.rank || '—'}`} /></div>
+    <section className="profile-layout"><div><section className="panel profile-editor"><h2>Customize profile</h2><form onSubmit={(event) => void saveProfile(event)}><label>Display name<input name="nickname" defaultValue={current.nickname} maxLength={80} /></label><label>Status message<textarea name="statusMessage" defaultValue={current.statusMessage || ''} maxLength={160} placeholder="What are you working on?" /></label><button className="button primary" type="submit">Save profile</button></form></section><section className="content-section"><button className="button secondary" type="button" onClick={onChallenges}>Browse challenges</button></section></div><aside className="social-panel"><h2>Friends</h2><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Username to add" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={async () => { try { await api.acceptFriend(friend.username); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not accept request.') } }}>Accept</button> : <button type="button" className="text-link" onClick={async () => { if (!window.confirm('Remove this friend?')) return; try { await api.removeFriend(friend.username); if (selectedFriend === friend.username) setSelectedFriend(null); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove friend.') } }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list">{messages.map((message) => <p className={message.sender === current.username ? 'message sent' : 'message received'} key={message.id}>{message.content}</p>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</aside></section>
+    {error && <p className="alert error">{error}</p>}
+  </div>
 }
 
 function CommunityView({ user, onLogin }: { user: User | null; onLogin: () => void }) {

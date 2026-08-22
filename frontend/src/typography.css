@@ -152,6 +152,50 @@
 .avatar-large { overflow: hidden; }
 .avatar-large img,
 .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-picker { position: relative; flex: 0 0 auto; border: 0; padding: 0; cursor: pointer; }
+.avatar-picker:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.avatar-picker-label { position: absolute; inset: 0; display: grid; place-items: center; padding: 8px; border-radius: inherit; background: rgba(7, 10, 16, .72); color: #fff; font-family: var(--mono); font-size: 9px; letter-spacing: .04em; line-height: 1.25; opacity: 0; transition: opacity .18s ease; }
+.avatar-picker:hover .avatar-picker-label,
+.avatar-picker:focus-visible .avatar-picker-label { opacity: 1; }
+.theme-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 33px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-raised); color: #dce5f0; font-family: var(--mono); font-size: 11px; }
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+html[data-theme='light'] .app-shell { background: radial-gradient(circle at 80% 0%, rgba(33, 111, 191, .1), transparent 32rem); color: #17202d; }
+html[data-theme='light'] .site-header { background: rgba(248, 251, 255, .9); }
+html[data-theme='light'] .brand,
+html[data-theme='light'] .nav-button:hover,
+html[data-theme='light'] .nav-button.active,
+html[data-theme='light'] .header-login:hover,
+html[data-theme='light'] .hero-copy h1,
+html[data-theme='light'] .page-intro h1,
+html[data-theme='light'] .profile-hero h1,
+html[data-theme='light'] .auth-card h1,
+html[data-theme='light'] .section-heading h2,
+html[data-theme='light'] .content-section h2,
+html[data-theme='light'] .challenge-card h3,
+html[data-theme='light'] .detail-header h1,
+html[data-theme='light'] .problem-panel h2,
+html[data-theme='light'] .community-detail h1,
+html[data-theme='light'] .profile-editor h2,
+html[data-theme='light'] .social-panel h2,
+html[data-theme='light'] .friend-row strong,
+html[data-theme='light'] .message-panel h3 { color: #17202d; }
+html[data-theme='light'] .button.ghost,
+html[data-theme='light'] .button.secondary { color: #263446; }
+html[data-theme='light'] .challenge-card { background: linear-gradient(145deg, var(--surface), #eef4fa); }
+html[data-theme='light'] .challenge-row:hover { background: rgba(33, 111, 191, .05); }
+html[data-theme='light'] .profile-avatar,
+html[data-theme='light'] .mini-avatar { background: #dfeaf6; }
+html[data-theme='light'] .profile-editor input,
+html[data-theme='light'] .profile-editor textarea,
+html[data-theme='light'] .friend-request input,
+html[data-theme='light'] .message-panel textarea,
+html[data-theme='light'] .comment-writer textarea,
+html[data-theme='light'] .auth-form input { background: #f8fbff; color: #17202d; }
+html[data-theme='light'] .message.sent { background: #cfe6ff; color: #17202d; }
+html[data-theme='light'] .message.received { background: #e8eef5; color: #17202d; }
+html[data-theme='light'] .theme-toggle { background: #edf4fb; color: #263446; }
+html[data-theme='light'] .site-footer strong { color: #34465c; }
 .status-message { color: #c8d2df; font-size: 17px; margin: 12px 0 0; }
 .social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
 .friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
