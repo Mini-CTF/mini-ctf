@@ -165,7 +165,7 @@
 .theme-toggle.is-light .theme-toggle-thumb { transform: translateX(8px); background: #fff5c9; color: #ad7200; }
 .theme-toggle.is-light { border-color: #b6c8da; background: linear-gradient(135deg, #f9fcff, #e2ecf6); color: #22384f; box-shadow: inset 0 1px #fff, 0 5px 15px rgba(44,72,100,.12); }
 
-html[data-theme='light'] .app-shell { background: radial-gradient(circle at 80% 0%, rgba(33, 111, 191, .1), transparent 32rem); color: #101a27; }
+html[data-theme='light'] .app-shell { background: radial-gradient(circle at 80% 0%, rgba(33, 111, 191, .1), transparent 32rem); color: #0b121c; }
 html[data-theme='light'] .site-header { background: rgba(248, 251, 255, .9); }
 html[data-theme='light'] .brand,
 html[data-theme='light'] .nav-button:hover,
@@ -200,12 +200,12 @@ html[data-theme='light'] .auth-form input { background: #f8fbff; color: #17202d;
 html[data-theme='light'] .message.sent { background: #cfe6ff; color: #17202d; }
 html[data-theme='light'] .message.received { background: #e1e9f2; color: #101a27; }
 html[data-theme='light'] .site-footer strong { color: #34465c; }
-html[data-theme='light'] .status-message { color: #2f4358; }
+html[data-theme='light'] .status-message { color: #152c42; }
 html[data-theme='light'] .profile-editor label,
 html[data-theme='light'] .auth-form label,
 html[data-theme='light'] .ranking-row,
 html[data-theme='light'] .site-footer,
-html[data-theme='light'] .footer-status { color: #34495f; }
+html[data-theme='light'] .footer-status { color: #1d2a38; }
 html[data-theme='light'] .stat span,
 html[data-theme='light'] .row-main strong,
 html[data-theme='light'] .challenge-count strong,
@@ -225,7 +225,22 @@ html[data-theme='light'] .challenge-card > p,
 html[data-theme='light'] .card-bottom,
 html[data-theme='light'] .friend-row small,
 html[data-theme='light'] .site-footer,
-html[data-theme='light'] .footer-status { color: #2d4054; }
+html[data-theme='light'] .footer-status { color: #1d2a38; }
+html[data-theme='light'] small,
+html[data-theme='light'] .muted,
+html[data-theme='light'] .eyebrow,
+html[data-theme='light'] .visual-label,
+html[data-theme='light'] .muted-label,
+html[data-theme='light'] .tag-list span,
+html[data-theme='light'] .badge,
+html[data-theme='light'] .detail-id,
+html[data-theme='light'] .panel-heading,
+html[data-theme='light'] .row-main small,
+html[data-theme='light'] .challenge-card > p,
+html[data-theme='light'] .card-bottom,
+html[data-theme='light'] .friend-row small,
+html[data-theme='light'] .site-footer,
+html[data-theme='light'] .footer-status { color: #111c29 !important; opacity: 1; }
 .status-message { color: #c8d2df; font-size: 17px; margin: 12px 0 0; }
 .social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
 .friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
