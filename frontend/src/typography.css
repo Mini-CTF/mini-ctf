@@ -246,6 +246,19 @@ html[data-theme='light'] .app-shell * { color: #080d14 !important; }
 html[data-theme='light'] .app-shell input,
 html[data-theme='light'] .app-shell textarea,
 html[data-theme='light'] .app-shell select { color: #080d14 !important; }
+html[data-theme='light'] .panel,
+html[data-theme='light'] .challenge-card,
+html[data-theme='light'] .category-tile,
+html[data-theme='light'] .social-panel,
+html[data-theme='light'] .auth-card,
+html[data-theme='light'] .badge,
+html[data-theme='light'] .button.ghost,
+html[data-theme='light'] .button.secondary,
+html[data-theme='light'] .profile-editor input,
+html[data-theme='light'] .profile-editor textarea,
+html[data-theme='light'] .friend-request input,
+html[data-theme='light'] .message-panel textarea,
+html[data-theme='light'] .auth-form input { border-color: #71879c !important; }
 
 .ranking-head { font-size: 12px; }
 .ranking-row { min-height: 82px; font-size: 16px; }
