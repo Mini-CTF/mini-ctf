@@ -5,7 +5,7 @@
 challenges/mvp/
 profiles/
 backups/
-.gradle-user/
+.gradle-user*/
 
 # Java / Gradle
 backend/.gradle/
