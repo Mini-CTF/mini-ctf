@@ -157,10 +157,16 @@
 .avatar-picker-label { position: absolute; inset: 0; display: grid; place-items: center; padding: 8px; border-radius: inherit; background: rgba(7, 10, 16, .72); color: #fff; font-family: var(--mono); font-size: 9px; letter-spacing: .04em; line-height: 1.25; opacity: 0; transition: opacity .18s ease; }
 .avatar-picker:hover .avatar-picker-label,
 .avatar-picker:focus-visible .avatar-picker-label { opacity: 1; }
-.theme-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 33px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-raised); color: #dce5f0; font-family: var(--mono); font-size: 11px; }
-.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.theme-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 4px 10px 4px 5px; border: 1px solid #3a4659; border-radius: 999px; background: linear-gradient(135deg, #151c28, #0e131d); color: #e8eff8; font-family: var(--mono); font-size: 11px; letter-spacing: .03em; box-shadow: inset 0 1px rgba(255,255,255,.06), 0 5px 15px rgba(0,0,0,.18); transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+.theme-toggle:hover { border-color: var(--accent); box-shadow: inset 0 1px rgba(255,255,255,.08), 0 6px 18px rgba(0,0,0,.27); }
+.theme-toggle-track { width: 29px; height: 21px; display: flex; align-items: center; padding: 2px; border-radius: 99px; background: #060a11; box-shadow: inset 0 1px 3px rgba(0,0,0,.55); }
+.theme-toggle-thumb { width: 17px; height: 17px; display: grid; place-items: center; border-radius: 50%; background: #293a53; color: #bcd8ff; font-size: 12px; line-height: 1; transform: translateX(0); transition: transform .2s ease, background .2s ease, color .2s ease; }
+.theme-toggle.is-light .theme-toggle-track { background: #c8d8e8; }
+.theme-toggle.is-light .theme-toggle-thumb { transform: translateX(8px); background: #fff5c9; color: #ad7200; }
+.theme-toggle.is-light { border-color: #b6c8da; background: linear-gradient(135deg, #f9fcff, #e2ecf6); color: #22384f; box-shadow: inset 0 1px #fff, 0 5px 15px rgba(44,72,100,.12); }
+.theme-toggle-label { min-width: 35px; text-align: left; }
 
-html[data-theme='light'] .app-shell { background: radial-gradient(circle at 80% 0%, rgba(33, 111, 191, .1), transparent 32rem); color: #17202d; }
+html[data-theme='light'] .app-shell { background: radial-gradient(circle at 80% 0%, rgba(33, 111, 191, .1), transparent 32rem); color: #101a27; }
 html[data-theme='light'] .site-header { background: rgba(248, 251, 255, .9); }
 html[data-theme='light'] .brand,
 html[data-theme='light'] .nav-button:hover,
@@ -193,9 +199,19 @@ html[data-theme='light'] .message-panel textarea,
 html[data-theme='light'] .comment-writer textarea,
 html[data-theme='light'] .auth-form input { background: #f8fbff; color: #17202d; }
 html[data-theme='light'] .message.sent { background: #cfe6ff; color: #17202d; }
-html[data-theme='light'] .message.received { background: #e8eef5; color: #17202d; }
-html[data-theme='light'] .theme-toggle { background: #edf4fb; color: #263446; }
+html[data-theme='light'] .message.received { background: #e1e9f2; color: #101a27; }
 html[data-theme='light'] .site-footer strong { color: #34465c; }
+html[data-theme='light'] .status-message { color: #2f4358; }
+html[data-theme='light'] .profile-editor label,
+html[data-theme='light'] .auth-form label,
+html[data-theme='light'] .ranking-row,
+html[data-theme='light'] .site-footer,
+html[data-theme='light'] .footer-status { color: #34495f; }
+html[data-theme='light'] .stat span,
+html[data-theme='light'] .row-main strong,
+html[data-theme='light'] .challenge-count strong,
+html[data-theme='light'] .card-bottom > strong,
+html[data-theme='light'] .artifact-file strong { color: #172638; }
 .status-message { color: #c8d2df; font-size: 17px; margin: 12px 0 0; }
 .social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
 .friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
