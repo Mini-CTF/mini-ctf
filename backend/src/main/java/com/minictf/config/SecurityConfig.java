@@ -1,6 +1,7 @@
 package com.minictf.config;
 
 import com.minictf.auth.JwtAuthenticationFilter;
+import com.minictf.auth.OAuth2LoginFailureHandler;
 import com.minictf.auth.OAuth2LoginSuccessHandler;
 import java.util.Arrays;
 import java.util.List;
@@ -47,6 +48,7 @@ public class SecurityConfig {
       HttpSecurity http,
       JwtAuthenticationFilter jwtFilter,
       OAuth2LoginSuccessHandler oauthHandler,
+      OAuth2LoginFailureHandler oauthFailureHandler,
       RestSecurityHandlers handlers,
       OAuth2AuthorizationRequestResolver oauthResolver)
       throws Exception {
@@ -89,7 +91,8 @@ public class SecurityConfig {
             o ->
                 o.authorizationEndpoint(
                         endpoint -> endpoint.authorizationRequestResolver(oauthResolver))
-                    .successHandler(oauthHandler))
+                    .successHandler(oauthHandler)
+                    .failureHandler(oauthFailureHandler))
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
   }

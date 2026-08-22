@@ -9,9 +9,15 @@ type View = 'home' | 'challenges' | 'ranking' | 'profile' | 'community' | 'admin
 type Filter = 'ALL' | 'WEB' | 'CRYPTO' | 'FORENSICS' | 'MISC'
 
 const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
+const initialOAuthError = new URLSearchParams(window.location.search).get('oauthError')
+const initialLoginError = initialOAuthError
+  ? initialOAuthError === 'authorization_request_not_found'
+    ? 'OAuth session expired. Open the login page on localhost and try again.'
+    : 'OAuth sign-in could not be completed. Please try again.'
+  : ''
 
 function App() {
-  const [view, setView] = useState<View>('home')
+  const [view, setView] = useState<View>(initialOAuthError ? 'login' : 'home')
   const [user, setUser] = useState<User | null>(null)
   const [stats, setStats] = useState<Stats>(emptyStats)
   const [challenges, setChallenges] = useState<ChallengeSummary[]>([])
@@ -20,7 +26,7 @@ function App() {
   const [category, setCategory] = useState<Filter>('ALL')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [compactLayout, setCompactLayout] = useState(() => window.innerWidth <= 620)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(initialLoginError)
   const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
@@ -42,6 +48,9 @@ function App() {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('token')
     if (token) {
       localStorage.setItem('mini-ctf-token', token)
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+    if (initialOAuthError) {
       window.history.replaceState(null, '', window.location.pathname)
     }
     if (localStorage.getItem('mini-ctf-token')) {

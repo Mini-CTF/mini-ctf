@@ -1,0 +1,40 @@
+package com.minictf.auth;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.stereotype.Component;
+
+@Component
+public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
+  private static final Logger log = LoggerFactory.getLogger(OAuth2LoginFailureHandler.class);
+  private final String redirect;
+
+  public OAuth2LoginFailureHandler(
+      @Value("${app.oauth.failure-redirect:http://localhost:5173/auth/callback}") String redirect) {
+    this.redirect = redirect;
+  }
+
+  @Override
+  public void onAuthenticationFailure(
+      HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
+      throws IOException, ServletException {
+    String code =
+        exception instanceof OAuth2AuthenticationException oauth
+            ? oauth.getError().getErrorCode()
+            : "oauth_login_failed";
+    log.warn("OAuth login failed with code={}", code);
+    String separator = redirect.contains("?") ? "&" : "?";
+    response.sendRedirect(
+        redirect + separator + "oauthError=" + URLEncoder.encode(code, StandardCharsets.UTF_8));
+  }
+}

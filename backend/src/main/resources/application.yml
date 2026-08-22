@@ -98,6 +98,7 @@ app:
     anti-cheat-events-days: ${ANTI_CHEAT_EVENT_RETENTION_DAYS:365}
   oauth:
     success-redirect: ${OAUTH_SUCCESS_REDIRECT:http://localhost:5173/auth/callback}
+    failure-redirect: ${OAUTH_FAILURE_REDIRECT:http://localhost:5173/auth/callback}
 
 springdoc:
   api-docs.path: /v3/api-docs
