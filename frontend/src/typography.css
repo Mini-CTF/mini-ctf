@@ -241,6 +241,30 @@ html[data-theme='light'] .card-bottom,
 html[data-theme='light'] .friend-row small,
 html[data-theme='light'] .site-footer,
 html[data-theme='light'] .footer-status { color: #111c29 !important; opacity: 1; }
+html[data-theme='light'] .app-shell,
+html[data-theme='light'] .app-shell * { color: #080d14 !important; }
+html[data-theme='light'] .app-shell input,
+html[data-theme='light'] .app-shell textarea,
+html[data-theme='light'] .app-shell select { color: #080d14 !important; }
+
+.ranking-head { font-size: 12px; }
+.ranking-row { min-height: 82px; font-size: 16px; }
+.rank-number { font-size: 16px; }
+.operator { font-size: 16px; }
+.ranking-row b { font-size: 15px; }
+.mini-avatar { width: 34px; height: 34px; font-size: 11px; }
+.profile-hero .muted { font-size: 15px; }
+.profile-stats .stat strong { font-size: 38px; }
+.profile-stats .stat span { font-size: 15px; }
+.profile-stats .stat small { font-size: 13px; }
+.profile-editor label { font-size: 18px; }
+.profile-editor input,
+.profile-editor textarea { font-size: 17px; }
+.social-panel h2 { font-size: 29px; }
+.friend-row strong { font-size: 17px; }
+.friend-row small { font-size: 15px; }
+.message-panel h3 { font-size: 20px; }
+.message { font-size: 16px; }
 .status-message { color: #c8d2df; font-size: 17px; margin: 12px 0 0; }
 .social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
 .friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
