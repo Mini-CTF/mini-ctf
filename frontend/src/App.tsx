@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 import { api } from './api/client'
 import { subscribeToDirectMessages } from './api/realtime'
 import type { AdminDashboard, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, PostComment, PostDetail, PostSummary, Profile, RankingRow, Stats, User } from './types/api'
+import miniCtfLogo from './assets/mini-ctf-logo.svg'
 import './App.css'
 import './typography.css'
 
@@ -117,7 +118,7 @@ function App() {
 
   return <div className="app-shell">
     <header className="site-header">
-      <button className="brand" type="button" onClick={() => navigate('home')}>MINI<span className="brand-accent">/</span>CTF</button>
+      <button className="brand" type="button" onClick={() => navigate('home')}><img className="brand-logo" src={miniCtfLogo} alt="MINI CTF" /><span>MINI<span className="brand-accent">/</span>CTF</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
       <nav id="primary-navigation" className={mobileNavOpen ? 'primary-nav is-open' : 'primary-nav'} aria-label="Primary navigation">
         <NavButton active={view === 'home'} onClick={() => navigate('home')}>Home</NavButton>

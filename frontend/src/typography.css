@@ -10,6 +10,17 @@
   line-height: 1.45;
 }
 
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  filter: drop-shadow(0 0 8px rgba(99, 169, 255, .28));
+}
+
+html[data-theme='light'] .brand-logo {
+  filter: drop-shadow(0 2px 4px rgba(22, 95, 169, .18));
+}
+
 .eyebrow { font-size: 13px; color: #c5cfdd; }
 .nav-button,
 .header-login { font-size: 16px; }
