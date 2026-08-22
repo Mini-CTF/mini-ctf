@@ -1,8 +1,6 @@
 package com.minictf.user;
 
 import com.minictf.common.ApiResponse;
-import java.nio.file.Path;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -23,14 +21,11 @@ public class PublicProfileController {
 
   @GetMapping("/{username}/avatar")
   public ResponseEntity<Resource> avatar(@PathVariable String username) {
-    Path image = profiles.avatar(username);
-    MediaType mediaType =
-        image.getFileName().toString().toLowerCase().endsWith(".png")
-            ? MediaType.IMAGE_PNG
-            : MediaType.IMAGE_JPEG;
+    AvatarAsset image = profiles.avatar(username);
     return ResponseEntity.ok()
-        .contentType(mediaType)
+        .contentType(image.mediaType())
         .header("X-Content-Type-Options", "nosniff")
-        .body(new FileSystemResource(image));
+        .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
+        .body(image.resource());
   }
 }

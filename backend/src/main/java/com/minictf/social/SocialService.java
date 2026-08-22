@@ -5,6 +5,7 @@ import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,16 +16,19 @@ public class SocialService {
   private final FriendshipRepository friendships;
   private final DirectMessageRepository messages;
   private final RateLimitService rateLimits;
+  private final SocialRealtimeService realtime;
 
   public SocialService(
       UserRepository users,
       FriendshipRepository friendships,
       DirectMessageRepository messages,
-      RateLimitService rateLimits) {
+      RateLimitService rateLimits,
+      SocialRealtimeService realtime) {
     this.users = users;
     this.friendships = friendships;
     this.messages = messages;
     this.rateLimits = rateLimits;
+    this.realtime = realtime;
   }
 
   @Transactional(readOnly = true)
@@ -41,7 +45,7 @@ public class SocialService {
       throw new IllegalArgumentException("Cannot add yourself");
     rateLimits.check("friend-request", current.getId() + ":" + ip, 20, 3600);
     Friendship relationship =
-        friendships.findRelationship(current.getId(), other.getId()).orElse(null);
+        friendships.findRelationshipForUpdate(current.getId(), other.getId()).orElse(null);
     if (relationship != null) {
       if ("DECLINED".equals(relationship.getStatus())
           && relationship.getRequester().getId().equals(current.getId())) {
@@ -53,7 +57,11 @@ public class SocialService {
     Friendship friend = new Friendship();
     friend.setRequester(current);
     friend.setRecipient(other);
-    return friendView(current, friendships.save(friend));
+    try {
+      return friendView(current, friendships.saveAndFlush(friend));
+    } catch (DataIntegrityViolationException ex) {
+      throw new IllegalArgumentException("Friend relationship already exists");
+    }
   }
 
   @Transactional
@@ -83,6 +91,10 @@ public class SocialService {
     return result.stream().map(this::messageView).toList();
   }
 
+  public org.springframework.web.servlet.mvc.method.annotation.SseEmitter stream(User current) {
+    return realtime.subscribe(current.getUsername());
+  }
+
   @Transactional
   public SocialDtos.MessageView send(
       User current, String username, SocialDtos.MessageRequest request, String ip) {
@@ -93,7 +105,9 @@ public class SocialService {
     message.setSender(current);
     message.setRecipient(other);
     message.setContent(request.content().trim());
-    return messageView(messages.save(message));
+    SocialDtos.MessageView view = messageView(messages.save(message));
+    realtime.publishAfterCommit(other.getUsername(), view);
+    return view;
   }
 
   private Friendship relationship(User current, User other) {

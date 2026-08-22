@@ -4,6 +4,8 @@
 .mvp-flags.properties
 challenges/mvp/
 profiles/
+backups/
+.gradle-user/
 
 # Java / Gradle
 backend/.gradle/

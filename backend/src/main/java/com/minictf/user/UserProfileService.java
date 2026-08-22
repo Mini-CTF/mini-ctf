@@ -4,12 +4,11 @@ import com.minictf.challenge.SolveRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import javax.imageio.ImageIO;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,15 +19,12 @@ public class UserProfileService {
   private static final Set<String> IMAGE_EXTENSIONS = Set.of("png", "jpg", "jpeg");
   private final UserRepository users;
   private final SolveRepository solves;
-  private final Path storageRoot;
+  private final AvatarStorage avatars;
 
-  public UserProfileService(
-      UserRepository users,
-      SolveRepository solves,
-      @Value("${app.profile.storage-root}") String storageRoot) {
+  public UserProfileService(UserRepository users, SolveRepository solves, AvatarStorage avatars) {
     this.users = users;
     this.solves = solves;
-    this.storageRoot = Paths.get(storageRoot).toAbsolutePath().normalize();
+    this.avatars = avatars;
   }
 
   @Transactional
@@ -63,13 +59,8 @@ public class UserProfileService {
       throw new IllegalArgumentException("Invalid avatar image");
     }
     String relative = "avatars/" + current.getId() + "/" + UUID.randomUUID() + "." + extension;
-    Path target = storageRoot.resolve(relative).normalize();
-    if (!target.startsWith(storageRoot)) throw new IllegalArgumentException("Invalid avatar path");
     try {
-      Files.createDirectories(target.getParent());
-      try (var input = upload.getInputStream()) {
-        Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
-      }
+      avatars.store(relative, upload.getBytes(), LocalAvatarStorage.mediaType(relative));
       deleteManagedAvatar(current);
       current.setAvatarPath(relative);
       return profile(current);
@@ -97,13 +88,14 @@ public class UserProfileService {
   }
 
   @Transactional(readOnly = true)
-  public Path avatar(String username) {
+  public AvatarAsset avatar(String username) {
     User user = byUsername(username);
     if (user.getAvatarPath() == null) throw new EntityNotFoundException("Avatar not found");
-    Path file = storageRoot.resolve(user.getAvatarPath()).normalize();
-    if (!file.startsWith(storageRoot) || !Files.isRegularFile(file))
+    try {
+      return avatars.load(user.getAvatarPath());
+    } catch (LocalAvatarStorage.AvatarNotFoundException ex) {
       throw new EntityNotFoundException("Avatar not found");
-    return file;
+    }
   }
 
   public UserDtos.Profile profile(User user) {
@@ -139,12 +131,6 @@ public class UserProfileService {
   private void deleteManagedAvatar(User user) {
     String relative = user.getAvatarPath();
     if (relative == null || !relative.startsWith("avatars/" + user.getId() + "/")) return;
-    Path existing = storageRoot.resolve(relative).normalize();
-    if (!existing.startsWith(storageRoot)) return;
-    try {
-      Files.deleteIfExists(existing);
-    } catch (IOException ex) {
-      throw new IllegalStateException("Could not replace avatar", ex);
-    }
+    avatars.delete(relative);
   }
 }

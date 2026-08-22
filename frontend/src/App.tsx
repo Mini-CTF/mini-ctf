@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { api } from './api/client'
+import { subscribeToDirectMessages } from './api/realtime'
 import type { AdminDashboard, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, PostComment, PostDetail, PostSummary, Profile, RankingRow, Stats, User } from './types/api'
 import './App.css'
 import './typography.css'
@@ -172,6 +173,13 @@ function ProfileView({ user, onChallenges, onLogin }: { user: User | null; onCha
   const refresh = useCallback(() => Promise.all([api.profile(), api.friends()]).then(([nextProfile, nextFriends]) => { setProfile(nextProfile); setFriends(nextFriends) }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load profile.')), [])
   useEffect(() => { if (user) void refresh() }, [user, refresh])
   useEffect(() => { if (selectedFriend) void api.messages(selectedFriend).then(setMessages).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load messages.')) }, [selectedFriend])
+  useEffect(() => {
+    if (!user) return
+    return subscribeToDirectMessages((message) => {
+      if (message.sender !== selectedFriend) return
+      setMessages((currentMessages) => currentMessages.some((item) => item.id === message.id) ? currentMessages : [...currentMessages, message])
+    })
+  }, [user, selectedFriend])
   if (!user) return <div className="page"><PageIntro eyebrow="YOUR PROGRESS" title="Sign in to track your progress." description="Your score and solved challenges are tied to your authenticated account." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
   const current = profile ?? { ...user, rank: 0, solvedCount: 0, statusMessage: null, avatarUrl: null }
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); try { setProfile(await api.updateProfile({ nickname: String(form.get('nickname')), statusMessage: String(form.get('statusMessage')) })); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save profile.') } }

@@ -6,9 +6,11 @@ import com.minictf.user.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/social")
@@ -50,6 +52,11 @@ public class SocialController {
   @GetMapping("/messages/{username}")
   public ApiResponse<?> messages(@PathVariable String username, Authentication auth) {
     return ApiResponse.ok(service.conversation(current(auth), username));
+  }
+
+  @GetMapping(value = "/messages/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  public SseEmitter stream(Authentication auth) {
+    return service.stream(current(auth));
   }
 
   @PostMapping("/messages/{username}")
