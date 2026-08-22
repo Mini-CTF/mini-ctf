@@ -134,7 +134,7 @@ public class MvpChallengeInitializer {
     String verifier =
         "# Offline MINI-CTF training verifier. No network calls are made.\n"
             + "expected = "
-            + java.util.Arrays.toString(encoded)
+            + unsignedByteList(encoded)
             + "\nkey = b'orbit-9'\n\n"
             + "def transform(value):\n"
             + "    data = bytearray(value.encode())\n"
@@ -165,5 +165,14 @@ public class MvpChallengeInitializer {
       }
     }
     return data;
+  }
+
+  private static String unsignedByteList(byte[] bytes) {
+    StringBuilder output = new StringBuilder("[");
+    for (int i = 0; i < bytes.length; i++) {
+      if (i > 0) output.append(", ");
+      output.append(Byte.toUnsignedInt(bytes[i]));
+    }
+    return output.append(']').toString();
   }
 }
