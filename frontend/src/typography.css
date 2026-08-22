@@ -278,6 +278,29 @@ html[data-theme='light'] .auth-form input { border-color: #1f4f78 !important; bo
 .friend-row small { font-size: 15px; }
 .message-panel h3 { font-size: 20px; }
 .message { font-size: 16px; }
+
+.submit-panel { background: linear-gradient(145deg, #174d7c, #0d2f4f); border: 1px solid #8cc7ff; color: #f7fbff; box-shadow: 0 12px 28px rgba(4, 24, 43, .22); }
+.submit-panel h2,
+.submit-panel .submit-kicker,
+.submit-panel > p,
+.submit-panel label { color: #f7fbff; opacity: 1; }
+.flag-input { background: #ffffff; border: 2px solid #9ed1ff; color: #102941; }
+.flag-input input { color: #102941; font-size: 14px; font-weight: 600; }
+.flag-input input::placeholder { color: #42637f; opacity: 1; }
+.submit-button { background: #ffffff; color: #123f66; border: 1px solid #b7dcff; }
+.submit-button:hover { background: #dceeff; color: #092b4a; }
+.submit-panel .feedback { background: rgba(255, 255, 255, .18); color: #ffffff; border: 1px solid rgba(255, 255, 255, .55); }
+.submit-panel .feedback.error { background: rgba(115, 0, 20, .42); }
+
+html[data-theme='light'] .submit-panel,
+html[data-theme='light'] .submit-panel h2,
+html[data-theme='light'] .submit-panel .submit-kicker,
+html[data-theme='light'] .submit-panel > p,
+html[data-theme='light'] .submit-panel label,
+html[data-theme='light'] .submit-panel .feedback { color: #f7fbff !important; }
+html[data-theme='light'] .submit-panel .flag-input,
+html[data-theme='light'] .submit-panel .flag-input input,
+html[data-theme='light'] .submit-panel .submit-button { color: #102941 !important; }
 .status-message { color: #c8d2df; font-size: 17px; margin: 12px 0 0; }
 .social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
 .friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
