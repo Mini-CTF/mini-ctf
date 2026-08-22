@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root { font-family: 'Manrope', sans-serif; color: #f1f3f7; background: #080a0f; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; --bg: #080a0f; --surface: #10131b; --surface-raised: #151923; --line: #272c38; --muted: #aab4c2; --accent: #63a9ff; --accent-dim: rgba(99,169,255,.12); --violet: #a184ff; --mono: 'DM Mono', monospace; }
-html[data-theme='light'] { color: #101a27; background: #f5f8fc; color-scheme: light; --bg: #f5f8fc; --surface: #ffffff; --surface-raised: #e8f0f8; --line: #c6d3e1; --muted: #3c4f63; --accent: #165fa9; --accent-dim: rgba(22,95,169,.11); --violet: #5e43ad; }
+html[data-theme='light'] { color: #101a27; background: #f5f8fc; color-scheme: light; --bg: #f5f8fc; --surface: #ffffff; --surface-raised: #e8f0f8; --line: #c6d3e1; --muted: #2d4054; --accent: #165fa9; --accent-dim: rgba(22,95,169,.11); --violet: #5e43ad; }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; background: var(--bg); transition: background-color .2s ease, color .2s ease; }
 button, input, select { font: inherit; }
