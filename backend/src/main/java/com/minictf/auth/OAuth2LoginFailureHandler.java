@@ -32,7 +32,11 @@ public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
         exception instanceof OAuth2AuthenticationException oauth
             ? oauth.getError().getErrorCode()
             : "oauth_login_failed";
-    log.warn("OAuth login failed with code={}", code);
+    String detail =
+        exception instanceof OAuth2AuthenticationException oauth
+            ? oauth.getError().getDescription()
+            : exception.getMessage();
+    log.warn("OAuth login failed path={} code={} detail={}", request.getRequestURI(), code, detail);
     String separator = redirect.contains("?") ? "&" : "?";
     response.sendRedirect(
         redirect + separator + "oauthError=" + URLEncoder.encode(code, StandardCharsets.UTF_8));
