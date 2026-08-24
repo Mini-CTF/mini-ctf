@@ -3,6 +3,7 @@ package com.minictf.attendance;
 import com.minictf.user.User;
 import java.time.*;
 import java.util.*;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +42,16 @@ public class AttendanceService {
   @Transactional
   public AttendanceDtos.Summary checkIn(User user) {
     LocalDate today = today();
-    checkins.insertIfAbsent(user.getId(), today);
+    if (checkins.findByUserIdAndCheckinDate(user.getId(), today).isEmpty()) {
+      AttendanceCheckin checkin = new AttendanceCheckin();
+      checkin.setUser(user);
+      checkin.setCheckinDate(today);
+      try {
+        checkins.saveAndFlush(checkin);
+      } catch (DataIntegrityViolationException ignored) {
+        // A concurrent request completed the same once-per-day check-in first.
+      }
+    }
     return summary(user);
   }
 

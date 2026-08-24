@@ -87,7 +87,10 @@ public class UserProfileService {
         user.getScore(),
         solves.countByActiveUser(user.getId()),
         user.getStatusMessage(),
-        avatarUrl(user));
+        avatarUrl(user),
+        user.getEquippedFrame(),
+        user.getEquippedAccessory(),
+        user.getEquippedVaultTitle());
   }
 
   @Transactional(readOnly = true)
@@ -111,7 +114,10 @@ public class UserProfileService {
         users.countByScoreGreaterThanAndStatusNot(user.getScore(), "DELETED") + 1,
         solves.countByActiveUser(user.getId()),
         user.getStatusMessage(),
-        avatarUrl(user));
+        avatarUrl(user),
+        user.getEquippedFrame(),
+        user.getEquippedAccessory(),
+        user.getEquippedVaultTitle());
   }
 
   private User byUsername(String username) {

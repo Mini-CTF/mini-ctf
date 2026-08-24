@@ -9,6 +9,7 @@ import com.minictf.admin.AdminDtos;
 import com.minictf.admin.AdminModerationService;
 import com.minictf.admin.SecurityEventRepository;
 import com.minictf.anticheat.AntiCheatEventRepository;
+import com.minictf.attendance.AttendanceCheckinRepository;
 import com.minictf.auth.JwtService;
 import com.minictf.auth.OAuthAccountRepository;
 import com.minictf.challenge.*;
@@ -17,6 +18,8 @@ import com.minictf.social.DirectMessageRepository;
 import com.minictf.social.FriendshipRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
+import com.minictf.vault.VaultMissionCompletionRepository;
+import com.minictf.vault.VaultOwnedCosmeticRepository;
 import java.util.List;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,10 +55,16 @@ class BackendIntegrationTests {
   @Autowired AdminModerationService moderation;
   @Autowired FriendshipRepository friendships;
   @Autowired DirectMessageRepository directMessages;
+  @Autowired AttendanceCheckinRepository attendanceCheckins;
+  @Autowired VaultMissionCompletionRepository vaultMissionCompletions;
+  @Autowired VaultOwnedCosmeticRepository vaultOwnedCosmetics;
 
   @BeforeEach
   void cleanDatabase() {
     securityEvents.deleteAll();
+    vaultMissionCompletions.deleteAll();
+    vaultOwnedCosmetics.deleteAll();
+    attendanceCheckins.deleteAll();
     directMessages.deleteAll();
     friendships.deleteAll();
     challengeComments.deleteAll();
@@ -66,6 +75,37 @@ class BackendIntegrationTests {
     oauthAccounts.deleteAll();
     challenges.deleteAll();
     users.deleteAll();
+  }
+
+  @Test
+  void cipherVaultAwardsDailyRewardsAndLetsAdminsEquipEverything() throws Exception {
+    mvc.perform(get("/api/vault")).andExpect(status().isUnauthorized());
+    User learner = user("vault_learner", "USER");
+    String learnerToken = jwt.createToken(learner.getId(), learner.getRole());
+    mvc.perform(post("/api/attendance/check-in").header("Authorization", bearer(learnerToken)))
+        .andExpect(status().isCreated());
+    mvc.perform(
+            post("/api/vault/missions/daily_checkin/claim")
+                .header("Authorization", bearer(learnerToken)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.gems").value(10));
+    mvc.perform(
+            post("/api/vault/missions/daily_checkin/claim")
+                .header("Authorization", bearer(learnerToken)))
+        .andExpect(status().isBadRequest());
+    mvc.perform(post("/api/vault/discover").header("Authorization", bearer(learnerToken)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.cosmetics[?(@.id == 'ghost_protocol')].owned").value(true));
+
+    User admin = user("vault_admin", "ADMIN");
+    String adminToken = jwt.createToken(admin.getId(), admin.getRole());
+    mvc.perform(
+            put("/api/vault/equip")
+                .header("Authorization", bearer(adminToken))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"id\":\"spectral_core\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.cosmetics[?(@.id == 'spectral_core')].equipped").value(true));
   }
 
   @Test

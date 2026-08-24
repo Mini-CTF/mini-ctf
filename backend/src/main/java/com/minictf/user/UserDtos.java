@@ -16,7 +16,10 @@ public final class UserDtos {
       long rank,
       long solvedCount,
       String statusMessage,
-      String avatarUrl) {}
+      String avatarUrl,
+      String equippedFrame,
+      String equippedAccessory,
+      String equippedTitle) {}
 
   public record ProfileUpdateRequest(
       @Size(max = 80) String nickname, @Size(max = 160) String statusMessage) {}
@@ -27,7 +30,10 @@ public final class UserDtos {
       int score,
       long solvedCount,
       String statusMessage,
-      String avatarUrl) {}
+      String avatarUrl,
+      String equippedFrame,
+      String equippedAccessory,
+      String equippedTitle) {}
 
   public record SolveView(Long challengeId, String title, int score, Instant solvedAt) {}
 

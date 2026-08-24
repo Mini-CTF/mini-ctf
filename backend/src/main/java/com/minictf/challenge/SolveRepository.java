@@ -1,5 +1,6 @@
 package com.minictf.challenge;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -29,4 +30,6 @@ public interface SolveRepository extends JpaRepository<Solve, Long> {
 
   @Query("select s.challenge.id from Solve s where s.user.id=:userId")
   Set<Long> findChallengeIdsByUserId(@Param("userId") Long userId);
+
+  boolean existsByUserIdAndSolvedAtGreaterThanEqual(Long userId, Instant since);
 }

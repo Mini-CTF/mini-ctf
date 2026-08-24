@@ -12,6 +12,9 @@ public interface ChallengeActivityEventRepository
   Optional<ChallengeActivityEvent> findTopByUserIdAndChallengeIdOrderByOccurredAtAsc(
       Long userId, Long challengeId);
 
+  boolean existsByUserIdAndActivityTypeAndOccurredAtGreaterThanEqual(
+      Long userId, String activityType, Instant since);
+
   @Modifying
   @Query("delete from ChallengeActivityEvent event where event.occurredAt < :before")
   int deleteOlderThan(@Param("before") Instant before);

@@ -161,6 +161,39 @@ export type Profile = User & {
   solvedCount: number
   statusMessage: string | null
   avatarUrl: string | null
+  equippedFrame: string | null
+  equippedAccessory: string | null
+  equippedTitle: string | null
+}
+
+export type VaultMission = {
+  id: string
+  name: string
+  description: string
+  gemReward: number
+  fragmentReward: number
+  eligible: boolean
+  completed: boolean
+}
+
+export type VaultCosmetic = {
+  id: string
+  name: string
+  description: string
+  type: 'FRAME' | 'ACCESSORY' | 'TITLE' | string
+  source: 'STORE' | 'CRAFT' | 'QUEST' | 'HIDDEN' | string
+  gemCost: number
+  fragmentCost: number
+  hidden: boolean
+  owned: boolean
+  equipped: boolean
+}
+
+export type VaultSummary = {
+  gems: number
+  fragments: number
+  missions: VaultMission[]
+  cosmetics: VaultCosmetic[]
 }
 
 export type Friend = {

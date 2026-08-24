@@ -18,6 +18,7 @@ import type {
   RankingRow,
   Stats,
   User,
+  VaultSummary,
 } from '../types/api'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
@@ -116,6 +117,12 @@ export const api = {
     return body.data as Profile
   },
   deleteAvatar: () => request<void>('/users/me/avatar', { method: 'DELETE' }),
+  vault: () => request<VaultSummary>('/vault'),
+  discoverVault: () => request<VaultSummary>('/vault/discover', { method: 'POST' }),
+  claimVaultMission: (id: string) => request<VaultSummary>(`/vault/missions/${encodeURIComponent(id)}/claim`, { method: 'POST' }),
+  buyVaultItem: (id: string) => request<VaultSummary>('/vault/shop/buy', { method: 'POST', body: JSON.stringify({ id }) }),
+  craftVaultItem: (id: string) => request<VaultSummary>('/vault/craft', { method: 'POST', body: JSON.stringify({ id }) }),
+  equipVaultItem: (id: string) => request<VaultSummary>('/vault/equip', { method: 'PUT', body: JSON.stringify({ id }) }),
   friends: () => request<Friend[]>('/social/friends'),
   requestFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(normalizeUsername(username))}`, { method: 'POST' }),
   acceptFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(username)}/accept`, { method: 'POST' }),
