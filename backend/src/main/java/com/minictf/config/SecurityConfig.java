@@ -3,6 +3,7 @@ package com.minictf.config;
 import com.minictf.auth.JwtAuthenticationFilter;
 import com.minictf.auth.OAuth2LoginFailureHandler;
 import com.minictf.auth.OAuth2LoginSuccessHandler;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,10 +38,30 @@ public class SecurityConfig {
   @Bean
   OAuth2AuthorizationRequestResolver oauth2AuthorizationRequestResolver(
       ClientRegistrationRepository registrations) {
-    DefaultOAuth2AuthorizationRequestResolver resolver =
+    DefaultOAuth2AuthorizationRequestResolver pkceResolver =
         new DefaultOAuth2AuthorizationRequestResolver(registrations, "/oauth2/authorization");
-    resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
-    return resolver;
+    pkceResolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
+    DefaultOAuth2AuthorizationRequestResolver discordResolver =
+        new DefaultOAuth2AuthorizationRequestResolver(registrations, "/oauth2/authorization");
+    return new OAuth2AuthorizationRequestResolver() {
+      @Override
+      public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(
+          HttpServletRequest request) {
+        return isDiscord(request) ? discordResolver.resolve(request) : pkceResolver.resolve(request);
+      }
+
+      @Override
+      public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(
+          HttpServletRequest request, String registrationId) {
+        return "discord".equalsIgnoreCase(registrationId)
+            ? discordResolver.resolve(request, registrationId)
+            : pkceResolver.resolve(request, registrationId);
+      }
+
+      private boolean isDiscord(HttpServletRequest request) {
+        return request.getRequestURI().endsWith("/oauth2/authorization/discord");
+      }
+    };
   }
 
   @Bean

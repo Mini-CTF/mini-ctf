@@ -51,7 +51,7 @@ spring:
             client-id: ${DISCORD_CLIENT_ID:not-configured}
             client-secret: ${DISCORD_CLIENT_SECRET:not-configured}
             authorization-grant-type: authorization_code
-            client-authentication-method: client_secret_basic
+            client-authentication-method: client_secret_post
             scope: identify,email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
           naver:

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 import { api } from './api/client'
 import { subscribeToDirectMessages } from './api/realtime'
 import type { AdminDashboard, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, PostComment, PostDetail, PostSummary, Profile, RankingRow, Stats, User } from './types/api'
-import miniCtfLogo from './assets/mini-ctf-logo.svg'
+import miniCtfLogo from './assets/mini-ctf-reference-logo.png'
 import './App.css'
 import './typography.css'
 
@@ -119,7 +119,7 @@ function App() {
 
   return <div className="app-shell">
     <header className="site-header">
-      <button className="brand" type="button" onClick={() => navigate('home')}><img className="brand-logo" src={miniCtfLogo} alt="MINI CTF" /><span>MINI<span className="brand-accent">/</span>CTF</span></button>
+      <button className="brand" type="button" onClick={() => navigate('home')}><span>MINI<span className="brand-accent">/</span>CTF</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
       <nav id="primary-navigation" className={mobileNavOpen ? 'primary-nav is-open' : 'primary-nav'} aria-label="Primary navigation">
         <NavButton active={view === 'home'} onClick={() => navigate('home')}>Home</NavButton>
@@ -150,7 +150,11 @@ function App() {
 function NavButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: string }) { return <button className={active ? 'nav-button active' : 'nav-button'} type="button" onClick={onClick}>{children}</button> }
 
 function Home({ stats, challenges, onExplore, onRanking, onOpen }: { stats: Stats; challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void }) {
-  return <div className="page home-page"><section className="hero-section"><div className="hero-copy"><p className="eyebrow">SECURITY TRAINING PLATFORM</p><h1>Learn security<br /><span>by solving.</span></h1><p className="hero-description">Live challenges, secure FLAG validation, and a real ranking.</p><div className="hero-actions"><button className="button primary" type="button" onClick={onExplore}>Start challenges</button><button className="button ghost" type="button" onClick={onRanking}>View ranking</button></div></div></section><section className="stat-strip" aria-label="Platform statistics"><Stat value={stats.challenges} label="Challenges" detail="active labs" /><Stat value={stats.solves} label="Solves" detail="recorded" /><Stat value={stats.users} label="Learners" detail="registered" /><div className="live-badge">live platform</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">EXPLORE THE LABS</p><h2>Featured challenges.</h2></div><button type="button" className="text-link" onClick={onExplore}>View all challenges</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
+  return <div className="page home-page"><section className="hero-section"><div className="hero-copy"><p className="eyebrow">SECURITY TRAINING PLATFORM</p><h1>Learn security<br /><span>by solving.</span></h1><p className="hero-description">Live challenges, secure FLAG validation, and a real ranking.</p><div className="hero-actions"><button className="button primary" type="button" onClick={onExplore}>Start challenges</button><button className="button ghost" type="button" onClick={onRanking}>View ranking</button></div></div><div className="hero-visual" aria-hidden="true"><ThemeLogo className="hero-hero-logo" alt="" /></div></section><section className="stat-strip" aria-label="Platform statistics"><Stat value={stats.challenges} label="Challenges" detail="active labs" /><Stat value={stats.solves} label="Solves" detail="recorded" /><Stat value={stats.users} label="Learners" detail="registered" /><div className="live-badge">live platform</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">EXPLORE THE LABS</p><h2>Featured challenges.</h2></div><button type="button" className="text-link" onClick={onExplore}>View all challenges</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
+}
+
+function ThemeLogo({ className, alt }: { className: string; alt: string }) {
+  return <img className={className} src={miniCtfLogo} alt={alt} />
 }
 
 function Stat({ value, label, detail }: { value: number; label: string; detail: string }) { return <div className="stat"><strong>{value}</strong><div><span>{label}</span><small>{detail}</small></div></div> }
@@ -189,8 +193,16 @@ function ProfileView({ user, onChallenges, onLogin }: { user: User | null; onCha
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null)
   const [messages, setMessages] = useState<DirectMessage[]>([])
   const [error, setError] = useState('')
+  const [avatarRevision, setAvatarRevision] = useState(() => Date.now())
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const avatarInput = useRef<HTMLInputElement>(null)
-  const refresh = useCallback(() => Promise.all([api.profile(), api.friends()]).then(([nextProfile, nextFriends]) => { setProfile(nextProfile); setFriends(nextFriends) }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load profile.')), [])
+  const refresh = useCallback(async () => {
+    const [profileResult, friendsResult] = await Promise.allSettled([api.profile(), api.friends()])
+    if (profileResult.status === 'fulfilled') setProfile(profileResult.value)
+    else setError(profileResult.reason instanceof Error ? profileResult.reason.message : 'Could not load profile.')
+    if (friendsResult.status === 'fulfilled') setFriends(friendsResult.value)
+    else setError(friendsResult.reason instanceof Error ? friendsResult.reason.message : 'Could not load friends.')
+  }, [])
   useEffect(() => { if (user) void refresh() }, [user, refresh])
   useEffect(() => { if (selectedFriend) void api.messages(selectedFriend).then(setMessages).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load messages.')) }, [selectedFriend])
   useEffect(() => {
@@ -200,20 +212,22 @@ function ProfileView({ user, onChallenges, onLogin }: { user: User | null; onCha
       setMessages((currentMessages) => currentMessages.some((item) => item.id === message.id) ? currentMessages : [...currentMessages, message])
     })
   }, [user, selectedFriend])
+  useEffect(() => () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview) }, [avatarPreview])
   if (!user) return <div className="page"><PageIntro eyebrow="YOUR PROGRESS" title="Sign in to track your progress." description="Your score and solved challenges are tied to your authenticated account." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
   const current = profile ?? { ...user, rank: 0, solvedCount: 0, statusMessage: null, avatarUrl: null }
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); try { setProfile(await api.updateProfile({ nickname: String(form.get('nickname')), statusMessage: String(form.get('statusMessage')) })); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save profile.') } }
-  const uploadAvatar = async (file: File) => { try { setProfile(await api.uploadAvatar(file)); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not upload avatar.') } }
-  const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.currentTarget.value = ''; if (file) void uploadAvatar(file) }
+  const uploadAvatar = async (file: File) => { setError(''); setAvatarPreview(URL.createObjectURL(file)); try { setProfile(await api.uploadAvatar(file)); setAvatarRevision(Date.now()); } catch (cause) { setAvatarPreview(null); setError(cause instanceof Error ? cause.message : 'Could not upload avatar.') } }
+  const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.currentTarget.value = ''; if (!file) return; const validType = !file.type || ['image/png', 'image/jpeg'].includes(file.type); const validName = /\.(png|jpe?g)$/i.test(file.name); if (!validType && !validName) { setError('PNG 또는 JPG 이미지만 업로드할 수 있습니다.'); return } if (file.size > 2 * 1024 * 1024) { setError('프로필 이미지는 2MB 이하만 업로드할 수 있습니다.'); return } void uploadAvatar(file) }
   const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const username = String(new FormData(event.currentTarget).get('username')); try { await api.requestFriend(username); await refresh(); (event.currentTarget as HTMLFormElement).reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!selectedFriend) return; const form = new FormData(event.currentTarget); try { const sent = await api.sendMessage(selectedFriend, String(form.get('content'))); setMessages((currentMessages) => [...currentMessages, sent]); (event.currentTarget as HTMLFormElement).reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send message.') } }
+  const avatarSrc = avatarPreview ?? (current.avatarUrl ? `${current.avatarUrl}${current.avatarUrl.includes('?') ? '&' : '?'}view=${avatarRevision}` : null)
   return <div className="page profile-page">
     <div className="profile-hero">
       <button className="profile-avatar avatar-large avatar-picker" type="button" onClick={() => avatarInput.current?.click()} aria-label="Upload profile photo">
-        {current.avatarUrl ? <img src={current.avatarUrl} alt="" /> : (current.nickname || current.username).slice(0, 2).toUpperCase()}
+        {avatarSrc ? <img src={avatarSrc} alt="" /> : (current.nickname || current.username).slice(0, 2).toUpperCase()}
         <span className="avatar-picker-label">Change photo</span>
       </button>
-      <input ref={avatarInput} className="sr-only" type="file" accept="image/png,image/jpeg" onChange={selectAvatar} />
+      <input ref={avatarInput} className="sr-only" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={selectAvatar} />
       <div><p className="eyebrow">OPERATOR PROFILE</p><h1>{current.nickname || current.username}</h1><p className="muted">@{current.username}</p><p className="status-message">{current.statusMessage || 'No status message yet.'}</p></div>
     </div>
     <div className="profile-stats"><Stat value={current.score} label="Score" detail="total points" /><Stat value={current.solvedCount} label="Solves" detail={`rank #${current.rank || '—'}`} /></div>
@@ -296,8 +310,8 @@ function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { 
 
 function ProviderIcon({ provider }: { provider: string }) {
   if (provider === 'google') return <svg className="oauth-provider-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h6.45a5.5 5.5 0 0 1-2.39 3.61v3h3.87c2.27-2.09 3.56-5.17 3.56-8.64Z" /><path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.87-3c-1.07.72-2.44 1.15-4.06 1.15-3.12 0-5.77-2.11-6.72-4.95H1.28v3.1A12 12 0 0 0 12 24Z" /><path fill="#FBBC05" d="M5.28 14.3A7.2 7.2 0 0 1 4.9 12c0-.8.14-1.58.38-2.3V6.6H1.28A12 12 0 0 0 0 12c0 1.94.46 3.78 1.28 5.4l4-3.1Z" /><path fill="#EA4335" d="M12 4.75c1.76 0 3.34.61 4.58 1.8l3.43-3.43C17.94 1.14 15.24 0 12 0A12 12 0 0 0 1.28 6.6l4 3.1C6.23 6.86 8.88 4.75 12 4.75Z" /></svg>
-  if (provider === 'github') return <svg className="oauth-provider-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.23c-3.34.73-4.04-1.42-4.04-1.42-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.77.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.96 0-1.32.47-2.4 1.24-3.25-.12-.3-.54-1.54.12-3.21 0 0 1.01-.32 3.3 1.24A11.48 11.48 0 0 1 12 6.8c1.02.01 2.05.14 3.01.41 2.29-1.56 3.3-1.24 3.3-1.24.66 1.67.24 2.91.12 3.21.77.85 1.24 1.93 1.24 3.25 0 4.63-2.82 5.65-5.5 5.95.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z" /></svg>
-  if (provider === 'discord') return <svg className="oauth-provider-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.32 4.37A16.66 16.66 0 0 0 16.2 3.1l-.5 1.02a15.46 15.46 0 0 0-4.7 0l-.5-1.02a16.73 16.73 0 0 0-4.13 1.28C3.75 8.28 3.04 12.08 3.4 15.83a16.56 16.56 0 0 0 5.06 2.55l1.23-1.68a9.87 9.87 0 0 1-1.94-.94l.47-.36c3.74 1.74 7.8 1.74 11.5 0l.48.36c-.62.36-1.27.68-1.95.94l1.23 1.68a16.5 16.5 0 0 0 5.08-2.55c.42-4.35-.72-8.12-3.24-11.46ZM9.45 13.5c-1 0-1.82-.92-1.82-2.05 0-1.13.8-2.05 1.82-2.05 1.02 0 1.84.92 1.82 2.05 0 1.13-.8 2.05-1.82 2.05Zm5.1 0c-1 0-1.82-.92-1.82-2.05 0-1.13.8-2.05 1.82-2.05 1.02 0 1.84.92 1.82 2.05 0 1.13-.8 2.05-1.82 2.05Z" /></svg>
+  if (provider === 'github') return <svg className="oauth-provider-icon" viewBox="0 0 19 19" aria-hidden="true"><path fill="currentColor" fillRule="evenodd" d="M9.356 1.85C5.05 1.85 1.57 5.356 1.57 9.694a7.84 7.84 0 0 0 5.324 7.44c.387.079.528-.168.528-.376 0-.182-.013-.805-.013-1.454-2.165.467-2.616-.935-2.616-.935-.349-.91-.864-1.143-.864-1.143-.71-.48.051-.48.051-.48.787.051 1.2.805 1.2.805.695 1.194 1.817.857 2.268.649.064-.507.27-.857.49-1.052-1.728-.182-3.545-.857-3.545-3.87 0-.857.31-1.558.8-2.104-.078-.195-.349-1 .077-2.078 0 0 .657-.208 2.14.805a7.5 7.5 0 0 1 1.946-.26c.657 0 1.328.092 1.946.26 1.483-1.013 2.14-.805 2.14-.805.426 1.078.155 1.883.078 2.078.502.546.799 1.247.799 2.104 0 3.013-1.818 3.675-3.558 3.87.284.247.528.714.528 1.454 0 1.052-.012 1.896-.012 2.156 0 .208.142.455.528.377a7.84 7.84 0 0 0 5.324-7.441c.013-4.338-3.48-7.844-7.773-7.844" clipRule="evenodd" /></svg>
+  if (provider === 'discord') return <svg className="oauth-provider-icon" viewBox="0 0 20 19" aria-hidden="true"><path fill="currentColor" d="M16.224 3.768a14.5 14.5 0 0 0-3.67-1.153c-.158.286-.343.67-.47.976a13.5 13.5 0 0 0-4.067 0c-.128-.306-.317-.69-.476-.976A14.4 14.4 0 0 0 3.868 3.77C1.546 7.28.916 10.703 1.231 14.077a14.7 14.7 0 0 0 4.5 2.306q.545-.748.965-1.587a9.5 9.5 0 0 1-1.518-.74q.191-.14.372-.293c2.927 1.369 6.107 1.369 8.999 0q.183.152.372.294-.723.437-1.52.74.418.838.963 1.588a14.6 14.6 0 0 0 4.504-2.308c.37-3.911-.63-7.302-2.644-10.309m-9.13 8.234c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.894 0 1.614.82 1.599 1.82.001 1-.705 1.82-1.6 1.82m5.91 0c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.893 0 1.614.82 1.599 1.82 0 1-.706 1.82-1.6 1.82" /></svg>
   return <span className="oauth-provider-fallback" aria-hidden="true">{provider[0].toUpperCase()}</span>
 }
 

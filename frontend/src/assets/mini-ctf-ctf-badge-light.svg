@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" shape-rendering="geometricPrecision">
+  <path fill="#000" d="M256 16 480 144v224L256 496 32 368V144L256 16Z"/>
+  <path fill="#165FA9" d="M256 47 452 159v194L256 465 60 353V159L256 47Z"/>
+  <path fill="#F5F8FC" d="M256 74 420 168v176l-164 94-164-94V168l164-94Z"/>
+  <path fill="#17202D" d="M108 166h111v42h-66v37h53v41h-53v42h66v42H108v-38H88V204h20v-38Zm111 0h91v42h-24v164h-43V208h-24v-42Zm112 0h100v42h-57v38h48v42h-48v84h-43V166Z"/>
+  <path fill="#165FA9" d="M60 159 128 120v19l-49 28-19 11v-19Zm392 0-68-39v19l49 28 19 11v-19Z"/>
+</svg>

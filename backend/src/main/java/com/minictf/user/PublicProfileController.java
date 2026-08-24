@@ -25,7 +25,7 @@ public class PublicProfileController {
     return ResponseEntity.ok()
         .contentType(image.mediaType())
         .header("X-Content-Type-Options", "nosniff")
-        .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
+        .cacheControl(CacheControl.noCache().mustRevalidate())
         .body(image.resource());
   }
 }

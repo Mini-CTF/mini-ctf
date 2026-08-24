@@ -1,4 +1,4 @@
-# Google and GitHub sign-in
+# Google, GitHub, and Discord sign-in
 
 The backend owns the OAuth authorization-code flow and only returns a Mini CTF JWT to the
 frontend after a successful provider login. Provider access tokens are not exposed to the browser.
@@ -12,6 +12,7 @@ callback directly on port `8080`. Register these exact redirect URLs in the prov
 |---|---|
 | Google | `http://localhost:8080/login/oauth2/code/google` |
 | GitHub | `http://localhost:8080/login/oauth2/code/github` |
+| Discord | `http://localhost:8080/login/oauth2/code/discord` |
 
 For Google, create an OAuth 2.0 **Web application** client. If its consent screen is in **Testing**,
 add the Google account used for login under **Test users**. For GitHub, create an OAuth App with the
@@ -24,6 +25,8 @@ GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
 ```
 
 Restart the backend after changing `.env`. The login page queries
