@@ -13,7 +13,7 @@ const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
 const initialOAuthError = new URLSearchParams(window.location.search).get('oauthError')
 const initialLoginError = initialOAuthError
   ? initialOAuthError === 'authorization_request_not_found'
-    ? 'OAuth session expired. Open the login page on localhost and try again.'
+    ? 'OAuth session expired. Open the login page and try again.'
     : 'OAuth sign-in could not be completed. Please try again.'
   : ''
 type Theme = 'dark' | 'light'
