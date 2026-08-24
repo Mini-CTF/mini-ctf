@@ -6,7 +6,7 @@ import com.minictf.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.Set;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-  private static final Set<String> PROVIDERS = Set.of("google", "github", "kakao", "naver");
+  private static final List<String> PROVIDERS =
+      List.of("google", "github", "kakao", "discord", "naver");
   private final AuthService service;
   private final UserRepository users;
   private final RateLimitService rateLimits;
@@ -80,7 +81,6 @@ public class AuthController {
                       && !r.getClientId().isBlank()
                       && !"not-configured".equals(r.getClientId());
                 })
-            .sorted()
             .toList());
   }
 
