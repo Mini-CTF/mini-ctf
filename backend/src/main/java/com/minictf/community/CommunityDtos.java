@@ -23,6 +23,10 @@ public final class CommunityDtos {
       String authorNickname,
       int viewCount,
       long commentCount,
+      long likeCount,
+      long dislikeCount,
+      long recommendCount,
+      String viewerReaction,
       Instant createdAt,
       Instant updatedAt) {}
 
@@ -34,11 +38,20 @@ public final class CommunityDtos {
       String author,
       String authorNickname,
       int viewCount,
+      long commentCount,
+      long likeCount,
+      long dislikeCount,
+      long recommendCount,
+      String viewerReaction,
       boolean editable,
       Instant createdAt,
       Instant updatedAt) {}
 
-  public record CommentRequest(@NotBlank @Size(max = 2_000) String content) {}
+  public record CommentRequest(
+      @NotBlank @Size(max = 2_000) String content, @Positive Long parentId) {}
+
+  public record ReactionRequest(
+      @NotBlank @Pattern(regexp = "(?i)LIKE|DISLIKE|RECOMMEND") String reaction) {}
 
   public record PostCommentView(
       Long id,
@@ -46,6 +59,8 @@ public final class CommunityDtos {
       String author,
       String authorNickname,
       boolean editable,
+      Long parentId,
+      boolean pinned,
       Instant createdAt,
       Instant updatedAt) {}
 

@@ -9,6 +9,7 @@ import com.minictf.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Locale;
+import java.time.Instant;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommunityService {
   private final PostRepository posts;
   private final PostCommentRepository postComments;
+  private final PostReactionRepository postReactions;
   private final ChallengeCommentRepository challengeComments;
   private final ChallengeRepository challenges;
   private final SolveRepository solves;
@@ -28,6 +30,7 @@ public class CommunityService {
   public CommunityService(
       PostRepository posts,
       PostCommentRepository postComments,
+      PostReactionRepository postReactions,
       ChallengeCommentRepository challengeComments,
       ChallengeRepository challenges,
       SolveRepository solves,
@@ -35,6 +38,7 @@ public class CommunityService {
       RateLimitService rateLimits) {
     this.posts = posts;
     this.postComments = postComments;
+    this.postReactions = postReactions;
     this.challengeComments = challengeComments;
     this.challenges = challenges;
     this.solves = solves;
@@ -103,6 +107,14 @@ public class CommunityService {
   public List<CommunityDtos.PostCommentView> listPostComments(Long postId, String username) {
     getPost(postId);
     return postComments.findByPostIdOrderByCreatedAtAsc(postId).stream()
+        .sorted(
+            (left, right) -> {
+              int byParent = Boolean.compare(left.getParent() != null, right.getParent() != null);
+              if (byParent != 0) return byParent;
+              int byPinned = Boolean.compare(right.getPinnedAt() != null, left.getPinnedAt() != null);
+              if (byPinned != 0) return byPinned;
+              return left.getCreatedAt().compareTo(right.getCreatedAt());
+            })
         .map(c -> postCommentView(c, username))
         .toList();
   }
@@ -111,12 +123,55 @@ public class CommunityService {
   public CommunityDtos.PostCommentView createPostComment(
       Long postId, CommunityDtos.CommentRequest request, String username, String ip) {
     User user = current(username);
+    Post post = getPost(postId);
+    PostComment parent = null;
+    if (request.parentId() != null) {
+      parent = getPostComment(request.parentId());
+      if (!parent.getPost().getId().equals(postId) || parent.getParent() != null)
+        throw new IllegalArgumentException("Replies can only target a top-level comment");
+    }
     rateLimits.check("post-comment", user.getId() + ":" + ip, 10, 60);
     PostComment comment = new PostComment();
-    comment.setPost(getPost(postId));
+    comment.setPost(post);
     comment.setUser(user);
+    comment.setParent(parent);
     comment.setContent(clean(request.content()));
     return postCommentView(postComments.save(comment), username);
+  }
+
+  @Transactional
+  public CommunityDtos.PostDetail reactToPost(
+      Long postId, CommunityDtos.ReactionRequest request, String username) {
+    User user = current(username);
+    Post post = getPost(postId);
+    String reaction = request.reaction().toUpperCase(Locale.ROOT);
+    PostReaction current = postReactions.findByPostIdAndUserId(postId, user.getId()).orElse(null);
+    if (current != null && reaction.equals(current.getReactionType())) {
+      postReactions.delete(current);
+    } else if (current != null) {
+      current.setReactionType(reaction);
+    } else {
+      PostReaction next = new PostReaction();
+      next.setPost(post);
+      next.setUser(user);
+      next.setReactionType(reaction);
+      postReactions.save(next);
+    }
+    return postDetail(post, username, post.getViewCount());
+  }
+
+  @Transactional
+  public CommunityDtos.PostCommentView pinReply(Long postId, Long commentId, String username) {
+    User user = current(username);
+    Post post = getPost(postId);
+    if (!post.getUser().getId().equals(user.getId()))
+      throw new AccessDeniedException("Only the post author can pin a reply");
+    PostComment reply = getPostComment(commentId);
+    if (!reply.getPost().getId().equals(postId) || reply.getParent() == null)
+      throw new IllegalArgumentException("Only replies can be pinned");
+    postComments.clearPinnedByPostId(postId);
+    reply.setPinnedAt(Instant.now());
+    return postCommentView(reply, username);
   }
 
   @Transactional
@@ -280,23 +335,22 @@ public class CommunityService {
         u.getNickname(),
         p.getViewCount(),
         postComments.countByPostId(p.getId()),
+        reactionCount(p, "LIKE"),
+        reactionCount(p, "DISLIKE"),
+        reactionCount(p, "RECOMMEND"),
+        viewerReaction(p, null),
         p.getCreatedAt(),
         p.getUpdatedAt());
   }
 
   private CommunityDtos.PostDetail postDetail(Post p, String username, int views) {
     User u = p.getUser();
+    CommunityDtos.PostSummary summary = postSummary(p, username);
     return new CommunityDtos.PostDetail(
-        p.getId(),
-        p.getTitle(),
-        p.getContent(),
-        p.getCategory(),
-        u.getUsername(),
-        u.getNickname(),
-        views,
-        editable(u, username),
-        p.getCreatedAt(),
-        p.getUpdatedAt());
+        summary.id(), summary.title(), p.getContent(), summary.category(), summary.author(),
+        summary.authorNickname(), summary.viewCount(), summary.commentCount(), summary.likeCount(),
+        summary.dislikeCount(), summary.recommendCount(), summary.viewerReaction(), editable(u, username),
+        p.getCreatedAt(), p.getUpdatedAt());
   }
 
   private CommunityDtos.PostCommentView postCommentView(PostComment c, String username) {
@@ -307,8 +361,32 @@ public class CommunityService {
         u.getUsername(),
         u.getNickname(),
         editable(u, username),
+        c.getParent() == null ? null : c.getParent().getId(),
+        c.getPinnedAt() != null,
         c.getCreatedAt(),
         c.getUpdatedAt());
+  }
+
+  private CommunityDtos.PostSummary postSummary(Post p, String username) {
+    User u = p.getUser();
+    return new CommunityDtos.PostSummary(
+        p.getId(), p.getTitle(), p.getCategory(), u.getUsername(), u.getNickname(), p.getViewCount(),
+        postComments.countByPostId(p.getId()), reactionCount(p, "LIKE"), reactionCount(p, "DISLIKE"),
+        reactionCount(p, "RECOMMEND"), viewerReaction(p, username), p.getCreatedAt(), p.getUpdatedAt());
+  }
+
+  private long reactionCount(Post post, String reaction) {
+    return postReactions.countByPostIdAndReactionType(post.getId(), reaction);
+  }
+
+  private String viewerReaction(Post post, String username) {
+    User user = userOrNull(username);
+    return user == null
+        ? null
+        : postReactions
+            .findByPostIdAndUserId(post.getId(), user.getId())
+            .map(PostReaction::getReactionType)
+            .orElse(null);
   }
 
   private CommunityDtos.ChallengeCommentView challengeCommentView(

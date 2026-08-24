@@ -40,6 +40,10 @@ export type PostSummary = {
   authorNickname: string
   viewCount: number
   commentCount: number
+  likeCount: number
+  dislikeCount: number
+  recommendCount: number
+  viewerReaction: 'LIKE' | 'DISLIKE' | 'RECOMMEND' | null
   createdAt: string
   updatedAt: string
 }
@@ -52,6 +56,8 @@ export type PostComment = {
   author: string
   authorNickname: string
   editable: boolean
+  parentId: number | null
+  pinned: boolean
   createdAt: string
   updatedAt: string
 }

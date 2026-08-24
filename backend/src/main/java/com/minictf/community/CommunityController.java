@@ -58,6 +58,14 @@ public class CommunityController {
     service.deletePost(id, name(auth));
   }
 
+  @PostMapping("/posts/{id}/reaction")
+  public ApiResponse<?> reactToPost(
+      @PathVariable Long id,
+      @Valid @RequestBody CommunityDtos.ReactionRequest request,
+      Authentication auth) {
+    return ApiResponse.ok(service.reactToPost(id, request, name(auth)));
+  }
+
   @GetMapping("/posts/{postId}/comments")
   public ApiResponse<?> comments(@PathVariable Long postId, Authentication auth) {
     return ApiResponse.ok(service.listPostComments(postId, name(auth)));
@@ -87,6 +95,12 @@ public class CommunityController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteComment(@PathVariable Long id, Authentication auth) {
     service.deletePostComment(id, name(auth));
+  }
+
+  @PatchMapping("/posts/{postId}/comments/{commentId}/pin")
+  public ApiResponse<?> pinReply(
+      @PathVariable Long postId, @PathVariable Long commentId, Authentication auth) {
+    return ApiResponse.ok(service.pinReply(postId, commentId, name(auth)));
   }
 
   private String name(Authentication auth) {

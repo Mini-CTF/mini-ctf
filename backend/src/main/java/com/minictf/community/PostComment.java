@@ -19,6 +19,10 @@ public class PostComment {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "parent_id")
+  private PostComment parent;
+
   @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
 
@@ -27,6 +31,9 @@ public class PostComment {
 
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
+
+  @Column(name = "pinned_at")
+  private Instant pinnedAt;
 
   @PrePersist
   void create() {
@@ -60,6 +67,9 @@ public class PostComment {
     user = v;
   }
 
+  public PostComment getParent() { return parent; }
+  public void setParent(PostComment value) { parent = value; }
+
   public String getContent() {
     return content;
   }
@@ -75,4 +85,7 @@ public class PostComment {
   public Instant getUpdatedAt() {
     return updatedAt;
   }
+
+  public Instant getPinnedAt() { return pinnedAt; }
+  public void setPinnedAt(Instant value) { pinnedAt = value; }
 }

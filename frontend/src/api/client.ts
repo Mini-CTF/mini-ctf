@@ -66,12 +66,16 @@ export const api = {
   updatePost: (id: number, payload: { title: string; content: string; category: CommunityCategory }) =>
     request<PostDetail>(`/community/posts/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deletePost: (id: number) => request<void>(`/community/posts/${id}`, { method: 'DELETE' }),
+  reactToPost: (id: number, reaction: 'LIKE' | 'DISLIKE' | 'RECOMMEND') =>
+    request<PostDetail>(`/community/posts/${id}/reaction`, { method: 'POST', body: JSON.stringify({ reaction }) }),
   postComments: (postId: number) => request<PostComment[]>(`/community/posts/${postId}/comments`),
-  createPostComment: (postId: number, content: string) =>
-    request<PostComment>(`/community/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
+  createPostComment: (postId: number, content: string, parentId?: number) =>
+    request<PostComment>(`/community/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content, parentId }) }),
   updatePostComment: (id: number, content: string) =>
     request<PostComment>(`/community/comments/${id}`, { method: 'PUT', body: JSON.stringify({ content }) }),
   deletePostComment: (id: number) => request<void>(`/community/comments/${id}`, { method: 'DELETE' }),
+  pinPostReply: (postId: number, commentId: number) =>
+    request<PostComment>(`/community/posts/${postId}/comments/${commentId}/pin`, { method: 'PATCH' }),
   adminDashboard: () => request<AdminDashboard>('/admin/dashboard'),
   adminPosts: () => request<AdminPost[]>('/admin/community/posts'),
   adminComments: () => request<AdminComment[]>('/admin/community/comments'),

@@ -121,6 +121,15 @@ html[data-theme='light'] .hero-hero-logo { opacity: 1; filter: invert(1); }
 .community-toolbar,
 .inline-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .community-toolbar { justify-content: space-between; padding: 28px 0; border-bottom: 1px solid var(--line); }
+.pinned-notices { margin-top: 28px; border: 1px solid rgba(99, 169, 255, .5); background: var(--accent-dim); }
+.pinned-notices-heading { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid rgba(99, 169, 255, .35); }
+.pinned-notices-heading .eyebrow { margin: 0; color: var(--accent); }
+.pinned-notices-heading > span { color: var(--accent); font-family: var(--mono); font-size: 13px; }
+.pinned-notice { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; border: 0; border-bottom: 1px solid rgba(99, 169, 255, .24); background: transparent; color: inherit; padding: 15px 18px; text-align: left; }
+.pinned-notice:last-child { border-bottom: 0; }
+.pinned-notice:hover { background: rgba(99, 169, 255, .08); }
+.pinned-notice strong { color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pinned-notice small { color: var(--muted); font-size: 13px; }
 .community-editor,
 .comment-writer { display: grid; gap: 12px; width: 100%; border: 1px solid var(--line); background: var(--surface); padding: 18px; }
 .community-editor input,
@@ -142,12 +151,27 @@ html[data-theme='light'] .hero-hero-logo { opacity: 1; filter: invert(1); }
 .comment-section { padding: 38px 0 80px; max-width: 800px; }
 .comment-section h2,
 .admin-section h2 { font-size: 27px; color: #fff; margin: 0 0 18px; }
+.comment-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.comment-section-heading h2 span { color: var(--accent); font-family: var(--mono); font-size: 16px; }
+.comment-section-heading small { color: var(--muted); padding-bottom: 18px; }
 .comment { border-bottom: 1px solid var(--line); padding: 18px 0; }
 .comment strong { color: #fff; display: block; }
 .comment small { color: var(--muted); font-size: 13px; }
 .comment p { color: #d7dce4; line-height: 1.65; white-space: pre-wrap; }
 .comment-actions { display: flex; gap: 12px; }
 .comment-actions button { border: 0; background: transparent; color: var(--accent); padding: 0; font: inherit; font-size: 14px; }
+.threaded-comment { border-bottom: 1px solid var(--line); }
+.threaded-comment > .comment { border-bottom: 0; }
+.comment.reply { margin-left: 30px; padding-left: 18px; border-left: 2px solid var(--line); }
+.comment.reply.pinned { border-left-color: var(--accent); background: var(--accent-dim); padding: 16px 18px; margin: 0 0 0 30px; }
+.pinned-reply-label { display: inline-block; margin-bottom: 7px; color: var(--accent); font: 12px var(--mono); letter-spacing: .08em; }
+.reply-writer { margin: 0 0 16px 30px; width: calc(100% - 30px); }
+.reaction-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 25px 0; }
+.reaction-button { display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--line); background: transparent; color: var(--muted); padding: 9px 12px; font: 13px var(--mono); }
+.reaction-button:hover:not(:disabled),
+.reaction-button.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.reaction-button:disabled { cursor: not-allowed; opacity: .6; }
+.reaction-button span { color: #fff; font-weight: 700; }
 .admin-section { margin-top: 42px; }
 .admin-table { border-top: 1px solid var(--line); }
 .admin-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); padding: 16px 8px; }
@@ -395,6 +419,13 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
   .community-post-row > span,
   .community-post-row small { display: none; }
   .community-toolbar { align-items: stretch; }
+  .pinned-notice { grid-template-columns: auto minmax(0, 1fr); }
+  .pinned-notice small { display: none; }
+  .comment-section-heading { align-items: flex-start; flex-direction: column; }
+  .comment-section-heading small { padding-bottom: 0; }
+  .comment.reply { margin-left: 16px; }
+  .comment.reply.pinned { margin-left: 16px; }
+  .reply-writer { margin-left: 16px; width: calc(100% - 16px); }
   .community-toolbar .filter-tabs { width: 100%; }
   .admin-row { align-items: flex-start; flex-direction: column; }
   .admin-summary-grid { grid-template-columns: 1fr 1fr; }
