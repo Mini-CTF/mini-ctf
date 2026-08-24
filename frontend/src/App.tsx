@@ -40,7 +40,6 @@ function App() {
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [vaultOpening, setVaultOpening] = useState(false)
   const [vaultOpen, setVaultOpen] = useState(false)
-  const [vaultClickProgress, setVaultClickProgress] = useState(0)
   const vaultClicks = useRef<number[]>([])
 
   const refresh = async () => {
@@ -135,13 +134,10 @@ function App() {
     const now = Date.now()
     vaultClicks.current = vaultClicks.current.filter((at) => now - at < 5000)
     vaultClicks.current.push(now)
-    setVaultClickProgress(vaultClicks.current.length)
     if (vaultClicks.current.length < 5) {
-      window.setTimeout(() => setVaultClickProgress((progress) => progress === vaultClicks.current.length ? 0 : progress), 1200)
       return
     }
     vaultClicks.current = []
-    setVaultClickProgress(0)
     setVaultOpening(true)
     window.setTimeout(() => { setVaultOpening(false); setVaultOpen(true) }, 2500)
   }
@@ -165,7 +161,7 @@ function App() {
     <main>
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       {loading && <div className="page"><LoadingState label="Loading live platform data..." /></div>}
-      {!loading && view === 'home' && <Home stats={stats} challenges={challenges} onExplore={() => navigate('challenges')} onRanking={() => navigate('ranking')} onOpen={openChallenge} onVault={triggerVault} vaultProgress={vaultClickProgress} />}
+      {!loading && view === 'home' && <Home stats={stats} challenges={challenges} onExplore={() => navigate('challenges')} onRanking={() => navigate('ranking')} onOpen={openChallenge} onVault={triggerVault} />}
       {!loading && view === 'challenges' && (selected ? <ChallengeDetailView item={selected} loggedIn={Boolean(user)} onBack={() => setSelected(null)} onLogin={() => navigate('login')} onSubmitted={refresh} /> : openingChallenge ? <div className="page"><LoadingState label={`Opening ${openingChallenge}...`} /></div> : <ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} onOpen={openChallenge} />)}
       {!loading && view === 'ranking' && <RankingView rows={ranking} attendanceRows={attendanceRanking} />}
       {!loading && view === 'profile' && <ProfileView user={user} onChallenges={() => navigate('challenges')} onLogin={() => navigate('login')} onVault={() => setVaultOpen(true)} />}
@@ -185,8 +181,8 @@ function LoadingState({ label }: { label: string }) {
   return <div className="loading-state" role="status"><span className="loading-mark" aria-hidden="true" /><p>{label}</p></div>
 }
 
-function Home({ stats, challenges, onExplore, onRanking, onOpen, onVault, vaultProgress }: { stats: Stats; challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void; onVault: () => void; vaultProgress: number }) {
-  return <div className="page home-page"><section className="hero-section"><div className="hero-copy"><p className="eyebrow">SECURITY TRAINING PLATFORM</p><h1>Learn security<br /><span>by solving.</span></h1><p className="hero-description">Live challenges, secure FLAG validation, and a real ranking.</p><div className="hero-actions"><button className="button primary" type="button" onClick={onExplore}>Start challenges</button><button className="button ghost" type="button" onClick={onRanking}>View ranking</button></div></div><button className="hero-visual hero-vault-trigger" type="button" onClick={onVault} aria-label="Mini CTF emblem, click five times to open Cipher Vault"><ThemeLogo className="hero-hero-logo" alt="Mini CTF emblem" /><span className={vaultProgress ? 'vault-click-hint is-counting' : 'vault-click-hint'}>{vaultProgress ? `${vaultProgress} / 5` : 'VAULT SIGNAL'}</span></button></section><section className="stat-strip" aria-label="Platform statistics"><Stat value={stats.challenges} label="Challenges" detail="active labs" /><Stat value={stats.solves} label="Solves" detail="recorded" /><Stat value={stats.users} label="Learners" detail="registered" /><div className="live-badge">live platform</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">EXPLORE THE LABS</p><h2>Featured challenges.</h2></div><button type="button" className="text-link" onClick={onExplore}>View all challenges</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
+function Home({ stats, challenges, onExplore, onRanking, onOpen, onVault }: { stats: Stats; challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void; onVault: () => void }) {
+  return <div className="page home-page"><section className="hero-section"><div className="hero-copy"><p className="eyebrow">SECURITY TRAINING PLATFORM</p><h1>Learn security<br /><span>by solving.</span></h1><p className="hero-description">Live challenges, secure FLAG validation, and a real ranking.</p><div className="hero-actions"><button className="button primary" type="button" onClick={onExplore}>Start challenges</button><button className="button ghost" type="button" onClick={onRanking}>View ranking</button></div></div><button className="hero-visual hero-vault-trigger" type="button" onClick={onVault} aria-label="Mini CTF emblem"><ThemeLogo className="hero-hero-logo" alt="Mini CTF emblem" /></button></section><section className="stat-strip" aria-label="Platform statistics"><Stat value={stats.challenges} label="Challenges" detail="active labs" /><Stat value={stats.solves} label="Solves" detail="recorded" /><Stat value={stats.users} label="Learners" detail="registered" /><div className="live-badge">live platform</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">EXPLORE THE LABS</p><h2>Featured challenges.</h2></div><button type="button" className="text-link" onClick={onExplore}>View all challenges</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
 }
 
 function ThemeLogo({ className, alt }: { className: string; alt: string }) {
