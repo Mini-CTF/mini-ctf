@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://mini-ctf-backend.onrender.com/api/:path*"
+    },
+    {
       "source": "/auth/callback",
       "destination": "/index.html"
     }
