@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SocialService {
+  private static final java.util.regex.Pattern USERNAME_PATTERN =
+      java.util.regex.Pattern.compile("[A-Za-z0-9_]{3,50}");
   private final UserRepository users;
   private final FriendshipRepository friendships;
   private final DirectMessageRepository messages;
@@ -123,9 +125,21 @@ public class SocialService {
   }
 
   private User byUsername(String username) {
+    String normalized = normalizeUsername(username);
     return users
-        .findByUsernameIgnoreCase(username)
+        .findByUsernameIgnoreCase(normalized)
         .orElseThrow(() -> new EntityNotFoundException("User not found"));
+  }
+
+  private String normalizeUsername(String username) {
+    if (username == null) throw new IllegalArgumentException("Username is required");
+    String normalized = username.trim();
+    if (normalized.startsWith("@")) normalized = normalized.substring(1).trim();
+    if (!USERNAME_PATTERN.matcher(normalized).matches()) {
+      throw new IllegalArgumentException(
+          "Username must be 3-50 characters using only letters, numbers, or underscore");
+    }
+    return normalized;
   }
 
   private SocialDtos.FriendView friendView(User current, Friendship friendship) {

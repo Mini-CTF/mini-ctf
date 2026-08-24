@@ -13,6 +13,8 @@ import com.minictf.auth.JwtService;
 import com.minictf.auth.OAuthAccountRepository;
 import com.minictf.challenge.*;
 import com.minictf.community.*;
+import com.minictf.social.DirectMessageRepository;
+import com.minictf.social.FriendshipRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import java.util.List;
@@ -48,10 +50,14 @@ class BackendIntegrationTests {
   @Autowired AntiCheatEventRepository antiCheatEvents;
   @Autowired SecurityEventRepository securityEvents;
   @Autowired AdminModerationService moderation;
+  @Autowired FriendshipRepository friendships;
+  @Autowired DirectMessageRepository directMessages;
 
   @BeforeEach
   void cleanDatabase() {
     securityEvents.deleteAll();
+    directMessages.deleteAll();
+    friendships.deleteAll();
     challengeComments.deleteAll();
     postComments.deleteAll();
     posts.deleteAll();
@@ -63,10 +69,42 @@ class BackendIntegrationTests {
   }
 
   @Test
+  void friendRequestAcceptAndUsernameNormalizationWorkEndToEnd() throws Exception {
+    User alice = user("alice", "USER");
+    User bob = user("bob_1", "USER");
+    String aliceToken = jwt.createToken(alice.getId(), alice.getRole());
+    String bobToken = jwt.createToken(bob.getId(), bob.getRole());
+
+    mvc.perform(
+            post("/api/social/friends/{username}", "@bob_1")
+                .header("Authorization", bearer(aliceToken)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.username").value("bob_1"))
+        .andExpect(jsonPath("$.data.relationshipStatus").value("PENDING"));
+
+    mvc.perform(get("/api/social/friends").header("Authorization", bearer(bobToken)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data[0].username").value("alice"))
+        .andExpect(jsonPath("$.data[0].incomingRequest").value(true));
+
+    mvc.perform(
+            post("/api/social/friends/{username}/accept", "alice")
+                .header("Authorization", bearer(bobToken)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.relationshipStatus").value("ACCEPTED"));
+
+    mvc.perform(
+            post("/api/social/friends/{username}", "not-valid!")
+                .header("Authorization", bearer(aliceToken)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error.code").value("INVALID_INPUT"));
+  }
+
+  @Test
   void authenticationUsesSafeErrorsAndNeverStoresPlainPassword() throws Exception {
     String body =
         """
-                {"username":"Student_1","nickname":"학생","password":"strong-password","passwordConfirmation":"strong-password"}
+                {"username":"Student_1","nickname":"","password":"strong-password","passwordConfirmation":"strong-password"}
                 """;
     String uniqueUsername = "Student_" + System.nanoTime();
     body = body.replace("Student_1", uniqueUsername);
@@ -76,6 +114,7 @@ class BackendIntegrationTests {
         .andExpect(jsonPath("$.data.token").isNotEmpty());
 
     User saved = users.findByUsernameIgnoreCase(uniqueUsername).orElseThrow();
+    assertThat(saved.getNickname()).isEqualTo(uniqueUsername);
     assertThat(saved.getPasswordHash()).isNotEqualTo("strong-password");
     assertThat(encoder.matches("strong-password", saved.getPasswordHash())).isTrue();
 
@@ -93,6 +132,21 @@ class BackendIntegrationTests {
                         .formatted(uniqueUsername)))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error.code").value("INVALID_CREDENTIALS"));
+    mvc.perform(
+            post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"username\":\"  %s  \",\"password\":\"strong-password\"}"
+                        .formatted(uniqueUsername.toLowerCase())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.user.username").value(uniqueUsername));
+    mvc.perform(
+            post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"username\":\"another_user\",\"nickname\":\"\",\"password\":\"strong-password\",\"passwordConfirmation\":\"different-password\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error.code").value("INVALID_INPUT"));
     mvc.perform(get("/api/users/me"))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));

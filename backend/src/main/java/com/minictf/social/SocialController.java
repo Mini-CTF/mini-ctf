@@ -4,7 +4,6 @@ import com.minictf.common.ApiResponse;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +29,7 @@ public class SocialController {
 
   @PostMapping("/friends/{username}")
   public ResponseEntity<ApiResponse<?>> request(
-      @PathVariable @Pattern(regexp = "[A-Za-z0-9_]{3,50}") String username,
+      @PathVariable String username,
       Authentication auth,
       jakarta.servlet.http.HttpServletRequest http) {
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -38,8 +37,7 @@ public class SocialController {
   }
 
   @PostMapping("/friends/{username}/accept")
-  public ApiResponse<?> accept(
-      @PathVariable @Pattern(regexp = "[A-Za-z0-9_]{3,50}") String username, Authentication auth) {
+  public ApiResponse<?> accept(@PathVariable String username, Authentication auth) {
     return ApiResponse.ok(service.accept(current(auth), username));
   }
 

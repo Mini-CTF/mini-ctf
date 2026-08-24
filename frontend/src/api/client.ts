@@ -18,6 +18,10 @@ import type {
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
+function normalizeUsername(username: string): string {
+  return username.trim().replace(/^@\s*/, '')
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('mini-ctf-token')
   const headers = new Headers(init.headers)
@@ -95,7 +99,7 @@ export const api = {
   },
   deleteAvatar: () => request<void>('/users/me/avatar', { method: 'DELETE' }),
   friends: () => request<Friend[]>('/social/friends'),
-  requestFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(username)}`, { method: 'POST' }),
+  requestFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(normalizeUsername(username))}`, { method: 'POST' }),
   acceptFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(username)}/accept`, { method: 'POST' }),
   removeFriend: (username: string) => request<void>(`/social/friends/${encodeURIComponent(username)}`, { method: 'DELETE' }),
   messages: (username: string) => request<DirectMessage[]>(`/social/messages/${encodeURIComponent(username)}`),

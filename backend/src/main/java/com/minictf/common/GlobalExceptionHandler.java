@@ -15,6 +15,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
@@ -26,7 +27,11 @@ public class GlobalExceptionHandler {
     return response(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage());
   }
 
-  @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class})
+  @ExceptionHandler({
+    MethodArgumentNotValidException.class,
+    ConstraintViolationException.class,
+    HandlerMethodValidationException.class
+  })
   ResponseEntity<ErrorResponse> validation(Exception ex) {
     return response(HttpStatus.UNPROCESSABLE_ENTITY, "VALIDATION_FAILED", "입력 값이 조건을 만족하지 않습니다.");
   }
