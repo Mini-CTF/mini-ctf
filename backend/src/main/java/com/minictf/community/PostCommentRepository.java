@@ -13,7 +13,15 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
 
   long countByPostId(Long postId);
 
+  @Query("select c.post.id as postId, count(c) as total from PostComment c where c.post.id in :postIds group by c.post.id")
+  List<PostCount> countByPostIds(@Param("postIds") List<Long> postIds);
+
   @Modifying
   @Query("update PostComment c set c.pinnedAt = null where c.post.id = :postId and c.pinnedAt is not null")
   int clearPinnedByPostId(@Param("postId") Long postId);
+
+  interface PostCount {
+    Long getPostId();
+    long getTotal();
+  }
 }

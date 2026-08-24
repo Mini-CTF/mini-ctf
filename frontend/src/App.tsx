@@ -243,7 +243,9 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [notices, setNotices] = useState<PostSummary[]>([])
   const [selected, setSelected] = useState<PostDetail | null>(null)
+  const [openingPostId, setOpeningPostId] = useState<number | null>(null)
   const [error, setError] = useState('')
+  const postCache = useRef(new Map<number, PostDetail>())
   const refresh = useCallback(async () => {
     try {
       const [nextPosts, nextNotices] = await Promise.all([api.communityPosts(category), api.communityPosts('NOTICE')])
@@ -255,12 +257,28 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   }, [category])
   useEffect(() => { void refresh() }, [refresh])
   if (selected) return <EnhancedCommunityPostView post={selected} user={user} onBack={() => { setSelected(null); void refresh() }} />
-  const openPost = (id: number) => api.communityPost(id).then(setSelected).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not open post.'))
+  const preloadPost = (id: number) => {
+    if (postCache.current.has(id)) return
+    api.communityPost(id).then((post) => postCache.current.set(id, post)).catch(() => undefined)
+  }
+  const openPost = async (id: number) => {
+    setOpeningPostId(id)
+    try {
+      const cached = postCache.current.get(id)
+      const post = cached ?? await api.communityPost(id)
+      postCache.current.set(id, post)
+      setSelected(post)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not open post.')
+    } finally {
+      setOpeningPostId(null)
+    }
+  }
   const visiblePosts = category === 'NOTICE' ? notices : posts
   return <div className="page community-page"><PageIntro eyebrow="COMMUNITY" title="Learn together." description="Ask questions, share safe write-ups, and discuss the Mini CTF training labs." />
-    {category !== 'NOTICE' && notices.length > 0 && <section className="pinned-notices"><div className="pinned-notices-heading"><p className="eyebrow">PINNED NOTICES</p><span>{notices.length}</span></div>{notices.map((notice) => <button type="button" className="pinned-notice" key={notice.id} onClick={() => openPost(notice.id)}><Badge tone="NOTICE">NOTICE</Badge><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleDateString()}</small></button>)}</section>}
+    {category !== 'NOTICE' && notices.length > 0 && <section className="pinned-notices"><div className="pinned-notices-heading"><p className="eyebrow">PINNED NOTICES</p><span>{notices.length}</span></div>{notices.map((notice) => <button type="button" className="pinned-notice" key={notice.id} onMouseEnter={() => preloadPost(notice.id)} onFocus={() => preloadPost(notice.id)} onClick={() => void openPost(notice.id)}><Badge tone="NOTICE">NOTICE</Badge><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleDateString()}</small></button>)}</section>}
     <div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0, likeCount: 0, dislikeCount: 0, recommendCount: 0, viewerReactions: [] }, ...current]); setSelected(post) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>
-    {error && <p className="alert error">{error}</p>}<div className="community-list">{visiblePosts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span>{post.authorNickname || post.author}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{visiblePosts.length === 0 && <EmptyState />}</div>
+    {error && <p className="alert error">{error}</p>}{openingPostId !== null && <p className="muted">Opening post...</p>}<div className="community-list">{visiblePosts.map((post) => <button type="button" className="community-post-row" key={post.id} onMouseEnter={() => preloadPost(post.id)} onFocus={() => preloadPost(post.id)} onClick={() => void openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span>{post.authorNickname || post.author}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{visiblePosts.length === 0 && <EmptyState />}</div>
   </div>
 }
 

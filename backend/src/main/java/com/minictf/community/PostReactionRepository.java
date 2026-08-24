@@ -14,4 +14,13 @@ public interface PostReactionRepository extends JpaRepository<PostReaction, Long
       Long postId, Long userId, List<String> reactionTypes);
 
   long countByPostIdAndReactionType(Long postId, String reactionType);
+
+  @org.springframework.data.jpa.repository.Query("select r.post.id as postId, r.reactionType as reactionType, count(r) as total from PostReaction r where r.post.id in :postIds group by r.post.id, r.reactionType")
+  List<ReactionCount> countByPostIds(@org.springframework.data.repository.query.Param("postIds") List<Long> postIds);
+
+  interface ReactionCount {
+    Long getPostId();
+    String getReactionType();
+    long getTotal();
+  }
 }

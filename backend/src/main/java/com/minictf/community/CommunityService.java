@@ -10,6 +10,8 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Locale;
 import java.time.Instant;
+import java.util.Map;
+import java.util.HashMap;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -54,8 +56,24 @@ public class CommunityService {
         category == null || category.isBlank()
             ? posts.findAllByOrderByCreatedAtDesc(pageable)
             : posts.findByCategoryOrderByCreatedAtDesc(category.toUpperCase(Locale.ROOT), pageable);
+    List<Post> posts = result.getContent();
+    Map<Long, Long> commentCounts = new HashMap<>();
+    Map<Long, Map<String, Long>> reactionCounts = new HashMap<>();
+    if (!posts.isEmpty()) {
+      List<Long> postIds = posts.stream().map(Post::getId).toList();
+      postComments
+          .countByPostIds(postIds)
+          .forEach(count -> commentCounts.put(count.getPostId(), count.getTotal()));
+      postReactions
+          .countByPostIds(postIds)
+          .forEach(
+              count ->
+                  reactionCounts
+                      .computeIfAbsent(count.getPostId(), ignored -> new HashMap<>())
+                      .put(count.getReactionType(), count.getTotal()));
+    }
     List<CommunityDtos.PostSummary> content =
-        result.getContent().stream().map(this::postSummary).toList();
+        posts.stream().map(post -> postSummary(post, commentCounts, reactionCounts)).toList();
     return new CommunityDtos.PageView<>(
         content,
         result.getNumber(),
@@ -358,6 +376,26 @@ public class CommunityService {
         viewerReaction(p, null),
         p.getCreatedAt(),
         p.getUpdatedAt());
+  }
+
+  private CommunityDtos.PostSummary postSummary(
+      Post post, Map<Long, Long> commentCounts, Map<Long, Map<String, Long>> reactionCounts) {
+    User user = post.getUser();
+    Map<String, Long> reactions = reactionCounts.getOrDefault(post.getId(), Map.of());
+    return new CommunityDtos.PostSummary(
+        post.getId(),
+        post.getTitle(),
+        post.getCategory(),
+        user.getUsername(),
+        user.getNickname(),
+        post.getViewCount(),
+        commentCounts.getOrDefault(post.getId(), 0L),
+        reactions.getOrDefault("LIKE", 0L),
+        reactions.getOrDefault("DISLIKE", 0L),
+        reactions.getOrDefault("RECOMMEND", 0L),
+        List.of(),
+        post.getCreatedAt(),
+        post.getUpdatedAt());
   }
 
   private CommunityDtos.PostDetail postDetail(Post p, String username, int views) {
