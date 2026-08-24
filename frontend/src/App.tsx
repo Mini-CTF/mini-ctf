@@ -14,6 +14,8 @@ const initialOAuthError = new URLSearchParams(window.location.search).get('oauth
 const initialLoginError = initialOAuthError
   ? initialOAuthError === 'authorization_request_not_found'
     ? 'OAuth session expired. Open the login page and try again.'
+    : initialOAuthError === 'discord_rate_limited'
+      ? 'Discord temporarily rate-limited the sign-in request. Please wait a few minutes and try again.'
     : 'OAuth sign-in could not be completed. Please try again.'
   : ''
 type Theme = 'dark' | 'light'

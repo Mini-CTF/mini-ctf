@@ -9,6 +9,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -16,12 +17,21 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -30,6 +40,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @EnableScheduling
 public class SecurityConfig {
+  private static final String DISCORD_USER_AGENT =
+      "Mini-CTF (https://frontend-six-rho-92.vercel.app, 0.1)";
+
   @Bean
   PasswordEncoder passwordEncoder() {
     return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
@@ -40,14 +53,17 @@ public class SecurityConfig {
       ClientRegistrationRepository registrations) {
     DefaultOAuth2AuthorizationRequestResolver pkceResolver =
         new DefaultOAuth2AuthorizationRequestResolver(registrations, "/oauth2/authorization");
-    pkceResolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
+    pkceResolver.setAuthorizationRequestCustomizer(
+        OAuth2AuthorizationRequestCustomizers.withPkce());
     DefaultOAuth2AuthorizationRequestResolver discordResolver =
         new DefaultOAuth2AuthorizationRequestResolver(registrations, "/oauth2/authorization");
     return new OAuth2AuthorizationRequestResolver() {
       @Override
       public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(
           HttpServletRequest request) {
-        return isDiscord(request) ? discordResolver.resolve(request) : pkceResolver.resolve(request);
+        return isDiscord(request)
+            ? discordResolver.resolve(request)
+            : pkceResolver.resolve(request);
       }
 
       @Override
@@ -65,13 +81,47 @@ public class SecurityConfig {
   }
 
   @Bean
+  OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest>
+      oauth2AccessTokenResponseClient() {
+    RestClientAuthorizationCodeTokenResponseClient client =
+        new RestClientAuthorizationCodeTokenResponseClient();
+    client.addHeadersConverter(
+        request -> {
+          HttpHeaders headers = new HttpHeaders();
+          if ("discord".equals(request.getClientRegistration().getRegistrationId())) {
+            headers.set(HttpHeaders.USER_AGENT, DISCORD_USER_AGENT);
+          }
+          return headers;
+        });
+    return client;
+  }
+
+  @Bean
+  OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService() {
+    DefaultOAuth2UserService service = new DefaultOAuth2UserService();
+    RestTemplate restTemplate = new RestTemplate();
+    restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
+    restTemplate
+        .getInterceptors()
+        .add(
+            (request, body, execution) -> {
+              request.getHeaders().set(HttpHeaders.USER_AGENT, DISCORD_USER_AGENT);
+              return execution.execute(request, body);
+            });
+    service.setRestOperations(restTemplate);
+    return service;
+  }
+
+  @Bean
   SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       JwtAuthenticationFilter jwtFilter,
       OAuth2LoginSuccessHandler oauthHandler,
       OAuth2LoginFailureHandler oauthFailureHandler,
       RestSecurityHandlers handlers,
-      OAuth2AuthorizationRequestResolver oauthResolver)
+      OAuth2AuthorizationRequestResolver oauthResolver,
+      OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> tokenResponseClient,
+      OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService)
       throws Exception {
     return http.csrf(c -> c.disable())
         .cors(c -> {})
@@ -112,6 +162,9 @@ public class SecurityConfig {
             o ->
                 o.authorizationEndpoint(
                         endpoint -> endpoint.authorizationRequestResolver(oauthResolver))
+                    .tokenEndpoint(
+                        endpoint -> endpoint.accessTokenResponseClient(tokenResponseClient))
+                    .userInfoEndpoint(endpoint -> endpoint.userService(oauth2UserService))
                     .successHandler(oauthHandler)
                     .failureHandler(oauthFailureHandler))
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

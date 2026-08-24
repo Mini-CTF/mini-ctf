@@ -36,6 +36,11 @@ public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
         exception instanceof OAuth2AuthenticationException oauth
             ? oauth.getError().getDescription()
             : exception.getMessage();
+    if (request.getRequestURI().endsWith("/discord")
+        && detail != null
+        && detail.contains("429 Too Many Requests")) {
+      code = "discord_rate_limited";
+    }
     log.warn("OAuth login failed path={} code={} detail={}", request.getRequestURI(), code, detail);
     String separator = redirect.contains("?") ? "&" : "?";
     response.sendRedirect(

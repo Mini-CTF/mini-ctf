@@ -64,8 +64,8 @@ spring:
         provider:
           discord:
             authorization-uri: https://discord.com/oauth2/authorize
-            token-uri: https://discord.com/api/oauth2/token
-            user-info-uri: https://discord.com/api/users/@me
+            token-uri: https://discord.com/api/v10/oauth2/token
+            user-info-uri: https://discord.com/api/v10/users/@me
             user-name-attribute: id
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize
