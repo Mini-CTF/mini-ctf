@@ -131,7 +131,7 @@ function App() {
   const triggerVault = () => {
     if (!user) { navigate('login'); return }
     const now = Date.now()
-    vaultClicks.current = vaultClicks.current.filter((at) => now - at < 1800)
+    vaultClicks.current = vaultClicks.current.filter((at) => now - at < 5000)
     vaultClicks.current.push(now)
     if (vaultClicks.current.length < 5) return
     vaultClicks.current = []
@@ -149,6 +149,7 @@ function App() {
         <NavButton active={view === 'ranking'} onClick={() => navigate('ranking')}>Ranking</NavButton>
         <NavButton active={view === 'community'} onClick={() => navigate('community')}>Community</NavButton>
         <NavButton active={view === 'profile'} onClick={() => navigate('profile')}>My Page</NavButton>
+        {user && <NavButton active={false} onClick={() => { setMobileNavOpen(false); setVaultOpen(true) }}>Vault</NavButton>}
         {user?.role === 'ADMIN' && <NavButton active={view === 'admin'} onClick={() => navigate('admin')}>Admin</NavButton>}
         {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>Sign out</button> : <button className="nav-button mobile-auth" type="button" onClick={() => navigate('login')}>Sign in</button>}
       </nav>
