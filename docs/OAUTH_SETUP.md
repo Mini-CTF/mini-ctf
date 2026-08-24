@@ -1,3 +1,5 @@
+Mini-CTF는 보안을 처음 접하는 사람도 안전하고 재미있게 해킹 기초를 학습할 수 있는 게임형 보안 교육 플랫폼입니다.
+
 # Google, GitHub, and Discord sign-in
 
 The backend owns the OAuth authorization-code flow and only returns a Mini CTF JWT to the
