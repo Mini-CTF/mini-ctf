@@ -101,9 +101,6 @@ html[data-theme='light'] .brand-logo {
 .social-button.oauth-github { background: #24292f; border-color: #3a424c; color: #fff; }
 .social-button.oauth-github span { color: #fff; }
 .social-button.oauth-github:hover { background: #32383f; border-color: #57606a; }
-.social-button.oauth-kakao { background: #fee500; border-color: #fee500; color: #191919; }
-.social-button.oauth-kakao span { color: #191919; }
-.social-button.oauth-kakao:hover { background: #f5dc00; border-color: #f5dc00; }
 .social-button.oauth-discord { background: #5865f2; border-color: #7380ff; color: #fff; }
 .social-button.oauth-discord span { color: #fff; }
 .social-button.oauth-discord:hover { background: #4752c4; border-color: #8a93ff; }

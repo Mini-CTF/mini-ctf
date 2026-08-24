@@ -117,9 +117,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     if ("naver".equals(provider))
       return first(
           nested(user, "response", "nickname", "name", "email"), attribute(user, "name", "email"));
-    if ("kakao".equals(provider))
-      return first(
-          nested(user, "properties", "nickname"), nested(user, "kakao_account", "profile"));
     if ("discord".equals(provider)) return attribute(user, "global_name", "username", "email");
     return attribute(user, "name", "login", "nickname", "email");
   }

@@ -47,13 +47,6 @@ spring:
             client-secret: ${GITHUB_CLIENT_SECRET:not-configured}
             scope: read:user,user:email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-          kakao:
-            client-id: ${KAKAO_CLIENT_ID:not-configured}
-            client-secret: ${KAKAO_CLIENT_SECRET:not-configured}
-            authorization-grant-type: authorization_code
-            client-authentication-method: client_secret_post
-            scope: profile_nickname,account_email
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
           discord:
             client-id: ${DISCORD_CLIENT_ID:not-configured}
             client-secret: ${DISCORD_CLIENT_SECRET:not-configured}
@@ -69,11 +62,6 @@ spring:
             scope: name,email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
         provider:
-          kakao:
-            authorization-uri: https://kauth.kakao.com/oauth/authorize
-            token-uri: https://kauth.kakao.com/oauth/token
-            user-info-uri: https://kapi.kakao.com/v2/user/me
-            user-name-attribute: id
           discord:
             authorization-uri: https://discord.com/oauth2/authorize
             token-uri: https://discord.com/api/oauth2/token

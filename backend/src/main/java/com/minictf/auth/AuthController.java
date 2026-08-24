@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
   private static final List<String> PROVIDERS =
-      List.of("google", "github", "kakao", "discord", "naver");
+      List.of("google", "github", "discord", "naver");
   private final AuthService service;
   private final UserRepository users;
   private final RateLimitService rateLimits;

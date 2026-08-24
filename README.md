@@ -26,7 +26,7 @@ Browser
 ## 주요 기능
 
 - username/password 회원가입·로그인과 JWT
-- Google·GitHub·Kakao·Discord·Naver OAuth2 진입 구조와 PKCE
+- Google·GitHub·Discord·Naver OAuth2 진입 구조와 PKCE
 - Challenge 목록·상세, FLAG 제출, Artifact 다운로드
 - 중복·동시 정답 점수 지급 방지와 제출 기록
 - Ranking, 통계, My Page 데이터
