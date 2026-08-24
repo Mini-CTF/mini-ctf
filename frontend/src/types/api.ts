@@ -43,7 +43,7 @@ export type PostSummary = {
   likeCount: number
   dislikeCount: number
   recommendCount: number
-  viewerReaction: 'LIKE' | 'DISLIKE' | 'RECOMMEND' | null
+  viewerReactions: ('LIKE' | 'DISLIKE' | 'RECOMMEND')[]
   createdAt: string
   updatedAt: string
 }

@@ -145,17 +145,34 @@ public class CommunityService {
     User user = current(username);
     Post post = getPost(postId);
     String reaction = request.reaction().toUpperCase(Locale.ROOT);
-    PostReaction current = postReactions.findByPostIdAndUserId(postId, user.getId()).orElse(null);
-    if (current != null && reaction.equals(current.getReactionType())) {
-      postReactions.delete(current);
-    } else if (current != null) {
-      current.setReactionType(reaction);
+    if ("RECOMMEND".equals(reaction)) {
+      PostReaction recommend =
+          postReactions
+              .findByPostIdAndUserIdAndReactionType(postId, user.getId(), reaction)
+              .orElse(null);
+      if (recommend == null) {
+        PostReaction next = new PostReaction();
+        next.setPost(post);
+        next.setUser(user);
+        next.setReactionType(reaction);
+        postReactions.save(next);
+      } else {
+        postReactions.delete(recommend);
+      }
     } else {
-      PostReaction next = new PostReaction();
-      next.setPost(post);
-      next.setUser(user);
-      next.setReactionType(reaction);
-      postReactions.save(next);
+      List<PostReaction> votes =
+          postReactions.findByPostIdAndUserIdAndReactionTypeIn(
+              postId, user.getId(), List.of("LIKE", "DISLIKE"));
+      if (votes.stream().anyMatch(vote -> reaction.equals(vote.getReactionType()))) {
+        postReactions.deleteAll(votes);
+      } else {
+        postReactions.deleteAll(votes);
+        PostReaction next = new PostReaction();
+        next.setPost(post);
+        next.setUser(user);
+        next.setReactionType(reaction);
+        postReactions.save(next);
+      }
     }
     return postDetail(post, username, post.getViewCount());
   }
@@ -349,7 +366,7 @@ public class CommunityService {
     return new CommunityDtos.PostDetail(
         summary.id(), summary.title(), p.getContent(), summary.category(), summary.author(),
         summary.authorNickname(), summary.viewCount(), summary.commentCount(), summary.likeCount(),
-        summary.dislikeCount(), summary.recommendCount(), summary.viewerReaction(), editable(u, username),
+        summary.dislikeCount(), summary.recommendCount(), summary.viewerReactions(), editable(u, username),
         p.getCreatedAt(), p.getUpdatedAt());
   }
 
@@ -379,14 +396,13 @@ public class CommunityService {
     return postReactions.countByPostIdAndReactionType(post.getId(), reaction);
   }
 
-  private String viewerReaction(Post post, String username) {
+  private List<String> viewerReaction(Post post, String username) {
     User user = userOrNull(username);
     return user == null
-        ? null
-        : postReactions
-            .findByPostIdAndUserId(post.getId(), user.getId())
+        ? List.of()
+        : postReactions.findByPostIdAndUserId(post.getId(), user.getId()).stream()
             .map(PostReaction::getReactionType)
-            .orElse(null);
+            .toList();
   }
 
   private CommunityDtos.ChallengeCommentView challengeCommentView(

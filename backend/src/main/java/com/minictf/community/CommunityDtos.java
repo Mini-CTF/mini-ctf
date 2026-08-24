@@ -26,7 +26,7 @@ public final class CommunityDtos {
       long likeCount,
       long dislikeCount,
       long recommendCount,
-      String viewerReaction,
+      List<String> viewerReactions,
       Instant createdAt,
       Instant updatedAt) {}
 
@@ -42,7 +42,7 @@ public final class CommunityDtos {
       long likeCount,
       long dislikeCount,
       long recommendCount,
-      String viewerReaction,
+      List<String> viewerReactions,
       boolean editable,
       Instant createdAt,
       Instant updatedAt) {}
