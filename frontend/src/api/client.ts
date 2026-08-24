@@ -19,6 +19,7 @@ import type {
   Stats,
   User,
   VaultSummary,
+  HiddenSummary,
 } from '../types/api'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
@@ -65,6 +66,7 @@ export const api = {
     }),
   challengeActivity: (id: number, type: 'OPENED' | 'FOCUS_LOST' | 'FOCUS_RESTORED') =>
     request<void>(`/challenges/${id}/activity`, { method: 'POST', body: JSON.stringify({ type }) }),
+  challengeHint: (id: number) => request<{ hint: string; remainingCredits: number }>(`/challenges/${id}/hint`, { method: 'POST' }),
   communityPosts: (category?: CommunityCategory) =>
     request<PageView<PostSummary>>(`/community/posts${category ? `?category=${category}` : ''}`),
   communityPost: (id: number) => request<PostDetail>(`/community/posts/${id}`),
@@ -123,6 +125,9 @@ export const api = {
   buyVaultItem: (id: string) => request<VaultSummary>('/vault/shop/buy', { method: 'POST', body: JSON.stringify({ id }) }),
   craftVaultItem: (id: string) => request<VaultSummary>('/vault/craft', { method: 'POST', body: JSON.stringify({ id }) }),
   equipVaultItem: (id: string) => request<VaultSummary>('/vault/equip', { method: 'PUT', body: JSON.stringify({ id }) }),
+  discoverHiddenVault: () => request<HiddenSummary>('/vault/hidden/discover', { method: 'POST' }),
+  hiddenVault: () => request<HiddenSummary>('/vault/hidden'),
+  claimHiddenMission: (id: string) => request<HiddenSummary>(`/vault/hidden/missions/${encodeURIComponent(id)}/claim`, { method: 'POST' }),
   friends: () => request<Friend[]>('/social/friends'),
   requestFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(normalizeUsername(username))}`, { method: 'POST' }),
   acceptFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(username)}/accept`, { method: 'POST' }),

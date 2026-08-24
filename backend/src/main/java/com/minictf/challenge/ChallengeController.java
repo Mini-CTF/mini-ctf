@@ -48,6 +48,11 @@ public class ChallengeController {
     return ApiResponse.ok(service.submit(id, auth.getName(), req.flag(), request.getRemoteAddr()));
   }
 
+  @PostMapping("/{id}/hint")
+  public ApiResponse<ChallengeDtos.HintView> hint(@PathVariable Long id, Authentication auth) {
+    return ApiResponse.ok(service.hint(id, auth.getName()));
+  }
+
   @GetMapping("/{id}/artifact")
   public ResponseEntity<Resource> artifact(
       @PathVariable Long id, Authentication auth, HttpServletRequest request) {

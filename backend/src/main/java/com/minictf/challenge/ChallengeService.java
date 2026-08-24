@@ -70,7 +70,21 @@ public class ChallengeService {
         c.getDifficulty(),
         c.getScore(),
         solvedIds.contains(id),
-        hasArtifact(c));
+        hasArtifact(c),
+        c.getHintText() != null && !c.getHintText().isBlank(),
+        c.getHintCost());
+  }
+
+  @Transactional
+  public ChallengeDtos.HintView hint(Long id, String username) {
+    Challenge c = getActive(id);
+    User user = users.findByUsernameForUpdate(username).orElseThrow();
+    if ("ADMIN".equals(user.getRole()))
+      return new ChallengeDtos.HintView(hintText(c), Integer.MAX_VALUE);
+    if (user.getHintCredits() < c.getHintCost())
+      throw new IllegalArgumentException("Not enough hint credits");
+    user.setHintCredits(user.getHintCredits() - c.getHintCost());
+    return new ChallengeDtos.HintView(hintText(c), user.getHintCredits());
   }
 
   @Transactional
@@ -202,7 +216,22 @@ public class ChallengeService {
     if (creating || (r.flag() != null && !r.flag().isBlank()))
       c.setFlagHash(encoder.encode(r.flag()));
     c.setArtifactPath(normalizeArtifactPath(r.artifactPath()));
+    c.setHintText(r.hintText() == null || r.hintText().isBlank() ? null : r.hintText().trim());
+    c.setHintCost(r.hintCost());
     c.setActive(r.active());
+  }
+
+  private String hintText(Challenge challenge) {
+    if (challenge.getHintText() != null && !challenge.getHintText().isBlank())
+      return challenge.getHintText();
+    return switch (challenge.getCategory()) {
+      case "CRYPTO" -> "Identify the encoding layer before trying to break the message.";
+      case "FORENSICS" -> "Follow the suspicious request and decode each representation in order.";
+      case "REVERSING" ->
+          "Work backwards from the verifier's final comparison and undo one round at a time.";
+      default ->
+          "Use the challenge description as your first source of truth and isolate one clue at a time.";
+    };
   }
 
   private String normalizeArtifactPath(String value) {

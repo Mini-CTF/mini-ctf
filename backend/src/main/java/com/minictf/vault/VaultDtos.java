@@ -26,10 +26,17 @@ public final class VaultDtos {
       int fragmentCost,
       boolean hidden,
       boolean owned,
-      boolean equipped) {}
+      boolean equipped,
+      boolean consumable) {}
 
   public record Summary(
-      int gems, int fragments, List<Mission> missions, List<Cosmetic> cosmetics) {}
+      int gems, int fragments, int hintCredits, List<Mission> missions, List<Cosmetic> cosmetics) {}
+
+  public record HiddenMission(
+      String id, String name, String description, boolean eligible, boolean completed) {}
+
+  public record HiddenSummary(
+      boolean unlocked, boolean rewarded, List<HiddenMission> missions, List<Cosmetic> rewards) {}
 
   public record IdRequest(@NotBlank @Size(max = 50) String id) {}
 }

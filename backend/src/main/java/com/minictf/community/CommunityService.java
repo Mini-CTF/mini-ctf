@@ -381,6 +381,7 @@ public class CommunityService {
         p.getCategory(),
         u.getUsername(),
         u.getNickname(),
+        titleFor(u),
         p.getViewCount(),
         postComments.countByVisibleUserPostId(p.getId()),
         reactionCount(p, "LIKE"),
@@ -401,6 +402,7 @@ public class CommunityService {
         post.getCategory(),
         user.getUsername(),
         user.getNickname(),
+        titleFor(user),
         post.getViewCount(),
         commentCounts.getOrDefault(post.getId(), 0L),
         reactions.getOrDefault("LIKE", 0L),
@@ -421,6 +423,7 @@ public class CommunityService {
         summary.category(),
         summary.author(),
         summary.authorNickname(),
+        summary.authorTitle(),
         summary.viewCount(),
         summary.commentCount(),
         summary.likeCount(),
@@ -439,6 +442,7 @@ public class CommunityService {
         c.getContent(),
         u.getUsername(),
         u.getNickname(),
+        titleFor(u),
         editable(u, username),
         c.getParent() == null ? null : c.getParent().getId(),
         c.getPinnedAt() != null,
@@ -454,6 +458,7 @@ public class CommunityService {
         p.getCategory(),
         u.getUsername(),
         u.getNickname(),
+        titleFor(u),
         p.getViewCount(),
         postComments.countByVisibleUserPostId(p.getId()),
         reactionCount(p, "LIKE"),
@@ -486,8 +491,15 @@ public class CommunityService {
         c.getDiscussionType(),
         u.getUsername(),
         u.getNickname(),
+        titleFor(u),
         editable(u, username),
         c.getCreatedAt(),
         c.getUpdatedAt());
+  }
+
+  private String titleFor(User user) {
+    return user.getEquippedVaultTitle() != null
+        ? user.getEquippedVaultTitle()
+        : user.getAttendanceTitle();
   }
 }

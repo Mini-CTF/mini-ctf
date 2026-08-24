@@ -23,7 +23,11 @@ public final class ChallengeDtos {
       String difficulty,
       int score,
       boolean solved,
-      boolean artifactAvailable) {}
+      boolean artifactAvailable,
+      boolean hintAvailable,
+      int hintCost) {}
+
+  public record HintView(String hint, int remainingCredits) {}
 
   public record SubmitRequest(@NotBlank @Size(max = 200) String flag) {}
 
@@ -40,7 +44,21 @@ public final class ChallengeDtos {
       @Min(1) @Max(1_000_000) int score,
       @Size(max = 200) String flag,
       @Size(max = 500) String artifactPath,
-      boolean active) {}
+      boolean active,
+      @Size(max = 2_000) String hintText,
+      @Min(1) @Max(100) int hintCost) {
+    public AdminRequest(
+        String title,
+        String description,
+        String category,
+        String difficulty,
+        int score,
+        String flag,
+        String artifactPath,
+        boolean active) {
+      this(title, description, category, difficulty, score, flag, artifactPath, active, null, 1);
+    }
+  }
 
   public record AdminView(
       Long id,

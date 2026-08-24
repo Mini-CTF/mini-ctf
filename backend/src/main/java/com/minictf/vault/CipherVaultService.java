@@ -4,6 +4,7 @@ import com.minictf.anticheat.ChallengeActivityEventRepository;
 import com.minictf.attendance.AttendanceCheckinRepository;
 import com.minictf.challenge.SolveRepository;
 import com.minictf.user.User;
+import com.minictf.user.UserRepository;
 import java.time.*;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class CipherVaultService {
               "STORE",
               45,
               0,
+              false,
               false),
           new Item(
               "violet_circuit_frame",
@@ -31,6 +33,7 @@ public class CipherVaultService {
               "STORE",
               90,
               0,
+              false,
               false),
           new Item(
               "signal_orbit",
@@ -40,16 +43,28 @@ public class CipherVaultService {
               "STORE",
               60,
               0,
+              false,
               false),
           new Item(
               "vault_key",
               "Vault Key",
-              "A key earned with gems.",
+              "A key earned with rubies.",
               "ACCESSORY",
               "STORE",
               120,
               0,
+              false,
               false),
+          new Item(
+              "hint_credit",
+              "Hint Credit",
+              "Spend one credit to reveal a challenge hint.",
+              "CREDIT",
+              "STORE",
+              30,
+              0,
+              false,
+              true),
           new Item(
               "neon_cipher_frame",
               "Neon Cipher",
@@ -58,6 +73,7 @@ public class CipherVaultService {
               "CRAFT",
               0,
               10,
+              false,
               false),
           new Item(
               "spectral_core",
@@ -67,16 +83,8 @@ public class CipherVaultService {
               "CRAFT",
               0,
               15,
+              false,
               false),
-          new Item(
-              "ghost_protocol",
-              "Ghost Protocol",
-              "A signal only the curious can see.",
-              "FRAME",
-              "HIDDEN",
-              0,
-              0,
-              true),
           new Item(
               "first_flag",
               "Flag Seeker",
@@ -85,6 +93,7 @@ public class CipherVaultService {
               "QUEST",
               0,
               0,
+              false,
               false),
           new Item(
               "vault_breaker",
@@ -94,16 +103,48 @@ public class CipherVaultService {
               "QUEST",
               0,
               0,
+              false,
               false),
           new Item(
-              "signal_ghost",
-              "Signal Ghost",
-              "Discover the hidden vault signal.",
+              "ghost_protocol",
+              "Ghost Protocol",
+              "A legacy signal marker retained for existing vaults.",
+              "FRAME",
+              "HIDDEN",
+              0,
+              0,
+              true,
+              false),
+          new Item(
+              "crimson_lock_frame",
+              "Crimson Lock",
+              "A frame awarded only by the hidden operation.",
+              "FRAME",
+              "HIDDEN",
+              0,
+              0,
+              true,
+              false),
+          new Item(
+              "ruby_signal",
+              "Ruby Signal",
+              "A secret profile mark from beyond the visible vault.",
+              "ACCESSORY",
+              "HIDDEN",
+              0,
+              0,
+              true,
+              false),
+          new Item(
+              "zero_day_title",
+              "Zero-Day Operative",
+              "A title for operators who found the signal.",
               "TITLE",
               "HIDDEN",
               0,
               0,
-              true));
+              true,
+              false));
   private static final Map<String, MissionRule> MISSIONS =
       Map.of(
           "daily_checkin",
@@ -114,24 +155,47 @@ public class CipherVaultService {
           "daily_solver",
               new MissionRule(
                   "daily_solver", "Break the Lock", "Solve one challenge today.", 25, 1));
+  private static final List<HiddenMissionRule> HIDDEN_MISSIONS =
+      List.of(
+          new HiddenMissionRule(
+              "hidden_signal",
+              "Read the Signal",
+              "The logo was only the entrance. Claim this first fragment.",
+              "UNLOCK"),
+          new HiddenMissionRule(
+              "hidden_pulse",
+              "Match the Pulse",
+              "Complete today's attendance check-in.",
+              "CHECKIN"),
+          new HiddenMissionRule(
+              "hidden_breaker",
+              "Break the Cipher",
+              "Solve at least one challenge on the platform.",
+              "SOLVE"));
 
   private final VaultMissionCompletionRepository completions;
   private final VaultOwnedCosmeticRepository owned;
+  private final VaultHiddenMissionRepository hiddenMissions;
   private final AttendanceCheckinRepository checkins;
   private final ChallengeActivityEventRepository activities;
   private final SolveRepository solves;
+  private final UserRepository users;
 
   public CipherVaultService(
       VaultMissionCompletionRepository completions,
       VaultOwnedCosmeticRepository owned,
+      VaultHiddenMissionRepository hiddenMissions,
       AttendanceCheckinRepository checkins,
       ChallengeActivityEventRepository activities,
-      SolveRepository solves) {
+      SolveRepository solves,
+      UserRepository users) {
     this.completions = completions;
     this.owned = owned;
+    this.hiddenMissions = hiddenMissions;
     this.checkins = checkins;
     this.activities = activities;
     this.solves = solves;
+    this.users = users;
   }
 
   @Transactional(readOnly = true)
@@ -143,6 +207,45 @@ public class CipherVaultService {
   public VaultDtos.Summary discover(User user) {
     grant(user, "ghost_protocol", "HIDDEN");
     return summaryFor(user);
+  }
+
+  @Transactional
+  public VaultDtos.HiddenSummary discoverHidden(User user) {
+    user.setHiddenVaultUnlocked(true);
+    users.save(user);
+    return hiddenSummary(user);
+  }
+
+  @Transactional(readOnly = true)
+  public VaultDtos.HiddenSummary hidden(User user) {
+    if (!user.isHiddenVaultUnlocked() && !admin(user))
+      throw new IllegalArgumentException("Hidden operation has not been discovered");
+    return hiddenSummary(user);
+  }
+
+  @Transactional
+  public VaultDtos.HiddenSummary completeHiddenMission(User user, String id) {
+    if (!user.isHiddenVaultUnlocked() && !admin(user))
+      throw new IllegalArgumentException("Hidden operation has not been discovered");
+    HiddenMissionRule rule = hiddenMission(id);
+    if (hiddenMissions.existsByUserIdAndMissionId(user.getId(), id))
+      throw new IllegalArgumentException("This hidden mission is already complete");
+    if (!admin(user) && !hiddenEligible(user, rule.requirement()))
+      throw new IllegalArgumentException("Complete the hidden mission requirement first");
+    VaultHiddenMission completion = new VaultHiddenMission();
+    completion.setUser(user);
+    completion.setMissionId(id);
+    hiddenMissions.save(completion);
+    if (HIDDEN_MISSIONS.stream()
+        .allMatch(
+            mission -> hiddenMissions.existsByUserIdAndMissionId(user.getId(), mission.id()))) {
+      user.setHiddenVaultRewarded(true);
+      grant(user, "crimson_lock_frame", "HIDDEN");
+      grant(user, "ruby_signal", "HIDDEN");
+      grant(user, "zero_day_title", "HIDDEN");
+    }
+    users.save(user);
+    return hiddenSummary(user);
   }
 
   @Transactional
@@ -162,6 +265,7 @@ public class CipherVaultService {
     completions.save(completion);
     user.setCipherGems(user.getCipherGems() + rule.gems());
     user.setVaultFragments(user.getVaultFragments() + rule.fragments());
+    users.save(user);
     return summaryFor(user);
   }
 
@@ -170,14 +274,16 @@ public class CipherVaultService {
     Item item = item(id);
     if (!"STORE".equals(item.source()))
       throw new IllegalArgumentException("This item is not sold in the shop");
-    if (!admin(user) && owned.existsByUserIdAndCosmeticId(user.getId(), id))
+    if (!item.consumable() && !admin(user) && owned.existsByUserIdAndCosmeticId(user.getId(), id))
       throw new IllegalArgumentException("You already own this item");
     if (!admin(user)) {
       if (user.getCipherGems() < item.gemCost())
-        throw new IllegalArgumentException("Not enough Cipher Gems");
+        throw new IllegalArgumentException("Not enough Red Rubies");
       user.setCipherGems(user.getCipherGems() - item.gemCost());
-      grant(user, id, "STORE");
     }
+    if ("hint_credit".equals(id)) user.setHintCredits(user.getHintCredits() + 1);
+    else grant(user, id, "STORE");
+    users.save(user);
     return summaryFor(user);
   }
 
@@ -192,8 +298,9 @@ public class CipherVaultService {
       if (user.getVaultFragments() < item.fragmentCost())
         throw new IllegalArgumentException("Not enough Vault Fragments");
       user.setVaultFragments(user.getVaultFragments() - item.fragmentCost());
-      grant(user, id, "CRAFT");
     }
+    grant(user, id, "CRAFT");
+    users.save(user);
     return summaryFor(user);
   }
 
@@ -203,11 +310,14 @@ public class CipherVaultService {
     if (!available(user, item))
       throw new IllegalArgumentException("This cosmetic has not been unlocked");
     switch (item.type()) {
-      case "FRAME" -> user.setEquippedFrame(id);
-      case "ACCESSORY" -> user.setEquippedAccessory(id);
-      case "TITLE" -> user.setEquippedVaultTitle(id);
-      default -> throw new IllegalArgumentException("Unsupported cosmetic type");
+      case "FRAME" -> user.setEquippedFrame(id.equals(user.getEquippedFrame()) ? null : id);
+      case "ACCESSORY" ->
+          user.setEquippedAccessory(id.equals(user.getEquippedAccessory()) ? null : id);
+      case "TITLE" ->
+          user.setEquippedVaultTitle(id.equals(user.getEquippedVaultTitle()) ? null : id);
+      default -> throw new IllegalArgumentException("This item cannot be equipped");
     }
+    users.save(user);
     return summaryFor(user);
   }
 
@@ -230,13 +340,38 @@ public class CipherVaultService {
                         completed.contains(rule.id())))
             .toList();
     return new VaultDtos.Summary(
-        user.getCipherGems(),
+        admin(user) ? 999999 : user.getCipherGems(),
         user.getVaultFragments(),
+        admin(user) ? 999999 : user.getHintCredits(),
         missionViews,
         ITEMS.stream()
             .filter(item -> !item.hidden() || admin(user) || available(user, item))
             .map(item -> view(user, item))
             .toList());
+  }
+
+  private VaultDtos.HiddenSummary hiddenSummary(User user) {
+    List<VaultDtos.HiddenMission> missions =
+        HIDDEN_MISSIONS.stream()
+            .map(
+                rule ->
+                    new VaultDtos.HiddenMission(
+                        rule.id(),
+                        rule.name(),
+                        rule.description(),
+                        admin(user) || hiddenEligible(user, rule.requirement()),
+                        hiddenMissions.existsByUserIdAndMissionId(user.getId(), rule.id())))
+            .toList();
+    List<VaultDtos.Cosmetic> rewards =
+        ITEMS.stream()
+            .filter(item -> item.source().equals("HIDDEN"))
+            .map(item -> view(user, item))
+            .toList();
+    return new VaultDtos.HiddenSummary(
+        user.isHiddenVaultUnlocked() || admin(user),
+        user.isHiddenVaultRewarded() || admin(user),
+        missions,
+        rewards);
   }
 
   private VaultDtos.Cosmetic view(User user, Item item) {
@@ -258,11 +393,13 @@ public class CipherVaultService {
         item.fragmentCost(),
         item.hidden(),
         available,
-        equipped);
+        equipped,
+        item.consumable());
   }
 
   private boolean available(User user, Item item) {
     if (admin(user)) return true;
+    if ("CREDIT".equals(item.type())) return false;
     if ("TITLE".equals(item.type())) return titleEarned(user, item.id());
     return owned.existsByUserIdAndCosmeticId(user.getId(), item.id());
   }
@@ -271,7 +408,17 @@ public class CipherVaultService {
     return switch (id) {
       case "first_flag" -> solves.countByUser(user.getId()) >= 1;
       case "vault_breaker" -> owned.existsByUserIdAndCosmeticId(user.getId(), "neon_cipher_frame");
-      case "signal_ghost" -> owned.existsByUserIdAndCosmeticId(user.getId(), "ghost_protocol");
+      case "zero_day_title" -> owned.existsByUserIdAndCosmeticId(user.getId(), "zero_day_title");
+      default -> false;
+    };
+  }
+
+  private boolean hiddenEligible(User user, String requirement) {
+    return switch (requirement) {
+      case "UNLOCK" -> user.isHiddenVaultUnlocked() || admin(user);
+      case "CHECKIN" ->
+          admin(user) || checkins.findByUserIdAndCheckinDate(user.getId(), today()).isPresent();
+      case "SOLVE" -> admin(user) || solves.countByUser(user.getId()) > 0;
       default -> false;
     };
   }
@@ -304,6 +451,13 @@ public class CipherVaultService {
         .orElseThrow(() -> new IllegalArgumentException("Unknown cosmetic"));
   }
 
+  private HiddenMissionRule hiddenMission(String id) {
+    return HIDDEN_MISSIONS.stream()
+        .filter(mission -> mission.id().equals(id))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Unknown hidden mission"));
+  }
+
   private boolean admin(User user) {
     return "ADMIN".equals(user.getRole());
   }
@@ -318,6 +472,9 @@ public class CipherVaultService {
 
   private record MissionRule(String id, String name, String description, int gems, int fragments) {}
 
+  private record HiddenMissionRule(
+      String id, String name, String description, String requirement) {}
+
   private record Item(
       String id,
       String name,
@@ -326,5 +483,6 @@ public class CipherVaultService {
       String source,
       int gemCost,
       int fragmentCost,
-      boolean hidden) {}
+      boolean hidden,
+      boolean consumable) {}
 }

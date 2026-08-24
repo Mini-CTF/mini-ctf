@@ -1,6 +1,7 @@
 package com.minictf.attendance;
 
 import com.minictf.user.User;
+import com.minictf.user.UserRepository;
 import java.time.*;
 import java.util.*;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,9 +35,11 @@ public class AttendanceService {
           new TitleRule("YEAR_ROUND", "Year-Round Operator", "365 total days", 365, false));
 
   private final AttendanceCheckinRepository checkins;
+  private final UserRepository users;
 
-  public AttendanceService(AttendanceCheckinRepository checkins) {
+  public AttendanceService(AttendanceCheckinRepository checkins, UserRepository users) {
     this.checkins = checkins;
+    this.users = users;
   }
 
   @Transactional
@@ -95,6 +98,7 @@ public class AttendanceService {
     if (current.earnedTitles().stream().noneMatch(title -> title.id().equals(request.titleId())))
       throw new IllegalArgumentException("That title has not been earned");
     user.setAttendanceTitle(request.titleId());
+    users.save(user);
     return summary(user);
   }
 

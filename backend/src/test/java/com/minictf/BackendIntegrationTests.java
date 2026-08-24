@@ -109,6 +109,64 @@ class BackendIntegrationTests {
   }
 
   @Test
+  void hiddenOperationUnlocksSecretSetAndHintCreditsAreConsumable() throws Exception {
+    User learner = user("signal_runner", "USER");
+    learner.setCipherGems(30);
+    users.saveAndFlush(learner);
+    Challenge challenge = challenge(true, "CTF{signal}");
+    challenge.setHintText("Decode the payload before changing its representation.");
+    challenge.setHintCost(1);
+    challenges.saveAndFlush(challenge);
+    String token = jwt.createToken(learner.getId(), learner.getRole());
+
+    mvc.perform(post("/api/vault/hidden/discover").header("Authorization", bearer(token)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.unlocked").value(true));
+    mvc.perform(
+            post("/api/vault/hidden/missions/hidden_signal/claim")
+                .header("Authorization", bearer(token)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.missions[0].completed").value(true));
+    mvc.perform(
+            post("/api/vault/hidden/missions/hidden_pulse/claim")
+                .header("Authorization", bearer(token)))
+        .andExpect(status().isBadRequest());
+    mvc.perform(post("/api/attendance/check-in").header("Authorization", bearer(token)))
+        .andExpect(status().isCreated());
+    mvc.perform(
+            post("/api/vault/hidden/missions/hidden_pulse/claim")
+                .header("Authorization", bearer(token)))
+        .andExpect(status().isOk());
+    challengeService.submit(challenge.getId(), learner.getUsername(), "CTF{signal}", "test-signal");
+    mvc.perform(
+            post("/api/vault/hidden/missions/hidden_breaker/claim")
+                .header("Authorization", bearer(token)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.rewarded").value(true))
+        .andExpect(jsonPath("$.data.rewards[?(@.id == 'crimson_lock_frame')].owned").value(true))
+        .andExpect(jsonPath("$.data.rewards[?(@.id == 'zero_day_title')].owned").value(true));
+
+    mvc.perform(
+            post("/api/vault/shop/buy")
+                .header("Authorization", bearer(token))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"id\":\"hint_credit\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.hintCredits").value(1));
+    mvc.perform(
+            post("/api/challenges/{id}/hint", challenge.getId())
+                .header("Authorization", bearer(token)))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath("$.data.hint").value("Decode the payload before changing its representation."))
+        .andExpect(jsonPath("$.data.remainingCredits").value(0));
+    mvc.perform(
+            post("/api/challenges/{id}/hint", challenge.getId())
+                .header("Authorization", bearer(token)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void friendRequestAcceptAndUsernameNormalizationWorkEndToEnd() throws Exception {
     User alice = user("alice", "USER");
     User bob = user("bob_1", "USER");

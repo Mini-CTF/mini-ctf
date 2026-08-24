@@ -18,7 +18,7 @@ export type ChallengeSummary = {
   artifactAvailable: boolean
 }
 
-export type ChallengeDetail = ChallengeSummary & { description: string }
+export type ChallengeDetail = ChallengeSummary & { description: string; hintAvailable: boolean; hintCost: number }
 
 export type RankingRow = {
   rank: number
@@ -26,6 +26,8 @@ export type RankingRow = {
   nickname: string
   score: number
   solvedCount: number
+  equippedTitle: string | null
+  equippedFrame: string | null
 }
 
 export type AttendanceBadge = {
@@ -68,6 +70,7 @@ export type PostSummary = {
   category: CommunityCategory
   author: string
   authorNickname: string
+  authorTitle: string | null
   viewCount: number
   commentCount: number
   likeCount: number
@@ -85,6 +88,7 @@ export type PostComment = {
   content: string
   author: string
   authorNickname: string
+  authorTitle: string | null
   editable: boolean
   parentId: number | null
   pinned: boolean
@@ -187,13 +191,30 @@ export type VaultCosmetic = {
   hidden: boolean
   owned: boolean
   equipped: boolean
+  consumable: boolean
 }
 
 export type VaultSummary = {
   gems: number
   fragments: number
+  hintCredits: number
   missions: VaultMission[]
   cosmetics: VaultCosmetic[]
+}
+
+export type HiddenMission = {
+  id: string
+  name: string
+  description: string
+  eligible: boolean
+  completed: boolean
+}
+
+export type HiddenSummary = {
+  unlocked: boolean
+  rewarded: boolean
+  missions: HiddenMission[]
+  rewards: VaultCosmetic[]
 }
 
 export type Friend = {

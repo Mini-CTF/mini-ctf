@@ -28,6 +28,22 @@ public class CipherVaultController {
     return ApiResponse.ok(service.discover(user(auth)));
   }
 
+  @PostMapping("/hidden/discover")
+  public ApiResponse<VaultDtos.HiddenSummary> discoverHidden(Authentication auth) {
+    return ApiResponse.ok(service.discoverHidden(user(auth)));
+  }
+
+  @GetMapping("/hidden")
+  public ApiResponse<VaultDtos.HiddenSummary> hidden(Authentication auth) {
+    return ApiResponse.ok(service.hidden(user(auth)));
+  }
+
+  @PostMapping("/hidden/missions/{id}/claim")
+  public ApiResponse<VaultDtos.HiddenSummary> claimHidden(
+      @PathVariable String id, Authentication auth) {
+    return ApiResponse.ok(service.completeHiddenMission(user(auth), id));
+  }
+
   @PostMapping("/missions/{id}/claim")
   public ApiResponse<VaultDtos.Summary> claim(@PathVariable String id, Authentication auth) {
     return ApiResponse.ok(service.completeMission(user(auth), id));

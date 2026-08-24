@@ -33,12 +33,22 @@ public class RankingController {
               u.getUsername(),
               u.getNickname(),
               u.getScore(),
-              solves.countByUser(u.getId())));
+              solves.countByUser(u.getId()),
+              u.getEquippedVaultTitle() != null
+                  ? u.getEquippedVaultTitle()
+                  : u.getAttendanceTitle(),
+              u.getEquippedFrame()));
       previousScore = u.getScore();
     }
     return ApiResponse.ok(rows);
   }
 
   public record RankingRow(
-      int rank, String username, String nickname, int score, long solvedCount) {}
+      int rank,
+      String username,
+      String nickname,
+      int score,
+      long solvedCount,
+      String equippedTitle,
+      String equippedFrame) {}
 }

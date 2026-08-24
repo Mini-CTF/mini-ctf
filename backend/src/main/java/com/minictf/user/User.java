@@ -60,6 +60,15 @@ public class User {
   @Column(name = "equipped_vault_title", length = 50)
   private String equippedVaultTitle;
 
+  @Column(name = "hidden_vault_unlocked", nullable = false)
+  private boolean hiddenVaultUnlocked;
+
+  @Column(name = "hidden_vault_rewarded", nullable = false)
+  private boolean hiddenVaultRewarded;
+
+  @Column(name = "hint_credits", nullable = false)
+  private int hintCredits;
+
   @Column(name = "deleted_original_username", length = 50)
   private String deletedOriginalUsername;
 
@@ -223,6 +232,30 @@ public class User {
 
   public void setEquippedVaultTitle(String value) {
     equippedVaultTitle = value;
+  }
+
+  public boolean isHiddenVaultUnlocked() {
+    return hiddenVaultUnlocked;
+  }
+
+  public void setHiddenVaultUnlocked(boolean value) {
+    hiddenVaultUnlocked = value;
+  }
+
+  public boolean isHiddenVaultRewarded() {
+    return hiddenVaultRewarded;
+  }
+
+  public void setHiddenVaultRewarded(boolean value) {
+    hiddenVaultRewarded = value;
+  }
+
+  public int getHintCredits() {
+    return hintCredits;
+  }
+
+  public void setHintCredits(int value) {
+    hintCredits = value;
   }
 
   public String getDeletedOriginalUsername() {
