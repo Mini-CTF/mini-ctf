@@ -1,5 +1,3 @@
-Mini-CTF는 보안을 처음 접하는 사람도 안전하고 재미있게 해킹 기초를 학습할 수 있는 게임형 보안 교육 플랫폼입니다.
-
 # Mini CTF FastAPI 내부 서비스
 
 이 서비스는 Java/Spring Boot 공개 REST API를 보조하는 내부 REST 서비스다.
