@@ -239,7 +239,7 @@ function ProfileView({ user, onChallenges, onLogin }: { user: User | null; onCha
 }
 
 function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: () => void }) {
-  const [category, setCategory] = useState<Exclude<CommunityCategory, 'NOTICE'> | undefined>()
+  const [category, setCategory] = useState<CommunityCategory | undefined>()
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [notices, setNotices] = useState<PostSummary[]>([])
   const [selected, setSelected] = useState<PostDetail | null>(null)
@@ -247,7 +247,7 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   const refresh = useCallback(async () => {
     try {
       const [nextPosts, nextNotices] = await Promise.all([api.communityPosts(category), api.communityPosts('NOTICE')])
-      setPosts(nextPosts.content.filter((post) => post.category !== 'NOTICE'))
+      setPosts(category === 'NOTICE' ? [] : nextPosts.content.filter((post) => post.category !== 'NOTICE'))
       setNotices(nextNotices.content)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load community posts.')
@@ -256,10 +256,11 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   useEffect(() => { void refresh() }, [refresh])
   if (selected) return <EnhancedCommunityPostView post={selected} user={user} onBack={() => { setSelected(null); void refresh() }} />
   const openPost = (id: number) => api.communityPost(id).then(setSelected).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not open post.'))
+  const visiblePosts = category === 'NOTICE' ? notices : posts
   return <div className="page community-page"><PageIntro eyebrow="COMMUNITY" title="Learn together." description="Ask questions, share safe write-ups, and discuss the Mini CTF training labs." />
-    {notices.length > 0 && <section className="pinned-notices"><div className="pinned-notices-heading"><p className="eyebrow">PINNED NOTICES</p><span>{notices.length}</span></div>{notices.map((notice) => <button type="button" className="pinned-notice" key={notice.id} onClick={() => openPost(notice.id)}><Badge tone="NOTICE">NOTICE</Badge><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleDateString()}</small></button>)}</section>}
-    <div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF'] as Exclude<CommunityCategory, 'NOTICE'>[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0, likeCount: 0, dislikeCount: 0, recommendCount: 0, viewerReactions: [] }, ...current]); setSelected(post) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>
-    {error && <p className="alert error">{error}</p>}<div className="community-list">{posts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span>{post.authorNickname || post.author}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{posts.length === 0 && <EmptyState />}</div>
+    {category !== 'NOTICE' && notices.length > 0 && <section className="pinned-notices"><div className="pinned-notices-heading"><p className="eyebrow">PINNED NOTICES</p><span>{notices.length}</span></div>{notices.map((notice) => <button type="button" className="pinned-notice" key={notice.id} onClick={() => openPost(notice.id)}><Badge tone="NOTICE">NOTICE</Badge><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleDateString()}</small></button>)}</section>}
+    <div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0, likeCount: 0, dislikeCount: 0, recommendCount: 0, viewerReactions: [] }, ...current]); setSelected(post) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>
+    {error && <p className="alert error">{error}</p>}<div className="community-list">{visiblePosts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span>{post.authorNickname || post.author}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{visiblePosts.length === 0 && <EmptyState />}</div>
   </div>
 }
 
