@@ -32,6 +32,7 @@ public class UserProfileService {
     if (request.nickname() != null && !request.nickname().isBlank())
       current.setNickname(request.nickname().trim());
     current.setStatusMessage(cleanOptional(request.statusMessage(), 160));
+    users.save(current);
     return profile(current);
   }
 
@@ -63,6 +64,7 @@ public class UserProfileService {
       avatars.store(relative, upload.getBytes(), LocalAvatarStorage.mediaType(relative));
       deleteManagedAvatar(current);
       current.setAvatarPath(relative);
+      users.save(current);
       return profile(current);
     } catch (IOException ex) {
       throw new IllegalStateException("Could not store avatar", ex);
@@ -73,6 +75,7 @@ public class UserProfileService {
   public void deleteAvatar(User current) {
     deleteManagedAvatar(current);
     current.setAvatarPath(null);
+    users.save(current);
   }
 
   @Transactional(readOnly = true)
@@ -118,7 +121,9 @@ public class UserProfileService {
   }
 
   private String avatarUrl(User user) {
-    return user.getAvatarPath() == null ? null : "/api/users/" + user.getUsername() + "/avatar";
+    if (user.getAvatarPath() == null) return null;
+    String version = Integer.toUnsignedString(user.getAvatarPath().hashCode());
+    return "/api/users/" + user.getUsername() + "/avatar?v=" + version;
   }
 
   private String cleanOptional(String value, int max) {
