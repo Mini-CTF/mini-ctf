@@ -100,6 +100,26 @@ export type AdminDashboard = {
   }[]
 }
 
+export type AdminPost = {
+  id: number
+  title: string
+  category: CommunityCategory
+  author: string
+  authorNickname: string
+  commentCount: number
+  createdAt: string
+}
+
+export type AdminComment = {
+  id: number
+  postId: number
+  postTitle: string
+  content: string
+  author: string
+  authorNickname: string
+  createdAt: string
+}
+
 export type Profile = User & {
   rank: number
   solvedCount: number

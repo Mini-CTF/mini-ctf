@@ -2,6 +2,10 @@ package com.minictf.admin;
 
 import com.minictf.anticheat.AntiCheatEventRepository;
 import com.minictf.challenge.SubmissionRepository;
+import com.minictf.community.Post;
+import com.minictf.community.PostComment;
+import com.minictf.community.PostCommentRepository;
+import com.minictf.community.PostRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -20,18 +24,24 @@ public class AdminModerationService {
   private final AntiCheatEventRepository antiCheatEvents;
   private final AdminAuditLogRepository auditLogs;
   private final SecurityEventRepository securityEvents;
+  private final PostRepository posts;
+  private final PostCommentRepository postComments;
 
   public AdminModerationService(
       UserRepository users,
       SubmissionRepository submissions,
       AntiCheatEventRepository antiCheatEvents,
       AdminAuditLogRepository auditLogs,
-      SecurityEventRepository securityEvents) {
+      SecurityEventRepository securityEvents,
+      PostRepository posts,
+      PostCommentRepository postComments) {
     this.users = users;
     this.submissions = submissions;
     this.antiCheatEvents = antiCheatEvents;
     this.auditLogs = auditLogs;
     this.securityEvents = securityEvents;
+    this.posts = posts;
+    this.postComments = postComments;
   }
 
   @Transactional(readOnly = true)
@@ -150,6 +160,70 @@ public class AdminModerationService {
                     event.getCreatedAt(),
                     event.getRedactedAt()))
         .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<AdminDtos.ModerationPostView> communityPosts() {
+    return posts.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 100)).stream()
+        .map(
+            post ->
+                new AdminDtos.ModerationPostView(
+                    post.getId(),
+                    post.getTitle(),
+                    post.getCategory(),
+                    post.getUser().getUsername(),
+                    post.getUser().getNickname(),
+                    postComments.countByPostId(post.getId()),
+                    post.getCreatedAt()))
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<AdminDtos.ModerationCommentView> communityComments() {
+    return postComments.findTop100ByOrderByCreatedAtDesc().stream()
+        .map(
+            comment ->
+                new AdminDtos.ModerationCommentView(
+                    comment.getId(),
+                    comment.getPost().getId(),
+                    comment.getPost().getTitle(),
+                    comment.getContent(),
+                    comment.getUser().getUsername(),
+                    comment.getUser().getNickname(),
+                    comment.getCreatedAt()))
+        .toList();
+  }
+
+  @Transactional
+  public AdminDtos.ModerationPostView publishNotice(
+      AdminDtos.NoticeRequest request, String adminUsername) {
+    User admin = users.findByUsernameIgnoreCase(adminUsername).orElseThrow();
+    Post notice = new Post();
+    notice.setUser(admin);
+    notice.setTitle(request.title().trim());
+    notice.setContent(request.content().trim());
+    notice.setCategory("NOTICE");
+    Post saved = posts.save(notice);
+    audit(adminUsername, "PUBLISH_NOTICE", "POST", saved.getId(), saved.getTitle());
+    return new AdminDtos.ModerationPostView(
+        saved.getId(), saved.getTitle(), "NOTICE", admin.getUsername(), admin.getNickname(), 0, saved.getCreatedAt());
+  }
+
+  @Transactional
+  public void deleteCommunityPost(Long id, String adminUsername) {
+    Post post = posts.findById(id).orElseThrow(() -> new EntityNotFoundException("Post not found"));
+    String detail = post.getTitle();
+    posts.delete(post);
+    audit(adminUsername, "DELETE_COMMUNITY_POST", "POST", id, detail);
+  }
+
+  @Transactional
+  public void deleteCommunityComment(Long id, String adminUsername) {
+    PostComment comment =
+        postComments.findById(id).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+    String detail = comment.getContent();
+    postComments.delete(comment);
+    audit(adminUsername, "DELETE_COMMUNITY_COMMENT", "POST_COMMENT", id, detail);
   }
 
   @Transactional

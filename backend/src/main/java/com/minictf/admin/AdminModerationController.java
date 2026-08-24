@@ -74,6 +74,35 @@ public class AdminModerationController {
     return ApiResponse.ok(service.securityEvents());
   }
 
+  @GetMapping("/community/posts")
+  public ApiResponse<?> communityPosts() {
+    return ApiResponse.ok(service.communityPosts());
+  }
+
+  @GetMapping("/community/comments")
+  public ApiResponse<?> communityComments() {
+    return ApiResponse.ok(service.communityComments());
+  }
+
+  @PostMapping("/notices")
+  @ResponseStatus(HttpStatus.CREATED)
+  public ApiResponse<?> publishNotice(
+      @Valid @RequestBody AdminDtos.NoticeRequest request, Authentication auth) {
+    return ApiResponse.ok(service.publishNotice(request, auth.getName()));
+  }
+
+  @DeleteMapping("/community/posts/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteCommunityPost(@PathVariable Long id, Authentication auth) {
+    service.deleteCommunityPost(id, auth.getName());
+  }
+
+  @DeleteMapping("/community/comments/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteCommunityComment(@PathVariable Long id, Authentication auth) {
+    service.deleteCommunityComment(id, auth.getName());
+  }
+
   @PatchMapping("/audit-logs/{id}/redact")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void redactAuditLog(

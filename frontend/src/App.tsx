@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { api } from './api/client'
 import { subscribeToDirectMessages } from './api/realtime'
-import type { AdminDashboard, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, PostComment, PostDetail, PostSummary, Profile, RankingRow, Stats, User } from './types/api'
+import type { AdminComment, AdminDashboard, AdminPost, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, PostComment, PostDetail, PostSummary, Profile, RankingRow, Stats, User } from './types/api'
 import miniCtfLogo from './assets/mini-ctf-reference-logo.png'
 import './App.css'
 import './typography.css'
@@ -142,7 +142,7 @@ function App() {
       {!loading && view === 'ranking' && <RankingView rows={ranking} />}
       {!loading && view === 'profile' && <ProfileView user={user} onChallenges={() => navigate('challenges')} onLogin={() => navigate('login')} />}
       {!loading && view === 'community' && <CommunityView user={user} onLogin={() => navigate('login')} />}
-      {!loading && view === 'admin' && user?.role === 'ADMIN' && <AdminView />}
+      {!loading && view === 'admin' && user?.role === 'ADMIN' && <AdminConsole />}
       {!loading && view === 'login' && <LoginView onBack={() => navigate('home')} onAuth={completeAuth} />}
     </main>
     <footer className="site-footer"><span><strong>MINI/CTF</strong> · learn by breaking things safely</span><span className="footer-status">live API connection</span></footer>
@@ -280,6 +280,134 @@ function CommentWriter({ postId, onCreated }: { postId: number; onCreated: (comm
   return <form className="comment-writer" onSubmit={(event) => void submit(event)}><textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Add a constructive comment" maxLength={2000} required /><button type="submit" className="button primary">Comment</button>{error && <p className="alert error">{error}</p>}</form>
 }
 
+type AdminTab = 'overview' | 'accounts' | 'content' | 'notices' | 'security' | 'logs'
+
+function AdminConsole() {
+  const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
+  const [posts, setPosts] = useState<AdminPost[]>([])
+  const [comments, setComments] = useState<AdminComment[]>([])
+  const [tab, setTab] = useState<AdminTab>('overview')
+  const [error, setError] = useState('')
+
+  const refresh = useCallback(async () => {
+    setError('')
+    try {
+      const [nextDashboard, nextPosts, nextComments] = await Promise.all([
+        api.adminDashboard(),
+        api.adminPosts(),
+        api.adminComments(),
+      ])
+      setDashboard(nextDashboard)
+      setPosts(nextPosts)
+      setComments(nextComments)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not load administrator data.')
+    }
+  }, [])
+
+  useEffect(() => { void refresh() }, [refresh])
+
+  const editUser = async (id: number, nickname: string) => {
+    const next = window.prompt('표시 이름', nickname)
+    if (!next) return
+    try { await api.updateAdminUser(id, next); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : '계정을 수정하지 못했습니다.') }
+  }
+  const suspend = async (id: number) => {
+    const reason = window.prompt('정지 사유 (사용자에게 표시됩니다)')
+    if (!reason) return
+    try { await api.suspendUser(id, reason); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : '계정을 정지하지 못했습니다.') }
+  }
+  const deactivate = async (id: number, username: string) => {
+    if (!window.confirm(`@${username} 계정을 비활성화하고 익명화할까요? 이 작업은 되돌릴 수 없습니다.`)) return
+    try { await api.deactivateUser(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : '계정을 비활성화하지 못했습니다.') }
+  }
+  const removePost = async (id: number, title: string) => {
+    if (!window.confirm(`게시글 “${title}”을 삭제할까요?`)) return
+    try { await api.deleteAdminPost(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : '게시글을 삭제하지 못했습니다.') }
+  }
+  const removeComment = async (id: number) => {
+    if (!window.confirm('댓글을 삭제할까요?')) return
+    try { await api.deleteAdminComment(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : '댓글을 삭제하지 못했습니다.') }
+  }
+  const publishNotice = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    try {
+      await api.publishNotice({ title: String(form.get('title')).trim(), content: String(form.get('content')).trim() })
+      event.currentTarget.reset()
+      await refresh()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '공지를 발행하지 못했습니다.')
+    }
+  }
+  const controlLog = async (type: 'audit' | 'security', id: number, hide: boolean) => {
+    const reason = window.prompt(hide ? '숨김 사유' : '민감 정보 삭제 사유')
+    if (!reason) return
+    try {
+      if (type === 'audit') {
+        if (hide) await api.hideAuditLog(id, reason)
+        else await api.redactAuditLog(id, reason)
+      } else if (hide) await api.hideSecurityEvent(id, reason)
+      else await api.redactSecurityEvent(id, reason)
+      await refresh()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '로그를 처리하지 못했습니다.')
+    }
+  }
+
+  if (!dashboard) return <div className="page admin-page"><PageIntro eyebrow="ADMIN CONSOLE" title="관리자 콘솔" description="플랫폼 상태와 운영 작업을 불러오는 중입니다." />{error && <p className="alert error">{error}</p>}<p className="muted">관리자 데이터를 불러오는 중...</p></div>
+
+  const notices = posts.filter((post) => post.category === 'NOTICE')
+  const tabs: { id: AdminTab; label: string; count?: number }[] = [
+    { id: 'overview', label: '개요' },
+    { id: 'accounts', label: '계정 관리', count: dashboard.users.length },
+    { id: 'content', label: '콘텐츠 관리', count: posts.length + comments.length },
+    { id: 'notices', label: '공지 사항', count: notices.length },
+    { id: 'security', label: '보안·제출', count: dashboard.antiCheatEvents.length },
+    { id: 'logs', label: '감사 로그', count: dashboard.auditLogs.length + dashboard.securityEvents.length },
+  ]
+
+  return <div className="page admin-page admin-console">
+    <PageIntro eyebrow="ADMIN CONSOLE" title="운영을 한눈에." description="계정, 커뮤니티, 공지, 보안 기록을 분리해 안전하게 관리합니다." />
+    {error && <p className="alert error">{error}</p>}
+    <div className="admin-summary-grid">
+      <div><small>활성 계정</small><strong>{dashboard.users.filter((item) => item.status === 'ACTIVE').length}</strong></div>
+      <div><small>검토할 콘텐츠</small><strong>{posts.length + comments.length}</strong></div>
+      <div><small>보안 이벤트</small><strong>{dashboard.antiCheatEvents.length}</strong></div>
+      <div><small>최근 제출</small><strong>{dashboard.recentSubmissions.length}</strong></div>
+    </div>
+    <div className="admin-tabs" role="tablist">
+      {tabs.map((item) => <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} className={tab === item.id ? 'admin-tab active' : 'admin-tab'} onClick={() => setTab(item.id)}>{item.label}{item.count !== undefined && <span>{item.count}</span>}</button>)}
+    </div>
+
+    {tab === 'overview' && <div className="admin-panel-grid">
+      <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">QUICK ACTIONS</p><h2>운영 바로가기</h2></div></div><div className="admin-quick-actions"><button type="button" className="button secondary" onClick={() => setTab('accounts')}>계정 검토</button><button type="button" className="button secondary" onClick={() => setTab('content')}>콘텐츠 관리</button><button type="button" className="button primary" onClick={() => setTab('notices')}>공지 작성</button></div></section>
+      <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">RECENT ACTIVITY</p><h2>최근 제출</h2></div><button type="button" className="text-button" onClick={() => setTab('security')}>전체 보기</button></div><AdminSubmissionList items={dashboard.recentSubmissions.slice(0, 5)} /></section>
+      <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">SECURITY</p><h2>주의 이벤트</h2></div><button type="button" className="text-button" onClick={() => setTab('security')}>전체 보기</button></div><AdminEventList items={dashboard.antiCheatEvents.slice(0, 5)} /></section>
+    </div>}
+
+    {tab === 'accounts' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>계정 관리</h2></div><small>정지·복구·표시 이름 수정 및 비활성화</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.role} · {item.status}</small>{item.suspensionReason && <small className="danger-text">정지 사유: {item.suspensionReason}</small>}</div>{item.role !== 'ADMIN' && <div className="inline-actions"><button type="button" className="button secondary" onClick={() => void editUser(item.id, item.nickname)}>이름 수정</button>{item.status === 'ACTIVE' ? <button type="button" className="button ghost danger-button" onClick={() => void suspend(item.id)}>정지</button> : <button type="button" className="button secondary" onClick={() => void api.reinstateUser(item.id).then(refresh).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : '계정을 복구하지 못했습니다.'))}>복구</button>}<button type="button" className="text-button danger-text" onClick={() => void deactivate(item.id, item.username)}>비활성화</button></div>}</div>)}</div></section>}
+
+    {tab === 'content' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMUNITY POSTS</p><h2>게시글 관리</h2></div><small>최근 {posts.length}개</small></div><div className="admin-table">{posts.filter((post) => post.category !== 'NOTICE').map((post) => <div className="admin-row" key={post.id}><div><strong>{post.title}</strong><small><Badge tone={post.category}>{post.category}</Badge> @{post.authorNickname || post.author} · 댓글 {post.commentCount}개 · {new Date(post.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removePost(post.id, post.title)}>삭제</button></div>)}</div></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMENTS</p><h2>댓글 관리</h2></div><small>최근 {comments.length}개</small></div><div className="admin-table">{comments.map((comment) => <div className="admin-row" key={comment.id}><div><strong>{comment.content}</strong><small>“{comment.postTitle}” · @{comment.authorNickname || comment.author} · {new Date(comment.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removeComment(comment.id)}>삭제</button></div>)}</div></section></div>}
+
+    {tab === 'notices' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">PUBLISH NOTICE</p><h2>새 공지 작성</h2></div></div><form className="community-editor admin-notice-form" onSubmit={(event) => void publishNotice(event)}><input name="title" placeholder="공지 제목" maxLength={200} required /><textarea name="content" placeholder="공지 내용을 입력하세요" maxLength={20000} required /><div><button className="button primary" type="submit">공지 발행</button></div></form></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">PUBLISHED</p><h2>발행한 공지</h2></div><small>{notices.length}개</small></div><div className="admin-table">{notices.map((notice) => <div className="admin-row" key={notice.id}><div><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removePost(notice.id, notice.title)}>삭제</button></div>)}</div></section></div>}
+
+    {tab === 'security' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ANTI-CHEAT</p><h2>보안 이벤트</h2></div><small>최근 {dashboard.antiCheatEvents.length}개</small></div><AdminEventList items={dashboard.antiCheatEvents} /></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">CHALLENGE ACTIVITY</p><h2>제출 이력</h2></div><small>최근 {dashboard.recentSubmissions.length}건</small></div><AdminSubmissionList items={dashboard.recentSubmissions} /></section></div>}
+
+    {tab === 'logs' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">SECURITY LOG</p><h2>로그인·계정 이벤트</h2></div></div><LogList items={dashboard.securityEvents.map((event) => ({ id: event.id, title: `${event.eventType} · ${event.username || event.subject || 'unknown'}`, detail: event.detail || '', date: event.createdAt }))} onControl={(id, hide) => void controlLog('security', id, hide)} /></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">AUDIT TRAIL</p><h2>관리 작업 기록</h2></div></div><LogList items={dashboard.auditLogs.map((log) => ({ id: log.id, title: `${log.action} · ${log.adminUsername}`, detail: log.detail, date: log.createdAt }))} onControl={(id, hide) => void controlLog('audit', id, hide)} /></section></div>}
+  </div>
+}
+
+function AdminSubmissionList({ items }: { items: AdminDashboard['recentSubmissions'] }) {
+  if (items.length === 0) return <p className="muted">기록이 없습니다.</p>
+  return <div className="admin-table">{items.map((item, index) => <div className="admin-row" key={`${item.username}-${item.submittedAt}-${index}`}><div><strong>@{item.username}</strong><small>{item.challengeTitle} · {new Date(item.submittedAt).toLocaleString()}</small></div><span className={item.correct ? 'success-text' : 'danger-text'}>{item.correct ? '정답' : '오답'}</span></div>)}</div>
+}
+
+function AdminEventList({ items }: { items: AdminDashboard['antiCheatEvents'] }) {
+  if (items.length === 0) return <p className="muted">주의 이벤트가 없습니다.</p>
+  return <div className="admin-table">{items.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.eventType} · @{item.username}</strong><small>{item.challengeTitle || '플랫폼'} · {item.detail || '세부 정보 없음'} · {new Date(item.createdAt).toLocaleString()}</small></div><span className={`severity ${item.severity.toLowerCase()}`}>{item.severity}</span></div>)}</div>
+}
+
 function AdminView() {
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
   const [error, setError] = useState('')
@@ -290,6 +418,8 @@ function AdminView() {
   const controlLog = async (type: 'audit' | 'security', id: number, hide: boolean) => { const reason = window.prompt(hide ? 'Reason for hiding this log' : 'Reason for redacting this log'); if (!reason) return; try { if (type === 'audit') { if (hide) await api.hideAuditLog(id, reason); else await api.redactAuditLog(id, reason) } else if (hide) await api.hideSecurityEvent(id, reason); else await api.redactSecurityEvent(id, reason); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update log.') } }
   return <div className="page admin-page"><PageIntro eyebrow="ADMINISTRATION" title="Platform control." description="Security log facts stay traceable. Redact hides details; Hide removes a record from the active dashboard with a reason." />{error && <p className="alert error">{error}</p>}{!dashboard ? <p className="muted">Loading administrator dashboard…</p> : <><section className="admin-section"><h2>Users</h2><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.role}</small>{item.suspensionReason && <small className="danger-text">Suspended: {item.suspensionReason}</small>}</div>{item.role !== 'ADMIN' && <div className="inline-actions"><button type="button" className="button secondary" onClick={() => void editUser(item.id, item.nickname)}>Edit</button>{item.status === 'ACTIVE' ? <button type="button" className="button ghost danger-button" onClick={() => void suspend(item.id)}>Suspend</button> : <button type="button" className="button secondary" onClick={() => void api.reinstateUser(item.id).then(refresh).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not reinstate user.'))}>Reinstate</button>}</div>}</div>)}</div></section><section className="admin-section"><h2>Login and account events</h2><LogList items={dashboard.securityEvents.map((event) => ({ id: event.id, title: `${event.eventType} · ${event.username || event.subject || 'unknown'}`, detail: event.detail || '', date: event.createdAt }))} onControl={(id, hide) => void controlLog('security', id, hide)} /></section><section className="admin-section"><h2>Moderation audit log</h2><LogList items={dashboard.auditLogs.map((log) => ({ id: log.id, title: `${log.action} · ${log.adminUsername}`, detail: log.detail, date: log.createdAt }))} onControl={(id, hide) => void controlLog('audit', id, hide)} /></section><section className="admin-section"><h2>Recent submissions</h2><div className="admin-table">{dashboard.recentSubmissions.map((submission, index) => <div className="admin-row" key={`${submission.username}-${submission.submittedAt}-${index}`}><span>{submission.username}</span><span>{submission.challengeTitle}</span><span className={submission.correct ? 'success-text' : 'danger-text'}>{submission.correct ? 'Correct' : 'Incorrect'}</span></div>)}</div></section></>}</div>
 }
+
+void AdminView
 
 function LogList({ items, onControl }: { items: { id: number; title: string; detail: string; date: string }[]; onControl: (id: number, hide: boolean) => void }) {
   if (items.length === 0) return <p className="muted">No records yet.</p>

@@ -55,6 +55,27 @@ public final class AdminDtos {
 
   public record LogControlRequest(@NotBlank @Size(max = 500) String reason) {}
 
+  public record ModerationPostView(
+      Long id,
+      String title,
+      String category,
+      String author,
+      String authorNickname,
+      long commentCount,
+      Instant createdAt) {}
+
+  public record ModerationCommentView(
+      Long id,
+      Long postId,
+      String postTitle,
+      String content,
+      String author,
+      String authorNickname,
+      Instant createdAt) {}
+
+  public record NoticeRequest(
+      @NotBlank @Size(max = 200) String title, @NotBlank @Size(max = 20_000) String content) {}
+
   public record Dashboard(
       List<UserView> users,
       List<SubmissionView> recentSubmissions,

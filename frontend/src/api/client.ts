@@ -1,8 +1,10 @@
 import type {
   AuthResponse,
+  AdminComment,
   ChallengeDetail,
   ChallengeSummary,
   AdminDashboard,
+  AdminPost,
   CommunityCategory,
   PageView,
   PostComment,
@@ -71,6 +73,12 @@ export const api = {
     request<PostComment>(`/community/comments/${id}`, { method: 'PUT', body: JSON.stringify({ content }) }),
   deletePostComment: (id: number) => request<void>(`/community/comments/${id}`, { method: 'DELETE' }),
   adminDashboard: () => request<AdminDashboard>('/admin/dashboard'),
+  adminPosts: () => request<AdminPost[]>('/admin/community/posts'),
+  adminComments: () => request<AdminComment[]>('/admin/community/comments'),
+  publishNotice: (payload: { title: string; content: string }) =>
+    request<AdminPost>('/admin/notices', { method: 'POST', body: JSON.stringify(payload) }),
+  deleteAdminPost: (id: number) => request<void>(`/admin/community/posts/${id}`, { method: 'DELETE' }),
+  deleteAdminComment: (id: number) => request<void>(`/admin/community/comments/${id}`, { method: 'DELETE' }),
   updateAdminUser: (id: number, nickname: string) =>
     request(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ nickname }) }),
   suspendUser: (id: number, reason: string) =>
