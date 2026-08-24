@@ -91,6 +91,13 @@ html[data-theme='light'] .hero-hero-logo { opacity: 1; filter: invert(1); }
   padding: 12px 14px;
 }
 
+.inline-alert { display: flex; align-items: center; gap: 12px; padding-top: 20px; }
+.inline-alert .alert { margin: 0; flex: 1; }
+.loading-state { min-height: 260px; display: grid; place-content: center; justify-items: center; gap: 14px; color: var(--muted); text-align: center; }
+.loading-state p { margin: 0; font: 13px var(--mono); letter-spacing: .04em; }
+.loading-mark { width: 28px; height: 28px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: minictf-spin .8s linear infinite; }
+@keyframes minictf-spin { to { transform: rotate(360deg); } }
+
 .social-buttons { display: grid; gap: 12px; }
 .social-button {
   min-height: 54px;
@@ -317,11 +324,7 @@ html[data-theme='light'] .card-bottom,
 html[data-theme='light'] .friend-row small,
 html[data-theme='light'] .site-footer,
 html[data-theme='light'] .footer-status { color: #111c29 !important; opacity: 1; }
-html[data-theme='light'] .app-shell,
-html[data-theme='light'] .app-shell * { color: #080d14 !important; }
-html[data-theme='light'] .app-shell input,
-html[data-theme='light'] .app-shell textarea,
-html[data-theme='light'] .app-shell select { color: #080d14 !important; }
+html[data-theme='light'] .app-shell { color: #080d14; }
 html[data-theme='light'] .panel,
 html[data-theme='light'] .challenge-card,
 html[data-theme='light'] .category-tile,
@@ -335,6 +338,20 @@ html[data-theme='light'] .profile-editor textarea,
 html[data-theme='light'] .friend-request input,
 html[data-theme='light'] .message-panel textarea,
 html[data-theme='light'] .auth-form input { border-color: #1f4f78 !important; box-shadow: inset 0 0 0 1px rgba(31, 79, 120, .12); }
+
+html[data-theme='light'] .community-post-row strong,
+html[data-theme='light'] .pinned-notice strong,
+html[data-theme='light'] .comment strong,
+html[data-theme='light'] .admin-row strong,
+html[data-theme='light'] .reaction-button span { color: #172638; }
+html[data-theme='light'] .community-content,
+html[data-theme='light'] .comment p,
+html[data-theme='light'] .message { color: #203246; }
+html[data-theme='light'] .community-editor input,
+html[data-theme='light'] .community-editor textarea,
+html[data-theme='light'] .comment-writer textarea { background: #f8fbff; color: #17202d; }
+html[data-theme='light'] .reaction-button.active,
+html[data-theme='light'] .reaction-button:hover:not(:disabled) { color: var(--accent); }
 
 .ranking-head { font-size: 12px; }
 .ranking-row { min-height: 82px; font-size: 16px; }

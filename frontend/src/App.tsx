@@ -29,6 +29,7 @@ function App() {
   const [challenges, setChallenges] = useState<ChallengeSummary[]>([])
   const [ranking, setRanking] = useState<RankingRow[]>([])
   const [selected, setSelected] = useState<ChallengeDetail | null>(null)
+  const [openingChallenge, setOpeningChallenge] = useState<string | null>(null)
   const [category, setCategory] = useState<Filter>('ALL')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [compactLayout, setCompactLayout] = useState(() => window.innerWidth <= 620)
@@ -95,15 +96,18 @@ function App() {
     setView(next)
     setMobileNavOpen(false)
     setError('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'auto' })
   }
   const openChallenge = async (item: ChallengeSummary) => {
     setError('')
     setView('challenges')
+    setOpeningChallenge(item.title)
     try {
       setSelected(await api.challenge(item.id))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load the challenge.')
+    } finally {
+      setOpeningChallenge(null)
     }
   }
   const completeAuth = (result: { token: string; user: User }) => {
@@ -135,10 +139,10 @@ function App() {
       <div className="header-actions">{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button><button className="header-login" type="button" onClick={logout}>Sign out</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>Sign in</button>}</div>
     </header>
     <main>
-      {error && <div className="page"><p className="alert error">{error}</p></div>}
-      {loading && <div className="page"><p className="muted">Loading live platform data…</p></div>}
+      {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
+      {loading && <div className="page"><LoadingState label="Loading live platform data..." /></div>}
       {!loading && view === 'home' && <Home stats={stats} challenges={challenges} onExplore={() => navigate('challenges')} onRanking={() => navigate('ranking')} onOpen={openChallenge} />}
-      {!loading && view === 'challenges' && (selected ? <ChallengeDetailView item={selected} loggedIn={Boolean(user)} onBack={() => setSelected(null)} onLogin={() => navigate('login')} onSubmitted={refresh} /> : <ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} onOpen={openChallenge} />)}
+      {!loading && view === 'challenges' && (selected ? <ChallengeDetailView item={selected} loggedIn={Boolean(user)} onBack={() => setSelected(null)} onLogin={() => navigate('login')} onSubmitted={refresh} /> : openingChallenge ? <div className="page"><LoadingState label={`Opening ${openingChallenge}...`} /></div> : <ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} onOpen={openChallenge} />)}
       {!loading && view === 'ranking' && <RankingView rows={ranking} />}
       {!loading && view === 'profile' && <ProfileView user={user} onChallenges={() => navigate('challenges')} onLogin={() => navigate('login')} />}
       {!loading && view === 'community' && <EnhancedCommunityView user={user} onLogin={() => navigate('login')} />}
@@ -150,6 +154,10 @@ function App() {
 }
 
 function NavButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: string }) { return <button className={active ? 'nav-button active' : 'nav-button'} type="button" onClick={onClick}>{children}</button> }
+
+function LoadingState({ label }: { label: string }) {
+  return <div className="loading-state" role="status"><span className="loading-mark" aria-hidden="true" /><p>{label}</p></div>
+}
 
 function Home({ stats, challenges, onExplore, onRanking, onOpen }: { stats: Stats; challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void }) {
   return <div className="page home-page"><section className="hero-section"><div className="hero-copy"><p className="eyebrow">SECURITY TRAINING PLATFORM</p><h1>Learn security<br /><span>by solving.</span></h1><p className="hero-description">Live challenges, secure FLAG validation, and a real ranking.</p><div className="hero-actions"><button className="button primary" type="button" onClick={onExplore}>Start challenges</button><button className="button ghost" type="button" onClick={onRanking}>View ranking</button></div></div><div className="hero-visual" aria-hidden="true"><ThemeLogo className="hero-hero-logo" alt="" /></div></section><section className="stat-strip" aria-label="Platform statistics"><Stat value={stats.challenges} label="Challenges" detail="active labs" /><Stat value={stats.solves} label="Solves" detail="recorded" /><Stat value={stats.users} label="Learners" detail="registered" /><div className="live-badge">live platform</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">EXPLORE THE LABS</p><h2>Featured challenges.</h2></div><button type="button" className="text-link" onClick={onExplore}>View all challenges</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
@@ -166,7 +174,7 @@ function ChallengesView({ items, total, category, onCategory, onOpen }: { items:
   return <div className="page"><PageIntro eyebrow="CHALLENGE INDEX" title="Find your next exploit." description="Every challenge is loaded from the Spring Boot API." /><section className="challenge-toolbar"><div className="filter-tabs">{(['ALL', 'WEB', 'CRYPTO', 'FORENSICS', 'MISC'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item}</button>)}</div></section><div className="challenge-count"><span><strong>{items.length}</strong> of {total} challenges</span></div><div className="challenge-grid">{items.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{items.length === 0 && <EmptyState />}</div>
 }
 
-function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h3>{item.title}</h3><p>Open the brief, download its artifact, and submit your FLAG securely.</p><div className="card-bottom"><strong>{item.score}<small> pts</small></strong>{item.solved ? <span className="solved">SOLVED</span> : <button className="card-open" type="button" onClick={() => onOpen(item)}>Open</button>}</div></article> }
+function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h3>{item.title}</h3><p>Open the brief, download its artifact, and submit your FLAG securely.</p><div className="card-bottom"><strong>{item.score}<small> pts</small></strong>{item.solved && <span className="solved">SOLVED</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? 'Review' : 'Open'}</button></div></article> }
 
 function ChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: { item: ChallengeDetail; loggedIn: boolean; onBack: () => void; onLogin: () => void; onSubmitted: () => void }) {
   const [flag, setFlag] = useState('')
@@ -205,7 +213,11 @@ function ProfileView({ user, onChallenges, onLogin }: { user: User | null; onCha
     if (friendsResult.status === 'fulfilled') setFriends(friendsResult.value)
     else setError(friendsResult.reason instanceof Error ? friendsResult.reason.message : 'Could not load friends.')
   }, [])
-  useEffect(() => { if (user) void refresh() }, [user, refresh])
+  useEffect(() => {
+    if (!user) return
+    const timer = window.setTimeout(() => void refresh(), 0)
+    return () => window.clearTimeout(timer)
+  }, [user, refresh])
   useEffect(() => { if (selectedFriend) void api.messages(selectedFriend).then(setMessages).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load messages.')) }, [selectedFriend])
   useEffect(() => {
     if (!user) return
@@ -255,7 +267,10 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
       setError(cause instanceof Error ? cause.message : 'Could not load community posts.')
     }
   }, [category])
-  useEffect(() => { void refresh() }, [refresh])
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refresh(), 0)
+    return () => window.clearTimeout(timer)
+  }, [refresh])
   if (selected) return <EnhancedCommunityPostView post={selected} user={user} onBack={() => { setSelected(null); void refresh() }} />
   const preloadPost = (id: number) => {
     if (postCache.current.has(id)) return
@@ -331,7 +346,10 @@ function CommunityView({ user, onLogin }: { user: User | null; onLogin: () => vo
   const [selected, setSelected] = useState<PostDetail | null>(null)
   const [error, setError] = useState('')
   const refresh = useCallback(() => api.communityPosts(category).then((data) => setPosts(data.content)).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load community posts.')), [category])
-  useEffect(() => { void refresh() }, [refresh])
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refresh(), 0)
+    return () => window.clearTimeout(timer)
+  }, [refresh])
   if (selected) return <CommunityPostView post={selected} user={user} onBack={() => { setSelected(null); void refresh() }} />
   return <div className="page community-page"><PageIntro eyebrow="COMMUNITY" title="Learn together." description="Ask questions, share safe write-ups, and discuss the Mini CTF training labs." /><div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0 }, ...current]); setSelected(post) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>{error && <p className="alert error">{error}</p>}<div className="community-list">{posts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => api.communityPost(post.id).then(setSelected).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not open post.'))}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span>{post.authorNickname || post.author}</span><small>{post.commentCount} comments · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{posts.length === 0 && <EmptyState />}</div></div>
 }
@@ -392,7 +410,10 @@ function AdminConsole() {
     }
   }, [])
 
-  useEffect(() => { void refresh() }, [refresh])
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refresh(), 0)
+    return () => window.clearTimeout(timer)
+  }, [refresh])
 
   const editUser = async (id: number, nickname: string) => {
     const next = window.prompt('Display name', nickname)
