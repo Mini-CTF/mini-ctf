@@ -12,6 +12,10 @@ public interface AntiCheatEventRepository extends JpaRepository<AntiCheatEvent, 
 
   List<AntiCheatEvent> findTop100ByOrderByCreatedAtDesc();
 
+  @Query(
+      "select e from AntiCheatEvent e join fetch e.user where e.user.status <> 'DELETED' order by e.createdAt desc")
+  List<AntiCheatEvent> findTop100WithActiveUsers();
+
   @Modifying
   @Query("delete from AntiCheatEvent event where event.createdAt < :before")
   int deleteOlderThan(@Param("before") Instant before);

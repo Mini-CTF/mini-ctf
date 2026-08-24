@@ -3,6 +3,8 @@ import type {
   AdminComment,
   ChallengeDetail,
   ChallengeSummary,
+  AttendanceRankingRow,
+  AttendanceSummary,
   AdminDashboard,
   AdminPost,
   CommunityCategory,
@@ -51,6 +53,10 @@ export const api = {
   challenges: () => request<ChallengeSummary[]>('/challenges'),
   challenge: (id: number) => request<ChallengeDetail>(`/challenges/${id}`),
   ranking: () => request<RankingRow[]>('/ranking'),
+  attendance: () => request<AttendanceSummary>('/attendance'),
+  checkIn: () => request<AttendanceSummary>('/attendance/check-in', { method: 'POST' }),
+  selectAttendanceTitle: (titleId: string) => request<AttendanceSummary>('/attendance/title', { method: 'PUT', body: JSON.stringify({ titleId }) }),
+  attendanceRanking: () => request<AttendanceRankingRow[]>('/attendance/ranking'),
   submitFlag: (id: number, flag: string) =>
     request<{ result: string; awardedScore: number }>(`/challenges/${id}/submit`, {
       method: 'POST',

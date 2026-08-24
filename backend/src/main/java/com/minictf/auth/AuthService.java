@@ -30,7 +30,9 @@ public class AuthService {
     if (!request.password().equals(request.passwordConfirmation()))
       throw new IllegalArgumentException("비밀번호 확인이 일치하지 않습니다.");
     String username = request.username().trim();
-    if (users.existsByUsernameIgnoreCase(username)) throw new DuplicateUsernameException();
+    if (users.existsByUsernameIgnoreCase(username)
+        || users.existsByDeletedOriginalUsernameIgnoreCase(username))
+      throw new DuplicateUsernameException();
     User user = new User();
     user.setUsername(username);
     user.setNickname(

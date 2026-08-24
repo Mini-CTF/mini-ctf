@@ -11,6 +11,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
   List<Submission> findByUserId(@Param("userId") Long userId, Pageable pageable);
 
   @Query(
-      "select s from Submission s join fetch s.user join fetch s.challenge order by s.submittedAt desc")
-  List<Submission> findAllWithDetails(Pageable pageable);
+      "select s from Submission s join fetch s.user join fetch s.challenge where s.user.status <> 'DELETED' order by s.submittedAt desc")
+  List<Submission> findAllWithActiveUsers(Pageable pageable);
 }

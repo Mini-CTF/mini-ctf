@@ -149,6 +149,7 @@ public class SecurityConfig {
                         "/api/challenges/*",
                         "/api/challenges/*/comments",
                         "/api/ranking",
+                        "/api/attendance/ranking",
                         "/api/stats",
                         "/api/users/*/profile",
                         "/api/users/*/avatar",

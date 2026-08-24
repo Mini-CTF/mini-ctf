@@ -7,11 +7,11 @@ import com.minictf.common.RateLimitService;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.time.Instant;
 import java.util.Map;
-import java.util.HashMap;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -54,8 +54,9 @@ public class CommunityService {
     Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
     Page<Post> result =
         category == null || category.isBlank()
-            ? posts.findAllByOrderByCreatedAtDesc(pageable)
-            : posts.findByCategoryOrderByCreatedAtDesc(category.toUpperCase(Locale.ROOT), pageable);
+            ? posts.findVisibleAllByCreatedAtDesc(pageable)
+            : posts.findVisibleByCategoryOrderByCreatedAtDesc(
+                category.toUpperCase(Locale.ROOT), pageable);
     List<Post> posts = result.getContent();
     Map<Long, Long> commentCounts = new HashMap<>();
     Map<Long, Map<String, Long>> reactionCounts = new HashMap<>();
@@ -124,12 +125,13 @@ public class CommunityService {
   @Transactional(readOnly = true)
   public List<CommunityDtos.PostCommentView> listPostComments(Long postId, String username) {
     getPost(postId);
-    return postComments.findByPostIdOrderByCreatedAtAsc(postId).stream()
+    return postComments.findVisibleByPostIdOrderByCreatedAtAsc(postId).stream()
         .sorted(
             (left, right) -> {
               int byParent = Boolean.compare(left.getParent() != null, right.getParent() != null);
               if (byParent != 0) return byParent;
-              int byPinned = Boolean.compare(right.getPinnedAt() != null, left.getPinnedAt() != null);
+              int byPinned =
+                  Boolean.compare(right.getPinnedAt() != null, left.getPinnedAt() != null);
               if (byPinned != 0) return byPinned;
               return left.getCreatedAt().compareTo(right.getCreatedAt());
             })
@@ -234,7 +236,7 @@ public class CommunityService {
     String normalized = discussionType(type);
     if ("SOLVER".equals(normalized)) requireSolver(challenge, userOrNull(username));
     return challengeComments
-        .findByChallengeIdAndDiscussionTypeOrderByCreatedAtAsc(challengeId, normalized)
+        .findVisibleByChallengeIdAndDiscussionTypeOrderByCreatedAtAsc(challengeId, normalized)
         .stream()
         .map(c -> challengeCommentView(c, username))
         .toList();
@@ -303,18 +305,29 @@ public class CommunityService {
   private User current(String username) {
     if (username == null)
       throw new AuthenticationCredentialsNotFoundException("Authentication required");
-    return users
-        .findByUsernameIgnoreCase(username)
-        .orElseThrow(
-            () -> new AuthenticationCredentialsNotFoundException("Authentication required"));
+    User user =
+        users
+            .findByUsernameIgnoreCase(username)
+            .orElseThrow(
+                () -> new AuthenticationCredentialsNotFoundException("Authentication required"));
+    if ("DELETED".equals(user.getStatus()))
+      throw new AuthenticationCredentialsNotFoundException("Authentication required");
+    return user;
   }
 
   private User userOrNull(String username) {
-    return username == null ? null : users.findByUsernameIgnoreCase(username).orElse(null);
+    if (username == null) return null;
+    return users
+        .findByUsernameIgnoreCase(username)
+        .filter(user -> !"DELETED".equals(user.getStatus()))
+        .orElse(null);
   }
 
   private Post getPost(Long id) {
-    return posts.findById(id).orElseThrow(() -> new EntityNotFoundException("Post not found"));
+    Post post = posts.findById(id).orElseThrow(() -> new EntityNotFoundException("Post not found"));
+    if ("DELETED".equals(post.getUser().getStatus()))
+      throw new EntityNotFoundException("Post not found");
+    return post;
   }
 
   private PostComment getPostComment(Long id) {
@@ -369,7 +382,7 @@ public class CommunityService {
         u.getUsername(),
         u.getNickname(),
         p.getViewCount(),
-        postComments.countByPostId(p.getId()),
+        postComments.countByVisibleUserPostId(p.getId()),
         reactionCount(p, "LIKE"),
         reactionCount(p, "DISLIKE"),
         reactionCount(p, "RECOMMEND"),
@@ -402,10 +415,21 @@ public class CommunityService {
     User u = p.getUser();
     CommunityDtos.PostSummary summary = postSummary(p, username);
     return new CommunityDtos.PostDetail(
-        summary.id(), summary.title(), p.getContent(), summary.category(), summary.author(),
-        summary.authorNickname(), summary.viewCount(), summary.commentCount(), summary.likeCount(),
-        summary.dislikeCount(), summary.recommendCount(), summary.viewerReactions(), editable(u, username),
-        p.getCreatedAt(), p.getUpdatedAt());
+        summary.id(),
+        summary.title(),
+        p.getContent(),
+        summary.category(),
+        summary.author(),
+        summary.authorNickname(),
+        summary.viewCount(),
+        summary.commentCount(),
+        summary.likeCount(),
+        summary.dislikeCount(),
+        summary.recommendCount(),
+        summary.viewerReactions(),
+        editable(u, username),
+        p.getCreatedAt(),
+        p.getUpdatedAt());
   }
 
   private CommunityDtos.PostCommentView postCommentView(PostComment c, String username) {
@@ -425,13 +449,23 @@ public class CommunityService {
   private CommunityDtos.PostSummary postSummary(Post p, String username) {
     User u = p.getUser();
     return new CommunityDtos.PostSummary(
-        p.getId(), p.getTitle(), p.getCategory(), u.getUsername(), u.getNickname(), p.getViewCount(),
-        postComments.countByPostId(p.getId()), reactionCount(p, "LIKE"), reactionCount(p, "DISLIKE"),
-        reactionCount(p, "RECOMMEND"), viewerReaction(p, username), p.getCreatedAt(), p.getUpdatedAt());
+        p.getId(),
+        p.getTitle(),
+        p.getCategory(),
+        u.getUsername(),
+        u.getNickname(),
+        p.getViewCount(),
+        postComments.countByVisibleUserPostId(p.getId()),
+        reactionCount(p, "LIKE"),
+        reactionCount(p, "DISLIKE"),
+        reactionCount(p, "RECOMMEND"),
+        viewerReaction(p, username),
+        p.getCreatedAt(),
+        p.getUpdatedAt());
   }
 
   private long reactionCount(Post post, String reaction) {
-    return postReactions.countByPostIdAndReactionType(post.getId(), reaction);
+    return postReactions.countByVisibleUserPostIdAndReactionType(post.getId(), reaction);
   }
 
   private List<String> viewerReaction(Post post, String username) {

@@ -28,6 +28,36 @@ export type RankingRow = {
   solvedCount: number
 }
 
+export type AttendanceBadge = {
+  id: string
+  name: string
+  description: string
+}
+
+export type AttendanceTitle = {
+  id: string
+  name: string
+  requirement: string
+}
+
+export type AttendanceSummary = {
+  totalDays: number
+  currentStreak: number
+  longestStreak: number
+  checkedInToday: boolean
+  activeTitle: string | null
+  badges: AttendanceBadge[]
+  earnedTitles: AttendanceTitle[]
+}
+
+export type AttendanceRankingRow = {
+  rank: number
+  username: string
+  nickname: string
+  totalDays: number
+  currentStreak: number
+}
+
 export type Stats = { challenges: number; solves: number; users: number }
 
 export type CommunityCategory = 'FREE' | 'QUESTION' | 'CTF' | 'NOTICE'
@@ -75,7 +105,7 @@ export type AdminUser = {
   username: string
   nickname: string
   role: string
-  status: 'ACTIVE' | 'SUSPENDED' | string
+  status: 'ACTIVE' | 'SUSPENDED' | 'DELETED' | string
   suspensionReason: string | null
   score: number
   createdAt: string

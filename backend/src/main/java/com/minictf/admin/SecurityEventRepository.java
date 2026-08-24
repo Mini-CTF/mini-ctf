@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface SecurityEventRepository extends JpaRepository<SecurityEvent, Long> {
-  List<SecurityEvent> findTop100ByHiddenFalseOrderByCreatedAtDesc();
+  @Query(
+      "select event from SecurityEvent event where event.hidden = false and (event.user is null or event.user.status <> 'DELETED') order by event.createdAt desc")
+  List<SecurityEvent> findTop100VisibleOrderByCreatedAtDesc();
 
   @Modifying
   @Query("delete from SecurityEvent event where event.createdAt < :before")

@@ -67,8 +67,13 @@ public class PostComment {
     user = v;
   }
 
-  public PostComment getParent() { return parent; }
-  public void setParent(PostComment value) { parent = value; }
+  public PostComment getParent() {
+    return parent;
+  }
+
+  public void setParent(PostComment value) {
+    parent = value;
+  }
 
   public String getContent() {
     return content;
@@ -86,6 +91,11 @@ public class PostComment {
     return updatedAt;
   }
 
-  public Instant getPinnedAt() { return pinnedAt; }
-  public void setPinnedAt(Instant value) { pinnedAt = value; }
+  public Instant getPinnedAt() {
+    return pinnedAt;
+  }
+
+  public void setPinnedAt(Instant value) {
+    pinnedAt = value;
+  }
 }

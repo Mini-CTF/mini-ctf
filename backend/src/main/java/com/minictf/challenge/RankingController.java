@@ -20,7 +20,7 @@ public class RankingController {
 
   @GetMapping
   public ApiResponse<?> ranking() {
-    List<User> ranked = users.findTop100ByOrderByScoreDescUsernameAsc();
+    List<User> ranked = users.findTop100ByStatusNotOrderByScoreDescUsernameAsc("DELETED");
     List<RankingRow> rows = new ArrayList<>();
     int displayedRank = 0;
     Integer previousScore = null;

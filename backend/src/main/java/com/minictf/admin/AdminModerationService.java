@@ -61,6 +61,8 @@ public class AdminModerationService {
   public AdminDtos.UserView updateNickname(
       Long targetId, AdminDtos.UserUpdateRequest request, String adminUsername) {
     User target = target(targetId);
+    if ("DELETED".equals(target.getStatus()))
+      throw new IllegalArgumentException("Restore the account before editing it");
     target.setNickname(request.nickname().trim());
     audit(adminUsername, "UPDATE_USER", "USER", targetId, "Updated nickname");
     return userView(target);
@@ -82,6 +84,11 @@ public class AdminModerationService {
   public AdminDtos.UserView reinstate(Long targetId, String adminUsername) {
     User target = target(targetId);
     ensureNotAdmin(target);
+    if ("DELETED".equals(target.getStatus())) {
+      restoreDeletedAccount(target);
+      audit(adminUsername, "RESTORE_USER", "USER", targetId, "Account and user data restored");
+      return userView(target);
+    }
     target.setStatus("ACTIVE");
     target.setSuspensionReason(null);
     target.setSuspendedAt(null);
@@ -93,17 +100,31 @@ public class AdminModerationService {
   public void deactivate(Long targetId, String adminUsername) {
     User target = target(targetId);
     ensureNotAdmin(target);
-    target.setStatus("SUSPENDED");
+    if ("DELETED".equals(target.getStatus())) return;
+    target.setDeletedOriginalUsername(target.getUsername());
+    target.setDeletedOriginalNickname(target.getNickname());
+    target.setDeletedOriginalScore(target.getScore());
+    target.setDeletedOriginalStatus(target.getStatus());
+    target.setDeletedOriginalSuspensionReason(target.getSuspensionReason());
+    target.setDeletedOriginalSuspendedAt(target.getSuspendedAt());
+    target.setDeletedAt(Instant.now());
+    target.setStatus("DELETED");
     target.setSuspensionReason("Account removed by an administrator");
-    target.setSuspendedAt(Instant.now());
+    target.setSuspendedAt(target.getDeletedAt());
+    target.setScore(0);
     target.setNickname("Deleted user");
     target.setUsername("deleted_" + target.getId());
-    audit(adminUsername, "DEACTIVATE_USER", "USER", targetId, "Anonymized and suspended account");
+    audit(
+        adminUsername,
+        "DEACTIVATE_USER",
+        "USER",
+        targetId,
+        "Account data hidden and progress reset; reversible restore is available");
   }
 
   @Transactional(readOnly = true)
   public List<AdminDtos.SubmissionView> submissions() {
-    return submissions.findAllWithDetails(PageRequest.of(0, 100)).stream()
+    return submissions.findAllWithActiveUsers(PageRequest.of(0, 100)).stream()
         .map(
             s ->
                 new AdminDtos.SubmissionView(
@@ -116,7 +137,7 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public List<AdminDtos.AntiCheatEventView> events() {
-    return antiCheatEvents.findTop100ByOrderByCreatedAtDesc().stream()
+    return antiCheatEvents.findTop100WithActiveUsers().stream()
         .map(
             e ->
                 new AdminDtos.AntiCheatEventView(
@@ -148,7 +169,7 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public List<AdminDtos.SecurityEventView> securityEvents() {
-    return securityEvents.findTop100ByHiddenFalseOrderByCreatedAtDesc().stream()
+    return securityEvents.findTop100VisibleOrderByCreatedAtDesc().stream()
         .map(
             event ->
                 new AdminDtos.SecurityEventView(
@@ -164,7 +185,7 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public List<AdminDtos.ModerationPostView> communityPosts() {
-    return posts.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 100)).stream()
+    return posts.findVisibleAllByCreatedAtDesc(PageRequest.of(0, 100)).stream()
         .map(
             post ->
                 new AdminDtos.ModerationPostView(
@@ -173,14 +194,14 @@ public class AdminModerationService {
                     post.getCategory(),
                     post.getUser().getUsername(),
                     post.getUser().getNickname(),
-                    postComments.countByPostId(post.getId()),
+                    postComments.countByVisibleUserPostId(post.getId()),
                     post.getCreatedAt()))
         .toList();
   }
 
   @Transactional(readOnly = true)
   public List<AdminDtos.ModerationCommentView> communityComments() {
-    return postComments.findTop100ByOrderByCreatedAtDesc().stream()
+    return postComments.findTop100VisibleByOrderByCreatedAtDesc().stream()
         .map(
             comment ->
                 new AdminDtos.ModerationCommentView(
@@ -206,7 +227,13 @@ public class AdminModerationService {
     Post saved = posts.save(notice);
     audit(adminUsername, "PUBLISH_NOTICE", "POST", saved.getId(), saved.getTitle());
     return new AdminDtos.ModerationPostView(
-        saved.getId(), saved.getTitle(), "NOTICE", admin.getUsername(), admin.getNickname(), 0, saved.getCreatedAt());
+        saved.getId(),
+        saved.getTitle(),
+        "NOTICE",
+        admin.getUsername(),
+        admin.getNickname(),
+        0,
+        saved.getCreatedAt());
   }
 
   @Transactional
@@ -220,7 +247,9 @@ public class AdminModerationService {
   @Transactional
   public void deleteCommunityComment(Long id, String adminUsername) {
     PostComment comment =
-        postComments.findById(id).orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+        postComments
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
     String detail = comment.getContent();
     postComments.delete(comment);
     audit(adminUsername, "DELETE_COMMUNITY_COMMENT", "POST_COMMENT", id, detail);
@@ -262,6 +291,34 @@ public class AdminModerationService {
 
   private User target(Long id) {
     return users.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+  }
+
+  private void restoreDeletedAccount(User target) {
+    String originalUsername = target.getDeletedOriginalUsername();
+    if (originalUsername == null || originalUsername.isBlank())
+      throw new IllegalArgumentException("This deleted account has no restore snapshot");
+    users
+        .findByUsernameIgnoreCase(originalUsername)
+        .filter(existing -> !existing.getId().equals(target.getId()))
+        .ifPresent(
+            existing -> {
+              throw new IllegalArgumentException("The original username is already in use");
+            });
+    target.setUsername(originalUsername);
+    target.setNickname(target.getDeletedOriginalNickname());
+    target.setScore(
+        target.getDeletedOriginalScore() == null ? 0 : target.getDeletedOriginalScore());
+    target.setStatus(
+        target.getDeletedOriginalStatus() == null ? "ACTIVE" : target.getDeletedOriginalStatus());
+    target.setSuspensionReason(target.getDeletedOriginalSuspensionReason());
+    target.setSuspendedAt(target.getDeletedOriginalSuspendedAt());
+    target.setDeletedOriginalUsername(null);
+    target.setDeletedOriginalNickname(null);
+    target.setDeletedOriginalScore(null);
+    target.setDeletedOriginalStatus(null);
+    target.setDeletedOriginalSuspensionReason(null);
+    target.setDeletedOriginalSuspendedAt(null);
+    target.setDeletedAt(null);
   }
 
   private void ensureNotAdmin(User user) {

@@ -42,6 +42,30 @@ public class User {
   @Column(name = "avatar_path", length = 500)
   private String avatarPath;
 
+  @Column(name = "attendance_title", length = 40)
+  private String attendanceTitle;
+
+  @Column(name = "deleted_original_username", length = 50)
+  private String deletedOriginalUsername;
+
+  @Column(name = "deleted_original_nickname", length = 80)
+  private String deletedOriginalNickname;
+
+  @Column(name = "deleted_original_score")
+  private Integer deletedOriginalScore;
+
+  @Column(name = "deleted_original_status", length = 20)
+  private String deletedOriginalStatus;
+
+  @Column(name = "deleted_original_suspension_reason", length = 500)
+  private String deletedOriginalSuspensionReason;
+
+  @Column(name = "deleted_original_suspended_at")
+  private Instant deletedOriginalSuspendedAt;
+
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -136,5 +160,69 @@ public class User {
 
   public void setAvatarPath(String value) {
     avatarPath = value;
+  }
+
+  public String getAttendanceTitle() {
+    return attendanceTitle;
+  }
+
+  public void setAttendanceTitle(String value) {
+    attendanceTitle = value;
+  }
+
+  public String getDeletedOriginalUsername() {
+    return deletedOriginalUsername;
+  }
+
+  public void setDeletedOriginalUsername(String value) {
+    deletedOriginalUsername = value;
+  }
+
+  public String getDeletedOriginalNickname() {
+    return deletedOriginalNickname;
+  }
+
+  public void setDeletedOriginalNickname(String value) {
+    deletedOriginalNickname = value;
+  }
+
+  public Integer getDeletedOriginalScore() {
+    return deletedOriginalScore;
+  }
+
+  public void setDeletedOriginalScore(Integer value) {
+    deletedOriginalScore = value;
+  }
+
+  public String getDeletedOriginalStatus() {
+    return deletedOriginalStatus;
+  }
+
+  public void setDeletedOriginalStatus(String value) {
+    deletedOriginalStatus = value;
+  }
+
+  public String getDeletedOriginalSuspensionReason() {
+    return deletedOriginalSuspensionReason;
+  }
+
+  public void setDeletedOriginalSuspensionReason(String value) {
+    deletedOriginalSuspensionReason = value;
+  }
+
+  public Instant getDeletedOriginalSuspendedAt() {
+    return deletedOriginalSuspendedAt;
+  }
+
+  public void setDeletedOriginalSuspendedAt(Instant value) {
+    deletedOriginalSuspendedAt = value;
+  }
+
+  public Instant getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(Instant value) {
+    deletedAt = value;
   }
 }

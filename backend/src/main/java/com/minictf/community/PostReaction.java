@@ -30,10 +30,27 @@ public class PostReaction {
     createdAt = Instant.now();
   }
 
-  public Post getPost() { return post; }
-  public void setPost(Post value) { post = value; }
-  public User getUser() { return user; }
-  public void setUser(User value) { user = value; }
-  public String getReactionType() { return reactionType; }
-  public void setReactionType(String value) { reactionType = value; }
+  public Post getPost() {
+    return post;
+  }
+
+  public void setPost(Post value) {
+    post = value;
+  }
+
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User value) {
+    user = value;
+  }
+
+  public String getReactionType() {
+    return reactionType;
+  }
+
+  public void setReactionType(String value) {
+    reactionType = value;
+  }
 }

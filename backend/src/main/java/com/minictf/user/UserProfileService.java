@@ -85,7 +85,7 @@ public class UserProfileService {
         user.getUsername(),
         user.getNickname(),
         user.getScore(),
-        solves.countByUser(user.getId()),
+        solves.countByActiveUser(user.getId()),
         user.getStatusMessage(),
         avatarUrl(user));
   }
@@ -108,16 +108,19 @@ public class UserProfileService {
         user.getNickname(),
         user.getRole(),
         user.getScore(),
-        users.countByScoreGreaterThan(user.getScore()) + 1,
-        solves.countByUser(user.getId()),
+        users.countByScoreGreaterThanAndStatusNot(user.getScore(), "DELETED") + 1,
+        solves.countByActiveUser(user.getId()),
         user.getStatusMessage(),
         avatarUrl(user));
   }
 
   private User byUsername(String username) {
-    return users
-        .findByUsernameIgnoreCase(username)
-        .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    User user =
+        users
+            .findByUsernameIgnoreCase(username)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    if ("DELETED".equals(user.getStatus())) throw new EntityNotFoundException("User not found");
+    return user;
   }
 
   private String avatarUrl(User user) {

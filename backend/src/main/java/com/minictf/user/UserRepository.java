@@ -17,9 +17,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   boolean existsByUsername(String username);
 
-  List<User> findTop100ByOrderByScoreDescUsernameAsc();
+  boolean existsByDeletedOriginalUsernameIgnoreCase(String username);
 
-  long countByScoreGreaterThan(int score);
+  List<User> findTop100ByStatusNotOrderByScoreDescUsernameAsc(String status);
+
+  long countByScoreGreaterThanAndStatusNot(int score, String status);
+
+  long countByStatusNot(String status);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select u from User u where lower(u.username) = lower(:username)")

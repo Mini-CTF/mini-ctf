@@ -23,7 +23,11 @@ public class StatsController {
 
   @GetMapping
   public ApiResponse<Stats> stats() {
-    return ApiResponse.ok(new Stats(challenges.countByActiveTrue(), solves.count(), users.count()));
+    return ApiResponse.ok(
+        new Stats(
+            challenges.countByActiveTrue(),
+            solves.countByActiveUsers(),
+            users.countByStatusNot("DELETED")));
   }
 
   public record Stats(long challenges, long solves, long users) {}
