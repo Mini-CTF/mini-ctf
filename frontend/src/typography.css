@@ -379,6 +379,33 @@ html[data-theme='light'] .friend-request input,
 html[data-theme='light'] .message-panel textarea,
 html[data-theme='light'] .auth-form input { color: #17202d; }
 
+/* Final contrast guard for components that define their dark-theme text later in the file. */
+html[data-theme='light'] .app-shell .brand,
+html[data-theme='light'] .app-shell .nav-button.active,
+html[data-theme='light'] .app-shell .header-login,
+html[data-theme='light'] .app-shell .hero-copy h1,
+html[data-theme='light'] .app-shell .page-intro h1,
+html[data-theme='light'] .app-shell .profile-hero h1,
+html[data-theme='light'] .app-shell .auth-card h1,
+html[data-theme='light'] .app-shell .section-heading h2,
+html[data-theme='light'] .app-shell .content-section h2,
+html[data-theme='light'] .app-shell .challenge-card h3,
+html[data-theme='light'] .app-shell .detail-header h1,
+html[data-theme='light'] .app-shell .problem-panel h2,
+html[data-theme='light'] .app-shell .community-detail h1,
+html[data-theme='light'] .app-shell .community-post-row strong,
+html[data-theme='light'] .app-shell .pinned-notice strong,
+html[data-theme='light'] .app-shell .comment strong,
+html[data-theme='light'] .app-shell .profile-editor h2,
+html[data-theme='light'] .app-shell .social-panel h2,
+html[data-theme='light'] .app-shell .friend-row strong,
+html[data-theme='light'] .app-shell .message-panel h3,
+html[data-theme='light'] .app-shell .admin-row strong,
+html[data-theme='light'] .app-shell .admin-summary-grid strong,
+html[data-theme='light'] .app-shell .site-footer strong { color: #101d2c !important; }
+
+html[data-theme='light'] .menu-toggle span:not(.sr-only) { background: #101d2c; }
+
 .ranking-head { font-size: 12px; }
 .ranking-row { min-height: 82px; font-size: 16px; }
 .rank-number { font-size: 16px; }
