@@ -97,7 +97,8 @@ public class SecurityConfig {
   }
 
   @Bean
-  OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService() {
+  OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService(
+      @Value("${DISCORD_CLIENT_SECRET:not-configured}") String discordClientSecret) {
     DefaultOAuth2UserService service = new DefaultOAuth2UserService();
     RestTemplate restTemplate = new RestTemplate();
     restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
@@ -106,6 +107,9 @@ public class SecurityConfig {
         .add(
             (request, body, execution) -> {
               request.getHeaders().set(HttpHeaders.USER_AGENT, DISCORD_USER_AGENT);
+              if (request.getURI().getPath().equals("/api/discord-user")) {
+                request.getHeaders().set("X-Mini-CTF-Proxy-Secret", discordClientSecret);
+              }
               return execution.execute(request, body);
             });
     service.setRestOperations(restTemplate);

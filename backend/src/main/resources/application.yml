@@ -65,7 +65,7 @@ spring:
           discord:
             authorization-uri: https://discord.com/oauth2/authorize
             token-uri: ${DISCORD_TOKEN_URI:https://frontend-six-rho-92.vercel.app/api/discord-token}
-            user-info-uri: https://discord.com/api/v10/users/@me
+            user-info-uri: ${DISCORD_USER_INFO_URI:https://frontend-six-rho-92.vercel.app/api/discord-user}
             user-name-attribute: id
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize
