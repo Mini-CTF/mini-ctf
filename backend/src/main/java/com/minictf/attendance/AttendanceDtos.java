@@ -21,7 +21,15 @@ public final class AttendanceDtos {
       List<Title> earnedTitles) {}
 
   public record RankingRow(
-      int rank, String username, String nickname, long totalDays, int currentStreak) {}
+      int rank,
+      String username,
+      String nickname,
+      long totalDays,
+      int currentStreak,
+      String avatarUrl,
+      String equippedFrame,
+      String equippedAccessory,
+      String equippedTitle) {}
 
   public record TitleRequest(@NotBlank @Size(max = 40) String titleId) {}
 }

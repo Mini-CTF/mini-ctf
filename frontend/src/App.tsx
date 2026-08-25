@@ -20,8 +20,83 @@ const initialLoginError = initialOAuthError
       : `OAuth sign-in could not be completed. Error code: ${initialOAuthError}`
   : ''
 type Theme = 'dark' | 'light'
+type Language = 'ko' | 'en'
 const initialTheme: Theme = localStorage.getItem('mini-ctf-theme') === 'light' ? 'light' : 'dark'
+const initialLanguage: Language = localStorage.getItem('flagbox-language') === 'en' ? 'en' : 'ko'
 const oauthBaseUrl = import.meta.env.VITE_OAUTH_BASE_URL ?? 'http://localhost:8080'
+
+const uiCopy = {
+  ko: { home: '홈', wargame: '워게임', ranking: '랭킹', community: '커뮤니티', profile: '마이 페이지', shop: '상점', admin: '관리', login: '로그인', logout: '로그아웃', language: '영어로 변경', footer: '안전하게 배우고, 직접 풀어보세요.', status: '학습 플랫폼 정상 운영 중' },
+  en: { home: 'Home', wargame: 'Wargames', ranking: 'Rankings', community: 'Community', profile: 'My Page', shop: 'Shop', admin: 'Admin', login: 'Sign in', logout: 'Sign out', language: '한국어로 변경', footer: 'Learn safely. Solve it yourself.', status: 'Learning platform online' },
+} as const
+
+const englishToKorean: Record<string, string> = {
+  'Menu': '메뉴', 'Home': '홈', 'Wargames': '워게임', 'Rankings': '랭킹', 'Community': '커뮤니티', 'My Page': '마이 페이지', 'Shop': '상점', 'Admin': '관리', 'Sign in': '로그인', 'Sign out': '로그아웃',
+  'Loading live platform data...': '플랫폼 정보를 불러오는 중...', 'Retry': '다시 시도', 'Loading...': '불러오는 중...', 'Back home': '홈으로 돌아가기', 'Back to community': '커뮤니티로 돌아가기',
+  'Create your account.': '계정을 만들어 보세요.', 'Sign in to continue.': '계속하려면 로그인하세요.', 'Username': '아이디', 'Display name (optional)': '표시 이름 (선택)', 'Password': '비밀번호', 'Confirm password': '비밀번호 확인', 'Create account': '계정 만들기',
+  'or continue with': '또는 다음 계정으로 계속하기', 'Already have an account?': '이미 계정이 있나요?', 'New to Mini CTF?': '처음 오셨나요?', 'Continue with Google': 'Google로 계속하기', 'Continue with GitHub': 'GitHub로 계속하기', 'Continue with Discord': 'Discord로 계속하기',
+  'START HERE': '여기서 시작', 'Challenges to try now': '지금 도전할 문제', 'View all wargames': '워게임 전체 보기', 'Previous banner': '이전 배너', 'Next banner': '다음 배너', 'Banner selection': '배너 선택',
+  'Solve your first challenge': '첫 문제 풀어보기', 'Browse wargames': '워게임 둘러보기', 'Visit community': '커뮤니티 둘러보기', 'Explore rankings': '랭킹 둘러보기',
+  'New to security?': '처음 배우는 보안은', 'Start with FlagBox.': 'FlagBox로 가볍게.', 'One challenge a day.': '하루 한 문제로', 'A great place to start.': '가볍게 시작해요.',
+  'Do not get stuck alone.': '혼자 고민하지 말고', 'Learn together.': '함께 배워요.', 'Security gets easier': '보안은, 직접 풀어보면', 'when you solve it.': '더 쉬워집니다.',
+  'Take your time.': '막힐 땐 괜찮아요.', 'Hints are here.': '힌트가 함께해요.', 'Small challenges today.': '오늘의 작은 도전이', 'Stronger skills tomorrow.': '내일의 실력이 돼요.',
+  'Challenge': '문제', 'Challenges': '문제', 'All': '전체', 'Open': '열기', 'Back': '뒤로', 'Submit': '제출', 'Correct': '정답', 'Incorrect': '오답', 'Solved': '해결함', 'Locked': '잠김',
+  'WARGAME': '워게임', 'RANKING': '랭킹', 'Which challenge would you like to solve first?': '어떤 문제부터 풀어볼까요?', 'Pick one at your own pace, and use a hint whenever you get stuck.': '부담 없이 골라보고, 막히면 힌트를 사용해 보세요.',
+  'Read the challenge, follow the clues step by step, and submit the FLAG.': '문제를 읽고, 차근차근 단서를 찾아 FLAG를 제출해 보세요.', 'points': '점', 'Review': '다시 보기', 'Open challenge': '문제 열기',
+  'Back to challenges': '문제 목록으로', 'REWARD': '보상', 'THE BRIEF': '문제 설명', 'Analyze carefully.': '천천히 살펴보세요.', 'ARTIFACT': '첨부 파일', 'Challenge artifact': '문제 파일', 'Protected download from the API': '안전하게 제공되는 문제 파일입니다.', 'Download': '다운로드', 'SUBMIT FLAG': 'FLAG 제출', 'What did you find?': '찾아낸 FLAG를 제출해 보세요.', 'Flag value': 'FLAG 입력', 'Submit flag': 'FLAG 제출', 'Sign in to submit': '로그인 후 제출할 수 있어요.',
+  'Need a nudge?': '작은 힌트가 필요하신가요?', 'Hint revealed': '힌트를 확인했어요', 'Reveal hint': '힌트 보기',
+  'Signal in Plain Sight': '평범한 곳에 숨은 신호', 'Proxy Afterimage': '프록시의 흔적', 'Orbit Gatekeeper': '궤도 관문 수문장',
+  'A captured status message looks ordinary, but its alphabet only uses Base64 characters. Decode the payload and submit the recovered FLAG.': '평범해 보이는 상태 메시지지만 Base64 문자만 사용하고 있어요. 내용을 디코딩해 FLAG를 찾아 제출해 보세요.',
+  'Review the supplied proxy trace. The analyst preserved one suspicious request in hex. Follow the transformation hints in the artifact to recover the FLAG.': '제공된 프록시 기록을 살펴보세요. 분석가는 의심스러운 요청 하나를 16진수로 남겨 두었습니다. 문제 파일의 변환 단서를 따라 FLAG를 복구해 보세요.',
+  'A small offline verifier checks a passphrase before opening a maintenance gate. Reverse its deterministic transform and recover the accepted FLAG. No network target is involved.': '작은 오프라인 검증기가 암호 구문을 확인한 뒤 정비 관문을 엽니다. 정해진 변환 과정을 거꾸로 따라 올바른 FLAG를 찾아보세요. 네트워크 대상은 없습니다.',
+  'Identify the encoding layer before trying to break the message.': '메시지를 해독하기 전에 어떤 인코딩이 사용됐는지 먼저 확인해 보세요.', 'Follow the suspicious request and decode each representation in order.': '의심스러운 요청을 따라가며 각 표현 방식을 차례대로 디코딩해 보세요.', "Work backwards from the verifier's final comparison and undo one round at a time.": '검증기의 마지막 비교 지점부터 거꾸로 따라가며 한 단계씩 되돌려 보세요.', 'Use the challenge description as your first source of truth and isolate one clue at a time.': '문제 설명을 첫 단서로 삼고, 단서를 하나씩 분리해 살펴보세요.', 'Could not reveal the hint.': '힌트를 불러오지 못했어요.',
+  'Building progress together': '함께 쌓아가는 기록', 'Scores and records built by solving challenges.': '문제를 해결하며 쌓은 점수와 기록이에요.', 'A steady record of learning every day.': '매일 학습을 이어온 꾸준한 기록이에요.',
+  'Score ranking': '점수 랭킹', 'Attendance ranking': '출석 랭킹', 'Rank': '순위', 'Learner': '학습자', 'Solves': '해결', 'Score': '점수', 'Total': '누적', 'Streak': '연속',
+  'Profile': '프로필', 'Edit profile': '프로필 수정', 'Save': '저장', 'Cancel': '취소', 'Delete': '삭제', 'Edit': '수정', 'Close': '닫기', 'Search': '검색',
+  'YOUR PROGRESS': '나의 학습 기록', 'Sign in to track your progress.': '학습 기록을 확인하려면 로그인하세요.', 'Your score and solved challenges are tied to your authenticated account.': '점수와 해결한 문제는 로그인한 계정에 안전하게 저장됩니다.',
+  'OPERATOR PROFILE': '프로필', 'No status message yet.': '아직 상태 메시지가 없어요.', 'total points': '누적 점수', 'DAILY OPERATIONS': '오늘의 학습', 'Attendance': '출석', 'Checked in today': '오늘 출석 완료', 'Check in today': '오늘 출석하기',
+  'Current streak': '현재 연속 출석', 'Longest streak': '최장 연속 출석', 'Total days': '누적 출석일', 'Profile title': '프로필 칭호', 'Earn a title to equip it': '칭호를 획득하면 여기서 적용할 수 있어요.',
+  'Customize profile': '프로필 꾸미기', 'Status message': '상태 메시지', 'What are you working on?': '지금 어떤 학습을 하고 있나요?', 'Save profile': '프로필 저장', 'Open Cipher Vault': '상점 열기', 'Browse challenges': '워게임 둘러보기',
+  'Friends': '친구', 'Account username (e.g. @player_1)': '계정 아이디 (예: @player_1)', 'Add': '추가', 'No friends yet.': '아직 친구가 없어요.', 'Accept': '수락', 'Remove': '삭제', 'Write a private message': '개인 메시지를 입력하세요', 'Send': '보내기', 'Change photo': '사진 변경', 'Upload profile photo': '프로필 사진 업로드',
+  'Write a post': '글쓰기', 'Post title': '게시글 제목', 'Question': '질문', 'Free': '자유', 'Publish': '게시', 'Publish notice': '공지 게시', 'Notice title': '공지 제목', 'Write the notice content': '공지 내용을 입력하세요',
+  'Ask questions, share safe write-ups, and discuss the Mini CTF training labs.': '질문을 나누고, 안전한 풀이 기록을 공유하며 Mini-CTF 워게임을 함께 배워요.', 'PINNED NOTICES': '고정 공지', 'NOTICE': '공지', 'FREE': '자유', 'QUESTION': '질문', 'Opening post...': '게시글을 여는 중...',
+  'Like': '좋아요', 'Dislike': '싫어요', 'Recommend': '추천', 'Replies can be pinned by the post author.': '게시글 작성자는 답글을 고정할 수 있어요.', 'Add a constructive comment': '서로에게 도움이 되는 댓글을 남겨 보세요.', 'Write a reply': '답글을 입력하세요',
+  'Comments': '댓글', 'Comment': '댓글 작성', 'Reply': '답글', 'Reply to this comment': '이 댓글에 답글 달기', 'Pin reply': '답글 고정', 'Pinned reply': '고정된 답글', 'Sign in to write': '글쓰기는 로그인 후 이용할 수 있어요', 'Sign in to join the conversation.': '대화에 참여하려면 로그인하세요.',
+  'Today': '오늘', 'Collection': '보관함', 'Buy': '구매', 'Craft': '제작', 'Equip': '착용', 'Unequip': '해제', 'Claim reward': '보상 받기', 'Claimed': '받음', 'In progress': '진행 중',
+  'Red Ruby Exchange': '레드 루비 교환소', 'Trade earned rubies for frames, accents, titles, and hint credits.': '모은 루비로 프로필 테두리, 장식, 칭호, 힌트 크레딧을 교환하세요.', 'Loading your collection...': '보관함을 불러오는 중...', 'Red Rubies': '레드 루비', 'Hint Credits': '힌트 크레딧', 'Earn rubies through attendance and missions': '출석과 미션으로 루비를 모아 보세요.',
+  'Exchange': '교환소', 'Missions': '미션', 'My loadout': '내 꾸미기', 'Add credit': '크레딧 추가', 'Owned': '보유함', 'Acquire': '구매하기', 'Currently equipped': '현재 적용 중', 'Ready to equip': '착용 가능', 'Detach': '해제', 'Your loadout is empty.': '아직 적용한 꾸미기 아이템이 없어요.', 'Acquire a profile frame, accent, or title from the exchange.': '교환소에서 프로필 테두리, 장식, 칭호를 획득해 보세요.',
+  'Account management': '계정 관리', 'Post management': '게시글 관리', 'Comment management': '댓글 관리', 'Write a new notice': '새 공지 작성', 'Published notices': '게시된 공지', 'Recent submissions': '최근 제출', 'Operations shortcuts': '빠른 작업', 'Review accounts': '계정 검토', 'Manage content': '콘텐츠 관리', 'Write a notice': '공지 작성',
+  'ADMIN CONSOLE': '관리자 콘솔', 'Administrator console': '관리자 콘솔', 'Loading platform status and moderation controls.': '플랫폼 상태와 관리 기능을 불러오는 중입니다.', 'Run the platform clearly.': '플랫폼을 한눈에 관리하세요.', 'Manage accounts, community content, notices, and security records in focused workspaces.': '계정, 커뮤니티, 공지, 보안 기록을 한곳에서 관리할 수 있어요.',
+  'QUICK ACTIONS': '빠른 작업', 'RECENT ACTIVITY': '최근 활동', 'SECURITY': '보안', 'Events to review': '확인이 필요한 이벤트', 'View all': '전체 보기', 'ACCOUNT MANAGEMENT': '계정 관리', 'COMMUNITY POSTS': '커뮤니티 게시글', 'COMMENTS': '댓글', 'PUBLISH NOTICE': '공지 게시', 'PUBLISHED': '게시됨', 'ANTI-CHEAT': '부정행위 방지', 'Security events': '보안 이벤트', 'CHALLENGE ACTIVITY': '문제 활동', 'Submission history': '제출 기록', 'SECURITY LOG': '보안 로그', 'Login and account events': '로그인 및 계정 이벤트', 'AUDIT TRAIL': '관리 기록', 'Administrator activity': '관리자 활동',
+  'Delete account': '계정 삭제', 'Restore account': '계정 복구', 'Restore': '복구', 'Suspend': '정지', 'Loading administrator dashboard…': '관리자 대시보드를 불러오는 중…',
+  'Learn safely. Solve it yourself.': '안전하게 배우고, 직접 풀어보세요.', 'Learning platform online': '학습 플랫폼 정상 운영 중', 'Skip': '건너뛰기',
+}
+const koreanToEnglish = Object.fromEntries(Object.entries(englishToKorean).map(([english, korean]) => [korean, english])) as Record<string, string>
+
+function localizeSystemInterface(language: Language) {
+  const root = document.querySelector('.app-shell')
+  if (!root) return
+  const dictionary = language === 'ko' ? englishToKorean : koreanToEnglish
+  const isProtected = (node: Node) => node.parentElement?.closest('code, pre, textarea, input, .community-content, .comment-content, .message, [data-i18n-skip]')
+  const replace = (value: string) => dictionary[value.trim()] ? value.replace(value.trim(), dictionary[value.trim()]) : value
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const textNodes: Text[] = []
+  while (walker.nextNode()) textNodes.push(walker.currentNode as Text)
+  textNodes.forEach((node) => {
+    if (isProtected(node)) return
+    const next = replace(node.nodeValue ?? '')
+    if (next !== node.nodeValue) node.nodeValue = next
+  })
+  root.querySelectorAll<HTMLElement>('[placeholder], [aria-label], [title]').forEach((element) => {
+    if (element.closest('[data-i18n-skip]')) return
+    ;(['placeholder', 'aria-label', 'title'] as const).forEach((attribute) => {
+      const value = element.getAttribute(attribute)
+      if (!value) return
+      const next = replace(value)
+      if (next !== value) element.setAttribute(attribute, next)
+    })
+  })
+}
 
 function App() {
   const [view, setView] = useState<View>(initialOAuthError ? 'login' : 'home')
@@ -38,10 +113,32 @@ function App() {
   const [error, setError] = useState(initialLoginError)
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState<Theme>(initialTheme)
+  const [language, setLanguage] = useState<Language>(initialLanguage)
   const [vaultOpening, setVaultOpening] = useState(false)
   const [vaultOpen, setVaultOpen] = useState(false)
   const [hiddenOpen, setHiddenOpen] = useState(false)
+  const [showIntro, setShowIntro] = useState(true)
+  const [introFilled, setIntroFilled] = useState(false)
   const vaultClicks = useRef<number[]>([])
+
+  useEffect(() => {
+    if (!showIntro) return
+    const timer = window.setTimeout(() => {
+      setShowIntro(false)
+    }, 3850)
+    return () => window.clearTimeout(timer)
+  }, [showIntro])
+  useEffect(() => {
+    if (!showIntro) return
+    setIntroFilled(false)
+    const timer = window.setTimeout(() => setIntroFilled(true), 140)
+    return () => window.clearTimeout(timer)
+  }, [showIntro])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('flagbox-intro-active', showIntro)
+    return () => document.documentElement.classList.remove('flagbox-intro-active')
+  }, [showIntro])
 
   const refresh = async () => {
     setLoading(true)
@@ -94,6 +191,23 @@ function App() {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('mini-ctf-theme', theme)
   }, [theme])
+  useEffect(() => {
+    document.documentElement.lang = language
+    localStorage.setItem('flagbox-language', language)
+  }, [language])
+  useEffect(() => {
+    let frame = window.requestAnimationFrame(() => localizeSystemInterface(language))
+    const root = document.querySelector('.app-shell')
+    if (!root) return () => window.cancelAnimationFrame(frame)
+    const observer = new MutationObserver(() => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => localizeSystemInterface(language))
+    })
+    observer.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'aria-label', 'title'] })
+    return () => { observer.disconnect(); window.cancelAnimationFrame(frame) }
+  }, [language])
+
+  const text = uiCopy[language]
 
   const visibleChallenges = useMemo(
     () => challenges.filter((item) => category === 'ALL' || item.category === category),
@@ -124,6 +238,14 @@ function App() {
     navigate('challenges')
     void refresh()
   }
+  const syncAppearance = async () => {
+    try {
+      setUser(await api.me())
+      await refresh()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not refresh your profile.')
+    }
+  }
   const logout = () => {
     localStorage.removeItem('mini-ctf-token')
     setUser(null)
@@ -141,47 +263,58 @@ function App() {
     window.setTimeout(() => { setVaultOpening(false); setHiddenOpen(true) }, 1800)
   }
 
+  const dismissIntro = () => {
+    setShowIntro(false)
+  }
+
   return <div className="app-shell">
+    {showIntro && <FlagBoxIntro onSkip={dismissIntro} filled={introFilled} />}
     <header className="site-header" onClick={(event) => { if ((event.target as Element).closest('.brand')) triggerVault() }}>
       <button className="brand" type="button" onClick={() => navigate('home')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
       <nav id="primary-navigation" className={mobileNavOpen ? 'primary-nav is-open' : 'primary-nav'} aria-label="Primary navigation">
-        <NavButton active={view === 'home'} onClick={() => navigate('home')}>홈</NavButton>
-        <NavButton active={view === 'challenges'} onClick={() => navigate('challenges')}>워게임</NavButton>
-        <NavButton active={view === 'ranking'} onClick={() => navigate('ranking')}>랭킹</NavButton>
-        <NavButton active={view === 'community'} onClick={() => navigate('community')}>커뮤니티</NavButton>
-        <NavButton active={view === 'profile'} onClick={() => navigate('profile')}>마이 페이지</NavButton>
-        {user && <NavButton active={false} onClick={() => { setMobileNavOpen(false); setVaultOpen(true) }}>상점</NavButton>}
-        {user?.role === 'ADMIN' && <NavButton active={view === 'admin'} onClick={() => navigate('admin')}>관리</NavButton>}
-        {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>로그아웃</button> : <button className="nav-button mobile-auth" type="button" onClick={() => navigate('login')}>로그인</button>}
+        <NavButton active={view === 'home'} onClick={() => navigate('home')}>{text.home}</NavButton>
+        <NavButton active={view === 'challenges'} onClick={() => navigate('challenges')}>{text.wargame}</NavButton>
+        <NavButton active={view === 'ranking'} onClick={() => navigate('ranking')}>{text.ranking}</NavButton>
+        <NavButton active={view === 'community'} onClick={() => navigate('community')}>{text.community}</NavButton>
+        <NavButton active={view === 'profile'} onClick={() => navigate('profile')}>{text.profile}</NavButton>
+        {user && <NavButton active={false} onClick={() => { setMobileNavOpen(false); setVaultOpen(true) }}>{text.shop}</NavButton>}
+        {user?.role === 'ADMIN' && <NavButton active={view === 'admin'} onClick={() => navigate('admin')}>{text.admin}</NavButton>}
+        <button className="nav-button mobile-language" type="button" onClick={() => setLanguage((current) => current === 'ko' ? 'en' : 'ko')} aria-label={text.language}><GlobeIcon /> {language === 'ko' ? 'EN' : 'KO'}</button>
+        {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>{text.logout}</button> : <button className="nav-button mobile-auth" type="button" onClick={() => navigate('login')}>{text.login}</button>}
       </nav>
-      <div className="header-actions"><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>로그아웃</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>로그인</button>}</div>
+      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={() => setLanguage((current) => current === 'ko' ? 'en' : 'ko')}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>{text.login}</button>}</div>
     </header>
     <main>
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       {loading && <div className="page"><LoadingState label="Loading live platform data..." /></div>}
-      {!loading && view === 'home' && <Home challenges={challenges} onExplore={() => navigate('challenges')} onRanking={() => navigate('ranking')} onOpen={openChallenge} />}
+      {!loading && view === 'home' && <Home language={language} challenges={challenges} onExplore={() => navigate('challenges')} onRanking={() => navigate('ranking')} onOpen={openChallenge} />}
       {!loading && view === 'challenges' && (selected ? <ChallengeDetailView item={selected} loggedIn={Boolean(user)} onBack={() => setSelected(null)} onLogin={() => navigate('login')} onSubmitted={refresh} /> : openingChallenge ? <div className="page"><LoadingState label={`Opening ${openingChallenge}...`} /></div> : <ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} onOpen={openChallenge} />)}
-      {!loading && view === 'ranking' && <RankingView rows={ranking} attendanceRows={attendanceRanking} />}
-      {!loading && view === 'profile' && <ProfileView user={user} onChallenges={() => navigate('challenges')} onLogin={() => navigate('login')} onVault={() => setVaultOpen(true)} />}
+      {!loading && view === 'ranking' && <EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />}
+      {!loading && view === 'profile' && <ProfileView user={user} onChallenges={() => navigate('challenges')} onLogin={() => navigate('login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />}
       {!loading && view === 'community' && <EnhancedCommunityView user={user} onLogin={() => navigate('login')} />}
       {!loading && view === 'admin' && user?.role === 'ADMIN' && <AdminConsole />}
       {!loading && view === 'login' && <LoginView onBack={() => navigate('home')} onAuth={completeAuth} />}
     </main>
     {vaultOpening && <VaultOpening />}
     {hiddenOpen && user && <HiddenOperation user={user} onClose={() => setHiddenOpen(false)} />}
-    {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} />}
-    <footer className="site-footer"><span><strong>FlagBox</strong> · 안전하게 배우고, 직접 풀어보세요.</span><span className="footer-status">학습 플랫폼 정상 운영 중</span></footer>
+    {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
+    <footer className="site-footer"><span><strong>FlagBox</strong> · {text.footer}</span><span className="footer-status">{text.status}</span></footer>
   </div>
 }
 
 function NavButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: string }) { return <button className={active ? 'nav-button active' : 'nav-button'} type="button" onClick={onClick}>{children}</button> }
+function GlobeIcon() { return <svg className="language-globe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M3.8 12h16.4M12 3.5c2.5 2.35 3.75 5.18 3.75 8.5S14.5 18.15 12 20.5M12 3.5C9.5 5.85 8.25 8.68 8.25 12S9.5 18.15 12 20.5" /></svg> }
 
 function LoadingState({ label }: { label: string }) {
   return <div className="loading-state" role="status"><span className="loading-mark" aria-hidden="true" /><p>{label}</p></div>
 }
 
-function Home({ challenges, onExplore, onRanking, onOpen }: { challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void }) {
+function FlagBoxIntro({ onSkip, filled }: { onSkip: () => void; filled: boolean }) {
+  return <div className={`flagbox-intro flagbox-wordmark-intro${filled ? ' is-filled' : ''}`} role="status" aria-label="FlagBox를 준비하고 있습니다."><button type="button" className="flagbox-intro-skip" onClick={onSkip}>건너뛰기</button><svg className="flagbox-intro-watermark" viewBox="0 0 1500 310" aria-hidden="true"><text x="750" y="232" textAnchor="middle">FlagBox</text><g className="flagbox-intro-flag"><path className="flagbox-intro-pole" d="M1148 226L1194 62L1207 22L1209 76L1163 232Z" /><path className="flagbox-intro-pennant" d="M1212 80C1248 63 1290 68 1321 96C1315 125 1308 153 1299 182C1265 166 1240 150 1211 151Z" /></g></svg></div>
+}
+
+function Home({ language, challenges, onExplore, onRanking, onOpen }: { language: Language; challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void }) {
   const banners = [
     { label: 'START FROM ZERO', title: '처음 배우는 보안도\nFlagBox와 함께.', description: '복잡한 이론보다 쉬운 문제부터. 직접 풀며 기초를 익혀 보세요.', action: '첫 문제 풀어보기', onClick: onExplore },
     { label: 'DAILY PRACTICE', title: '하루 한 문제로\n가볍게 시작해요.', description: '짧은 도전이 모여 실력이 됩니다. 오늘의 학습 기록을 남겨 보세요.', action: '워게임 둘러보기', onClick: onExplore },
@@ -190,21 +323,30 @@ function Home({ challenges, onExplore, onRanking, onOpen }: { challenges: Challe
     { label: 'LEARN AT YOUR PACE', title: '막혀도 괜찮아요.\n힌트가 함께해요.', description: '문제를 읽고, 단서를 찾고, 필요한 순간에는 힌트를 사용해 보세요.', action: '워게임 둘러보기', onClick: onExplore },
     { label: 'KEEP THE MOMENTUM', title: '오늘의 작은 풀이가\n내일의 실력이 돼요.', description: '매일의 도전과 학습 기록을 FlagBox에서 이어가 보세요.', action: '랭킹 둘러보기', onClick: onRanking },
   ]
+  const englishBanners = [
+    { label: 'START FROM ZERO', title: 'New to security?\nStart with FlagBox.', description: 'Skip the jargon. Build the fundamentals by solving safe, approachable problems.', action: 'Solve your first challenge', onClick: onExplore },
+    { label: 'DAILY PRACTICE', title: 'One challenge a day.\nA great place to start.', description: 'Small and safe practice sessions add up. Keep track of today’s learning.', action: 'Browse wargames', onClick: onExplore },
+    { label: 'ASK AND GROW', title: 'Do not get stuck alone.\nLearn together.', description: 'Ask questions in the community and learn from other learners’ experiences.', action: 'Visit community', onClick: onRanking },
+    { label: 'BEGINNER WARGAME', title: 'Security gets easier\nwhen you solve it.', description: 'Take it one step at a time. FlagBox wargames are made for a safe first start.', action: 'Solve your first challenge', onClick: onExplore },
+    { label: 'LEARN AT YOUR PACE', title: 'Take your time.\nHints are here.', description: 'Read the prompt, find your bearings, and use a hint whenever you need one.', action: 'Browse wargames', onClick: onExplore },
+    { label: 'KEEP THE MOMENTUM', title: 'Small challenges today.\nStronger skills tomorrow.', description: 'Keep your attendance and learning record going in FlagBox.', action: 'Explore rankings', onClick: onRanking },
+  ]
+  const localizedBanners = language === 'en' ? englishBanners : banners
   const [activeBanner, setActiveBanner] = useState(0)
   const bannerContentRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const timer = window.setInterval(() => setActiveBanner((current) => (current + 1) % banners.length), 5000)
+    const timer = window.setInterval(() => setActiveBanner((current) => (current + 1) % localizedBanners.length), 5000)
     return () => window.clearInterval(timer)
-  }, [activeBanner, banners.length])
+  }, [activeBanner, localizedBanners.length])
   useEffect(() => {
     bannerContentRef.current?.animate(
       [{ opacity: 0, transform: 'translateX(56px)' }, { opacity: 1, transform: 'translateX(0)' }],
       { duration: 620, easing: 'cubic-bezier(.2, .78, .24, 1)', fill: 'both' },
     )
   }, [activeBanner])
-  const banner = banners[activeBanner]
-  const moveBanner = (direction: -1 | 1) => setActiveBanner((current) => (current + direction + banners.length) % banners.length)
-  return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox banner"><button className="hero-banner-arrow previous" type="button" aria-label="Previous banner" onClick={() => moveBanner(-1)} /><div className="hero-banner-content banner-slide" ref={bannerContentRef}><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><button className="hero-banner-arrow next" type="button" aria-label="Next banner" onClick={() => moveBanner(1)} /><div className="hero-banner-dots" role="tablist" aria-label="Banner selection">{banners.map((item, index) => <button key={item.label} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`Banner ${index + 1}`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
+  const banner = localizedBanners[activeBanner]
+  const moveBanner = (direction: -1 | 1) => setActiveBanner((current) => (current + direction + localizedBanners.length) % localizedBanners.length)
+  return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox banner"><button className="hero-banner-arrow previous" type="button" aria-label="Previous banner" onClick={() => moveBanner(-1)} /><div className="hero-banner-content banner-slide" ref={bannerContentRef}><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><span className="hero-banner-wordmark" aria-hidden="true">FlagBox</span><button className="hero-banner-arrow next" type="button" aria-label="Next banner" onClick={() => moveBanner(1)} /><div className="hero-banner-dots" role="tablist" aria-label="Banner selection">{localizedBanners.map((item, index) => <button key={item.label} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`Banner ${index + 1}`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>{language === 'en' ? 'Challenges to try now' : '지금 도전할 문제'}</h2></div><button type="button" className="text-link" onClick={onExplore}>{language === 'en' ? 'View all wargames' : '워게임 전체 보기'}</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   /*
   return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox 안내 배너"><div className="hero-banner-content"><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><div className="hero-banner-dots" role="tablist" aria-label="배너 선택">{banners.map((item, index) => <button key={item.label} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`${index + 1}번 배너`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="stat-strip" aria-label="플랫폼 현황"><Stat value={stats.challenges} label="워게임 문제" detail="천천히 도전해 보세요" /><Stat value={stats.solves} label="문제 해결" detail="함께 쌓은 기록" /><Stat value={stats.users} label="학습 중인 사람" detail="FlagBox 동료" /><div className="live-badge">함께 배우는 중</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   /*
@@ -250,17 +392,23 @@ function LegacyCipherVault({ user, onClose }: { user: User; onClose: () => void 
   return <div className="vault-backdrop" role="dialog" aria-modal="true" aria-label="Cipher Vault"><section className="cipher-vault"><header className="vault-header"><div><p className="eyebrow">CLASSIFIED COLLECTION // VAULT-05</p><h2>Cipher Vault</h2><p>Complete daily operations. Collect fragments. Wear the proof.</p></div><button className="vault-close" type="button" onClick={onClose} aria-label="Close Cipher Vault">×</button></header>{!summary ? <LoadingState label="Decrypting your vault..." /> : <><div className="vault-wallet"><div><span>◈</span><strong>{summary.gems}</strong><small>Cipher Gems</small></div><div><span>◇</span><strong>{summary.fragments}</strong><small>Vault Fragments</small></div><div className="vault-admin-status">{user.role === 'ADMIN' ? 'ADMIN ACCESS: ALL COSMETICS UNLOCKED' : 'Daily rewards reset at midnight (KST)'}</div></div><nav className="vault-tabs" aria-label="Cipher Vault sections">{([['missions', 'Today'], ['shop', 'Shop'], ['craft', 'Forge'], ['collection', 'Collection']] as const).map(([id, label]) => <button key={id} className={tab === id ? 'active' : ''} type="button" onClick={() => setTab(id)}>{label}</button>)}</nav>{tab === 'missions' && <div className="vault-grid mission-grid">{summary.missions.map((mission) => <article className={`vault-card mission-card ${mission.completed ? 'complete' : ''}`} key={mission.id}><div className="vault-card-icon">{mission.completed ? '✓' : '◌'}</div><div><span className="vault-kicker">DAILY MISSION</span><h3>{mission.name}</h3><p>{mission.description}</p><div className="vault-reward">◈ {mission.gemReward}{mission.fragmentReward > 0 && <> <b>+</b> ◇ {mission.fragmentReward}</>}</div></div><button className="button primary" type="button" disabled={mission.completed || !mission.eligible || busy === mission.id} onClick={() => void run(mission.id, () => api.claimVaultMission(mission.id))}>{mission.completed ? 'Claimed' : mission.eligible ? 'Claim reward' : 'In progress'}</button></article>)}</div>}{tab === 'shop' && <VaultItems items={shop} gems={summary.gems} busy={busy} action={(item) => run(item.id, () => api.buyVaultItem(item.id))} actionLabel="Buy" />}{tab === 'craft' && <VaultItems items={craft} fragments={summary.fragments} busy={busy} action={(item) => run(item.id, () => api.craftVaultItem(item.id))} actionLabel="Craft" />}{tab === 'collection' && <VaultItems items={collection} busy={busy} action={(item) => run(item.id, () => api.equipVaultItem(item.id))} actionLabel="Equip" />}{error && <p className="alert error vault-error">{error}</p>}</>}</section></div>
 }
 
-function CipherVault({ user, onClose }: { user: User; onClose: () => void }) {
+function CipherVault({ user, onClose, onAppearanceChanged }: { user: User; onClose: () => void; onAppearanceChanged: () => Promise<void> }) {
   const [summary, setSummary] = useState<VaultSummary | null>(null)
   const [tab, setTab] = useState<'shop' | 'missions' | 'collection'>('shop')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
+  const equippedKey = summary?.cosmetics.filter((item) => item.equipped).map((item) => item.id).sort().join('|') ?? ''
+  const previousEquippedKey = useRef<string | null>(null)
   const refresh = useCallback(async () => {
     try { setError(''); setSummary(await api.vault()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not open Cipher Vault.') }
   }, [])
   useEffect(() => { const timer = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(timer) }, [refresh])
-  const run = async (key: string, action: () => Promise<VaultSummary>) => {
-    try { setBusy(key); setError(''); setSummary(await action()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Vault action failed.') } finally { setBusy(null) }
+  useEffect(() => {
+    if (previousEquippedKey.current !== null && previousEquippedKey.current !== equippedKey) void onAppearanceChanged()
+    previousEquippedKey.current = equippedKey
+  }, [equippedKey, onAppearanceChanged])
+  const run = async (key: string, action: () => Promise<VaultSummary>, appearanceChanged = false) => {
+    try { setBusy(key); setError(''); setSummary(await action()); if (appearanceChanged) await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Vault action failed.') } finally { setBusy(null) }
   }
   const items = summary?.cosmetics.filter((item) => !item.hidden || item.owned || user.role === 'ADMIN') ?? []
   const shop = items.filter((item) => item.source === 'STORE')
@@ -328,6 +476,17 @@ function LegacyRankingView({ rows, attendanceRows }: { rows: RankingRow[]; atten
   return <div className="page"><PageIntro eyebrow="GLOBAL RANKING" title="Earn your place." description={section === 'score' ? 'Live scores and solve counts from the API.' : 'Daily check-ins, streaks, and long-term consistency.'} /><div className="filter-tabs ranking-tabs"><button type="button" className={section === 'score' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('score')}>Score ranking</button><button type="button" className={section === 'attendance' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('attendance')}>Attendance ranking</button></div>{section === 'score' ? <section className="panel ranking-panel"><div className="ranking-head"><span>RANK</span><span>OPERATOR</span><span>SOLVED</span><span>SCORE</span></div>{rows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><div className="operator"><span className="mini-avatar">{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><span>{row.nickname || row.username}</span></div><span>{row.solvedCount}</span><b>{row.score}</b></div>)}{rows.length === 0 && <EmptyState />}</section> : <section className="panel ranking-panel attendance-ranking-panel"><div className="ranking-head"><span>RANK</span><span>OPERATOR</span><span>DAYS</span><span>STREAK</span></div>{attendanceRows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><div className="operator"><span className="mini-avatar">{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><span>{row.nickname || row.username}</span></div><span>{row.totalDays}</span><b>{row.currentStreak} days</b></div>)}{attendanceRows.length === 0 && <EmptyState />}</section>}</div>
 }
 
+function EnhancedRankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceRows: AttendanceRankingRow[] }) {
+  const [section, setSection] = useState<'score' | 'attendance'>('score')
+  const visibleRows = section === 'score' ? rows : attendanceRows
+  return <div className="page"><PageIntro eyebrow="RANKING" title="함께 쌓아가는 기록" description={section === 'score' ? '문제를 해결하며 쌓은 점수와 기록이에요.' : '매일 학습을 이어온 꾸준한 기록이에요.'} /><div className="filter-tabs ranking-tabs"><button type="button" className={section === 'score' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('score')}>점수 랭킹</button><button type="button" className={section === 'attendance' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('attendance')}>출석 랭킹</button></div><section className="panel ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>{section === 'score' ? '해결' : '누적'}</span><span>{section === 'score' ? '점수' : '연속'}</span></div>{visibleRows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><RankIdentity row={row} /><span>{section === 'score' ? (row as RankingRow).solvedCount : `${(row as AttendanceRankingRow).totalDays}일`}</span><b>{section === 'score' ? (row as RankingRow).score : `${(row as AttendanceRankingRow).currentStreak}일`}</b></div>)}{visibleRows.length === 0 && <EmptyState />}</section></div>
+}
+
+function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' | 'avatarUrl' | 'equippedFrame' | 'equippedAccessory' | 'equippedTitle'> }) {
+  const name = row.nickname || row.username
+  return <div className="operator"><span className={`mini-avatar ranking-avatar ${row.equippedFrame ? `equipped-${row.equippedFrame}` : ''}`}>{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}{row.equippedAccessory && <i className="profile-accessory" aria-label={cosmeticLabel(row.equippedAccessory)}>◈</i>}</strong>{row.equippedTitle && <small className="ranking-title">{cosmeticLabel(row.equippedTitle)}</small>}</span></div>
+}
+
 function RankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceRows: AttendanceRankingRow[] }) {
   const [section, setSection] = useState<'score' | 'attendance'>('score')
   return <div className="page"><PageIntro eyebrow="RANKING" title="함께 쌓아가는 기록" description={section === 'score' ? '문제를 해결하며 쌓은 점수와 기록이에요.' : '매일 학습을 이어온 꾸준한 기록이에요.'} /><div className="filter-tabs ranking-tabs"><button type="button" className={section === 'score' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('score')}>점수 랭킹</button><button type="button" className={section === 'attendance' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('attendance')}>출석 랭킹</button></div>{section === 'score' ? <section className="panel ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>해결</span><span>점수</span></div>{rows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><div className="operator"><span className={`mini-avatar ${row.equippedFrame ? `equipped-${row.equippedFrame}` : ''}`}>{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><span><strong>{row.nickname || row.username}</strong>{row.equippedTitle && <small className="ranking-title">{cosmeticLabel(row.equippedTitle)}</small>}</span></div><span>{row.solvedCount}</span><b>{row.score}</b></div>)}{rows.length === 0 && <EmptyState />}</section> : <section className="panel ranking-panel attendance-ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>누적</span><span>연속</span></div>{attendanceRows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><div className="operator"><span className="mini-avatar">{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><span>{row.nickname || row.username}</span></div><span>{row.totalDays}일</span><b>{row.currentStreak}일</b></div>)}{attendanceRows.length === 0 && <EmptyState />}</section>}</div>
@@ -336,8 +495,9 @@ function RankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceR
 void LegacyCipherVault
 void LegacyChallengeDetailView
 void LegacyRankingView
+void RankingView
 
-function ProfileView({ user, onChallenges, onLogin, onVault }: { user: User | null; onChallenges: () => void; onLogin: () => void; onVault: () => void }) {
+function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged }: { user: User | null; onChallenges: () => void; onLogin: () => void; onVault: () => void; onAppearanceChanged: () => Promise<void> }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [attendance, setAttendance] = useState<AttendanceSummary | null>(null)
   const [friends, setFriends] = useState<Friend[]>([])
@@ -372,10 +532,10 @@ function ProfileView({ user, onChallenges, onLogin, onVault }: { user: User | nu
   useEffect(() => () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview) }, [avatarPreview])
   if (!user) return <div className="page"><PageIntro eyebrow="YOUR PROGRESS" title="Sign in to track your progress." description="Your score and solved challenges are tied to your authenticated account." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
   const current = profile ?? { ...user, rank: 0, solvedCount: 0, statusMessage: null, avatarUrl: null, equippedFrame: null, equippedAccessory: null, equippedTitle: null }
-  const saveProfile = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); try { setProfile(await api.updateProfile({ nickname: String(form.get('nickname')), statusMessage: String(form.get('statusMessage')) })); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save profile.') } }
+  const saveProfile = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); try { setProfile(await api.updateProfile({ nickname: String(form.get('nickname')), statusMessage: String(form.get('statusMessage')) })); await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save profile.') } }
   const checkIn = async () => { try { setAttendance(await api.checkIn()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not complete the daily check-in.') } }
-  const selectTitle = async (event: ChangeEvent<HTMLSelectElement>) => { try { setAttendance(await api.selectAttendanceTitle(event.target.value)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update the title.') } }
-  const uploadAvatar = async (file: File) => { setError(''); setAvatarPreview(URL.createObjectURL(file)); try { setProfile(await api.uploadAvatar(file)); setAvatarRevision(Date.now()); } catch (cause) { setAvatarPreview(null); setError(cause instanceof Error ? cause.message : 'Could not upload avatar.') } }
+  const selectTitle = async (event: ChangeEvent<HTMLSelectElement>) => { try { setAttendance(await api.selectAttendanceTitle(event.target.value)); await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update the title.') } }
+  const uploadAvatar = async (file: File) => { setError(''); setAvatarPreview(URL.createObjectURL(file)); try { setProfile(await api.uploadAvatar(file)); setAvatarRevision(Date.now()); await onAppearanceChanged() } catch (cause) { setAvatarPreview(null); setError(cause instanceof Error ? cause.message : 'Could not upload avatar.') } }
   const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.currentTarget.value = ''; if (!file) return; const validType = !file.type || ['image/png', 'image/jpeg'].includes(file.type); const validName = /\.(png|jpe?g)$/i.test(file.name); if (!validType && !validName) { setError('PNG 또는 JPG 이미지만 업로드할 수 있습니다.'); return } if (file.size > 2 * 1024 * 1024) { setError('프로필 이미지는 2MB 이하만 업로드할 수 있습니다.'); return } void uploadAvatar(file) }
   const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setError(''); const username = String(new FormData(event.currentTarget).get('username')).trim().replace(/^@\s*/, ''); if (!/^[A-Za-z0-9_]{3,50}$/.test(username)) { setError('Enter the account username shown after @ (letters, numbers, and underscores only).'); return } try { await api.requestFriend(username); await refresh(); (event.currentTarget as HTMLFormElement).reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!selectedFriend) return; const form = new FormData(event.currentTarget); try { const sent = await api.sendMessage(selectedFriend, String(form.get('content'))); setMessages((currentMessages) => [...currentMessages, sent]); (event.currentTarget as HTMLFormElement).reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send message.') } }

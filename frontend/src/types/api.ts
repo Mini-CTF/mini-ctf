@@ -28,6 +28,8 @@ export type RankingRow = {
   solvedCount: number
   equippedTitle: string | null
   equippedFrame: string | null
+  equippedAccessory: string | null
+  avatarUrl: string | null
 }
 
 export type AttendanceBadge = {
@@ -58,6 +60,10 @@ export type AttendanceRankingRow = {
   nickname: string
   totalDays: number
   currentStreak: number
+  avatarUrl: string | null
+  equippedFrame: string | null
+  equippedAccessory: string | null
+  equippedTitle: string | null
 }
 
 export type Stats = { challenges: number; solves: number; users: number }

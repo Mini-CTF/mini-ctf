@@ -37,7 +37,9 @@ public class RankingController {
               u.getEquippedVaultTitle() != null
                   ? u.getEquippedVaultTitle()
                   : u.getAttendanceTitle(),
-              u.getEquippedFrame()));
+              u.getEquippedFrame(),
+              u.getEquippedAccessory(),
+              avatarUrl(u)));
       previousScore = u.getScore();
     }
     return ApiResponse.ok(rows);
@@ -50,5 +52,15 @@ public class RankingController {
       int score,
       long solvedCount,
       String equippedTitle,
-      String equippedFrame) {}
+      String equippedFrame,
+      String equippedAccessory,
+      String avatarUrl) {}
+
+  private static String avatarUrl(User user) {
+    if (user.getAvatarPath() == null) return null;
+    return "/api/users/"
+        + user.getUsername()
+        + "/avatar?v="
+        + Integer.toUnsignedString(user.getAvatarPath().hashCode());
+  }
 }

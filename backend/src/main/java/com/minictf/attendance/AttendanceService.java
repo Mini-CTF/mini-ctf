@@ -117,7 +117,13 @@ public class AttendanceService {
               row.getUsername(),
               row.getNickname(),
               row.getTotalDays(),
-              currentStreak(dates, today())));
+              currentStreak(dates, today()),
+              avatarUrl(row.getUsername(), row.getAvatarPath()),
+              row.getEquippedFrame(),
+              row.getEquippedAccessory(),
+              row.getEquippedVaultTitle() != null
+                  ? row.getEquippedVaultTitle()
+                  : row.getAttendanceTitle()));
       previousTotal = row.getTotalDays();
     }
     return rows;
@@ -156,6 +162,14 @@ public class AttendanceService {
 
   private LocalDate today() {
     return LocalDate.now(PLATFORM_ZONE);
+  }
+
+  private static String avatarUrl(String username, String avatarPath) {
+    if (avatarPath == null) return null;
+    return "/api/users/"
+        + username
+        + "/avatar?v="
+        + Integer.toUnsignedString(avatarPath.hashCode());
   }
 
   private record BadgeRule(
