@@ -22,11 +22,11 @@ public interface AttendanceCheckinRepository extends JpaRepository<AttendanceChe
   List<AttendanceCheckin> findByUserIdOrderByCheckinDateDesc(Long userId);
 
   @Query(
-      "select c.user.id as userId, c.user.username as username, c.user.nickname as nickname, c.user.avatarPath as avatarPath, "
+      "select c.user.id as userId, c.user.username as username, c.user.nickname as nickname, c.user.score as score, c.user.avatarPath as avatarPath, "
           + "c.user.equippedFrame as equippedFrame, c.user.equippedAccessory as equippedAccessory, "
           + "c.user.equippedVaultTitle as equippedVaultTitle, c.user.attendanceTitle as attendanceTitle, count(c) as totalDays "
           + "from AttendanceCheckin c where c.user.status <> 'DELETED' "
-          + "group by c.user.id, c.user.username, c.user.nickname, c.user.avatarPath, c.user.equippedFrame, "
+          + "group by c.user.id, c.user.username, c.user.nickname, c.user.score, c.user.avatarPath, c.user.equippedFrame, "
           + "c.user.equippedAccessory, c.user.equippedVaultTitle, c.user.attendanceTitle "
           + "order by count(c) desc, max(c.checkinDate) desc, c.user.username asc")
   List<AttendanceRank> findTopAttendance(Pageable pageable);
@@ -40,6 +40,8 @@ public interface AttendanceCheckinRepository extends JpaRepository<AttendanceChe
     String getUsername();
 
     String getNickname();
+
+    int getScore();
 
     String getAvatarPath();
 

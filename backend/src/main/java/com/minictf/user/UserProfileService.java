@@ -102,7 +102,8 @@ public class UserProfileService {
         friendships.findAcceptedForUser(user.getId()).stream()
             .map(friendship -> friendship.getRequester().getId().equals(user.getId()) ? friendship.getRecipient() : friendship.getRequester())
             .map(friend -> new UserDtos.PublicFriend(friend.getUsername(), friend.getNickname(), avatarUrl(friend), friend.getEquippedFrame(), friend.getEquippedAccessory(), friend.getEquippedVaultTitle()))
-            .toList());
+            .toList(),
+        UserTier.forScore(user.getScore()).id());
   }
 
   @Transactional(readOnly = true)
@@ -129,7 +130,8 @@ public class UserProfileService {
         avatarUrl(user),
         user.getEquippedFrame(),
         user.getEquippedAccessory(),
-        user.getEquippedVaultTitle());
+        user.getEquippedVaultTitle(),
+        UserTier.forScore(user.getScore()).id());
   }
 
   private User byUsername(String username) {

@@ -544,6 +544,15 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .attendance-title-select select { font-size: 17px; padding: 12px 14px; }
 .attendance-badge { font-size: 15px; font-weight: 800; padding: 10px 14px; }
 .super-user-profile .profile-title, .ranking-title { color: #ffcf38 !important; font-weight: 900; letter-spacing: .08em; text-shadow: 0 0 10px rgba(255, 92, 38, .8), 0 0 22px rgba(255, 205, 56, .55); }
+.profile-tier-row { margin: 15px 0 -5px; }
+.tier-badge { display: inline-flex; align-items: center; width: fit-content; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .05em; }
+.tier-beginner { color: #9fb0c3; background: rgba(159, 176, 195, .08); }
+.tier-rookie { color: #7bd8a5; background: rgba(123, 216, 165, .09); }
+.tier-junior { color: #63b9ff; background: rgba(99, 185, 255, .09); }
+.tier-senior { color: #a990ff; background: rgba(169, 144, 255, .1); }
+.tier-veteran { color: #ffae5d; background: rgba(255, 174, 93, .1); }
+.tier-master { color: #ff6ea5; background: rgba(255, 110, 165, .1); }
+.tier-root { color: #ffcf38; background: rgba(255, 207, 56, .12); box-shadow: 0 0 14px rgba(255, 181, 42, .2); }
 .public-profile-trigger { border: 0; background: transparent; padding: 5px; text-align: left; cursor: pointer; }
 .public-profile-trigger:hover strong { color: var(--accent); }
 .community-post-row > span, .threaded-comment .comment > strong, .comment.reply > strong { cursor: pointer; }

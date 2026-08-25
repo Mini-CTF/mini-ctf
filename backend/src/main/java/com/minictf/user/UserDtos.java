@@ -19,7 +19,8 @@ public final class UserDtos {
       String avatarUrl,
       String equippedFrame,
       String equippedAccessory,
-      String equippedTitle) {}
+      String equippedTitle,
+      String tier) {}
 
   public record PublicFriend(
       String username,
@@ -42,7 +43,8 @@ public final class UserDtos {
       String equippedFrame,
       String equippedAccessory,
       String equippedTitle,
-      List<PublicFriend> friends) {}
+      List<PublicFriend> friends,
+      String tier) {}
 
   public record SolveView(Long challengeId, String title, int score, Instant solvedAt) {}
 

@@ -2,6 +2,7 @@ package com.minictf.attendance;
 
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
+import com.minictf.user.UserTier;
 import java.time.*;
 import java.util.*;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -132,7 +133,8 @@ public class AttendanceService {
               row.getEquippedAccessory(),
               row.getEquippedVaultTitle() != null
                   ? row.getEquippedVaultTitle()
-                  : "NONE".equals(row.getAttendanceTitle()) ? null : row.getAttendanceTitle()));
+                  : "NONE".equals(row.getAttendanceTitle()) ? null : row.getAttendanceTitle(),
+              UserTier.forScore(row.getScore()).id()));
       previousTotal = row.getTotalDays();
     }
     return rows;

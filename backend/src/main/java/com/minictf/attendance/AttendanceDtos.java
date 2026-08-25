@@ -29,7 +29,8 @@ public final class AttendanceDtos {
       String avatarUrl,
       String equippedFrame,
       String equippedAccessory,
-      String equippedTitle) {}
+      String equippedTitle,
+      String tier) {}
 
   public record TitleRequest(@NotBlank @Size(max = 40) String titleId) {}
 }

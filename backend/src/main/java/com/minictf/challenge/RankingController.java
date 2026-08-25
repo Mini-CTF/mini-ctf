@@ -3,6 +3,7 @@ package com.minictf.challenge;
 import com.minictf.common.ApiResponse;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
+import com.minictf.user.UserTier;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,8 @@ public class RankingController {
                   : u.getAttendanceTitle(),
               u.getEquippedFrame(),
               u.getEquippedAccessory(),
-              avatarUrl(u)));
+              avatarUrl(u),
+              UserTier.forScore(u.getScore()).id()));
       previousScore = u.getScore();
     }
     return ApiResponse.ok(rows);
@@ -54,7 +56,8 @@ public class RankingController {
       String equippedTitle,
       String equippedFrame,
       String equippedAccessory,
-      String avatarUrl) {}
+      String avatarUrl,
+      String tier) {}
 
   private static String avatarUrl(User user) {
     if (user.getAvatarPath() == null) return null;

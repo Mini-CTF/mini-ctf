@@ -30,6 +30,7 @@ export type RankingRow = {
   equippedFrame: string | null
   equippedAccessory: string | null
   avatarUrl: string | null
+  tier: string
 }
 
 export type AttendanceBadge = {
@@ -64,6 +65,7 @@ export type AttendanceRankingRow = {
   equippedFrame: string | null
   equippedAccessory: string | null
   equippedTitle: string | null
+  tier: string
 }
 
 export type Stats = { challenges: number; solves: number; users: number }
@@ -174,6 +176,7 @@ export type Profile = User & {
   equippedFrame: string | null
   equippedAccessory: string | null
   equippedTitle: string | null
+  tier: string
 }
 
 export type PublicProfileFriend = {
@@ -196,6 +199,7 @@ export type PublicProfile = {
   equippedAccessory: string | null
   equippedTitle: string | null
   friends: PublicProfileFriend[]
+  tier: string
 }
 
 export type VaultMission = {
