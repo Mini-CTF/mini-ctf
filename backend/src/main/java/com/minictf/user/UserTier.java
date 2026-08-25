@@ -7,13 +7,13 @@ public final class UserTier {
   public record Tier(String id, String name, int minimumScore) {}
 
   private static final Tier[] TIERS = {
-    new Tier("beginner", "비기너", 0),
-    new Tier("rookie", "루키", 300),
-    new Tier("junior", "주니어", 1_000),
-    new Tier("senior", "시니어", 2_500),
-    new Tier("veteran", "베테랑", 4_000),
-    new Tier("master", "마스터", 7_000),
-    new Tier("root", "루트", 15_000)
+    new Tier("beginner", "Beginner", 0),
+    new Tier("rookie", "Rookie", 300),
+    new Tier("junior", "Junior", 1_000),
+    new Tier("senior", "Senior", 2_500),
+    new Tier("veteran", "Veteran", 4_000),
+    new Tier("master", "Master", 7_000),
+    new Tier("root", "Root", 15_000)
   };
 
   public static Tier forScore(int score) {

@@ -509,7 +509,7 @@ function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' |
 }
 
 function TierBadge({ tier }: { tier: string }) { return <small className={`tier-badge tier-${tier}`}>{tierLabel(tier)}</small> }
-function tierLabel(tier: string) { return ({ beginner: '비기너', rookie: '루키', junior: '주니어', senior: '시니어', veteran: '베테랑', master: '마스터', root: '루트' } as Record<string, string>)[tier] ?? '비기너' }
+function tierLabel(tier: string) { return ({ beginner: 'Beginner', rookie: 'Rookie', junior: 'Junior', senior: 'Senior', veteran: 'Veteran', master: 'Master', root: 'Root' } as Record<string, string>)[tier] ?? 'Beginner' }
 
 function PublicProfileDialog() {
   const [username, setUsername] = useState<string | null>(null)
