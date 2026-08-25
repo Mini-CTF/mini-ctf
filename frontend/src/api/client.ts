@@ -13,6 +13,7 @@ import type {
   PostDetail,
   PostSummary,
   Profile,
+  PublicProfile,
   Friend,
   DirectMessage,
   RankingRow,
@@ -107,6 +108,7 @@ export const api = {
   hideSecurityEvent: (id: number, reason: string) =>
     request<void>(`/admin/security-events/${id}`, { method: 'DELETE', body: JSON.stringify({ reason }) }),
   profile: () => request<Profile>('/users/me'),
+  publicProfile: (username: string) => request<PublicProfile>(`/users/${encodeURIComponent(username)}/profile`),
   updateProfile: (payload: { nickname?: string; statusMessage?: string }) =>
     request<Profile>('/users/me/profile', { method: 'PUT', body: JSON.stringify(payload) }),
   async uploadAvatar(file: File): Promise<Profile> {

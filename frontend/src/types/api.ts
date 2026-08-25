@@ -176,6 +176,28 @@ export type Profile = User & {
   equippedTitle: string | null
 }
 
+export type PublicProfileFriend = {
+  username: string
+  nickname: string
+  avatarUrl: string | null
+  equippedFrame: string | null
+  equippedAccessory: string | null
+  equippedTitle: string | null
+}
+
+export type PublicProfile = {
+  username: string
+  nickname: string
+  score: number
+  solvedCount: number
+  statusMessage: string | null
+  avatarUrl: string | null
+  equippedFrame: string | null
+  equippedAccessory: string | null
+  equippedTitle: string | null
+  friends: PublicProfileFriend[]
+}
+
 export type VaultMission = {
   id: string
   name: string

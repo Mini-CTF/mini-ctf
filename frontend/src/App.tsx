@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { api } from './api/client'
 import { subscribeToSocialUpdates } from './api/realtime'
-import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
+import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
 import './App.css'
@@ -24,6 +24,8 @@ type Language = 'ko' | 'en'
 const initialTheme: Theme = localStorage.getItem('mini-ctf-theme') === 'light' ? 'light' : 'dark'
 const initialLanguage: Language = localStorage.getItem('flagbox-language') === 'en' ? 'en' : 'ko'
 const oauthBaseUrl = import.meta.env.VITE_OAUTH_BASE_URL ?? 'http://localhost:8080'
+const publicProfileEvent = 'flagbox:open-public-profile'
+function openPublicProfile(username: string) { window.dispatchEvent(new CustomEvent<string>(publicProfileEvent, { detail: username })) }
 
 const uiCopy = {
   ko: { home: '홈', wargame: '워게임', ranking: '랭킹', community: '커뮤니티', profile: '마이 페이지', shop: '상점', admin: '관리', login: '로그인', logout: '로그아웃', language: '영어로 변경', footer: '안전하게 배우고, 직접 풀어보세요.', status: '학습 플랫폼 정상 운영 중' },
@@ -299,6 +301,7 @@ function App() {
     {vaultOpening && <VaultOpening />}
     {hiddenOpen && user && <HiddenOperation user={user} onClose={() => setHiddenOpen(false)} />}
     {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
+    <PublicProfileDialog />
     <footer className="site-footer"><span><strong>FlagBox</strong> · {text.footer}</span><span className="footer-status">{text.status}</span></footer>
   </div>
 }
@@ -484,7 +487,38 @@ function EnhancedRankingView({ rows, attendanceRows }: { rows: RankingRow[]; att
 
 function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' | 'avatarUrl' | 'equippedFrame' | 'equippedAccessory' | 'equippedTitle'> }) {
   const name = row.nickname || row.username
-  return <div className="operator"><span className={`mini-avatar ranking-avatar ${row.equippedFrame ? `equipped-${row.equippedFrame}` : ''}`}>{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}{row.equippedAccessory && <i className="profile-accessory" aria-label={cosmeticLabel(row.equippedAccessory)}>◈</i>}</strong>{row.equippedTitle && <small className="ranking-title">{cosmeticLabel(row.equippedTitle)}</small>}</span></div>
+  return <button className="operator public-profile-trigger" type="button" onClick={() => openPublicProfile(row.username)} aria-label={`${name} profile`}><span className={`mini-avatar ranking-avatar ${row.equippedFrame ? `equipped-${row.equippedFrame}` : ''}`}>{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}{row.equippedAccessory && <i className="profile-accessory" aria-label={cosmeticLabel(row.equippedAccessory)}>◈</i>}</strong>{row.equippedTitle && <small className="ranking-title">{cosmeticLabel(row.equippedTitle)}</small>}</span></button>
+}
+
+function PublicProfileDialog() {
+  const [username, setUsername] = useState<string | null>(null)
+  const [profile, setProfile] = useState<PublicProfile | null>(null)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    const open = (event: Event) => setUsername((event as CustomEvent<string>).detail)
+    window.addEventListener(publicProfileEvent, open)
+    return () => window.removeEventListener(publicProfileEvent, open)
+  }, [])
+  useEffect(() => {
+    const openCommunityAuthor = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest('.community-post-row > span, .threaded-comment .comment > strong, .comment.reply > strong') : null
+      if (!target) return
+      const reference = target.firstChild?.textContent?.trim()
+      if (!reference) return
+      event.preventDefault(); event.stopPropagation()
+      setUsername(reference)
+    }
+    window.addEventListener('click', openCommunityAuthor, true)
+    return () => window.removeEventListener('click', openCommunityAuthor, true)
+  }, [])
+  useEffect(() => {
+    if (!username) return
+    setProfile(null); setError('')
+    void api.publicProfile(username).then(setProfile).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load this profile.'))
+  }, [username])
+  if (!username) return null
+  const name = profile?.nickname || username
+  return <div className="public-profile-backdrop" role="dialog" aria-modal="true" aria-label="Public profile" onMouseDown={() => setUsername(null)}><section className="public-profile-card" onMouseDown={(event) => event.stopPropagation()}><button className="vault-close" type="button" onClick={() => setUsername(null)} aria-label="Close profile">×</button>{!profile && !error && <LoadingState label="Loading profile..." />}{error && <p className="alert error">{error}</p>}{profile && <><div className={`public-profile-hero ${profile.equippedFrame ? `equipped-${profile.equippedFrame}` : ''} ${profile.equippedTitle === 'super_user' ? 'super-user-profile' : ''}`}><span className="profile-avatar avatar-large">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><div><p className="eyebrow">PUBLIC PROFILE</p><h2>{name}{profile.equippedAccessory && <i className="profile-accessory">◈</i>}</h2>{profile.equippedTitle && <p className="profile-title vault-profile-title">{cosmeticLabel(profile.equippedTitle)}</p>}<p className="muted">@{profile.username}</p></div></div><p className="public-profile-status">{profile.statusMessage || 'No status message yet.'}</p><div className="public-profile-stats"><span><b>{profile.score}</b> Score</span><span><b>{profile.solvedCount}</b> Solves</span></div><section className="public-profile-friends"><h3>Friends <span>{profile.friends.length}</span></h3>{profile.friends.length === 0 ? <p className="muted">No public friends yet.</p> : <div>{profile.friends.map((friend) => <button type="button" key={friend.username} onClick={() => openPublicProfile(friend.username)}><span className={`mini-avatar ${friend.equippedFrame ? `equipped-${friend.equippedFrame}` : ''}`}>{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}{friend.equippedAccessory && <i className="profile-accessory">◈</i>}</strong>{friend.equippedTitle && <small className="ranking-title">{cosmeticLabel(friend.equippedTitle)}</small>}</span></button>)}</div>}</section></>}</section></div>
 }
 
 function RankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceRows: AttendanceRankingRow[] }) {

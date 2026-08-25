@@ -21,6 +21,14 @@ public final class UserDtos {
       String equippedAccessory,
       String equippedTitle) {}
 
+  public record PublicFriend(
+      String username,
+      String nickname,
+      String avatarUrl,
+      String equippedFrame,
+      String equippedAccessory,
+      String equippedTitle) {}
+
   public record ProfileUpdateRequest(
       @Size(max = 80) String nickname, @Size(max = 160) String statusMessage) {}
 
@@ -33,7 +41,8 @@ public final class UserDtos {
       String avatarUrl,
       String equippedFrame,
       String equippedAccessory,
-      String equippedTitle) {}
+      String equippedTitle,
+      List<PublicFriend> friends) {}
 
   public record SolveView(Long challengeId, String title, int score, Instant solvedAt) {}
 

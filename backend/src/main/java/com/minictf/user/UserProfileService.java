@@ -1,11 +1,13 @@
 package com.minictf.user;
 
 import com.minictf.challenge.SolveRepository;
+import com.minictf.social.FriendshipRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.imageio.ImageIO;
@@ -19,11 +21,17 @@ public class UserProfileService {
   private static final Set<String> IMAGE_EXTENSIONS = Set.of("png", "jpg", "jpeg");
   private final UserRepository users;
   private final SolveRepository solves;
+  private final FriendshipRepository friendships;
   private final AvatarStorage avatars;
 
-  public UserProfileService(UserRepository users, SolveRepository solves, AvatarStorage avatars) {
+  public UserProfileService(
+      UserRepository users,
+      SolveRepository solves,
+      FriendshipRepository friendships,
+      AvatarStorage avatars) {
     this.users = users;
     this.solves = solves;
+    this.friendships = friendships;
     this.avatars = avatars;
   }
 
@@ -90,7 +98,11 @@ public class UserProfileService {
         avatarUrl(user),
         user.getEquippedFrame(),
         user.getEquippedAccessory(),
-        user.getEquippedVaultTitle());
+        user.getEquippedVaultTitle(),
+        friendships.findAcceptedForUser(user.getId()).stream()
+            .map(friendship -> friendship.getRequester().getId().equals(user.getId()) ? friendship.getRecipient() : friendship.getRequester())
+            .map(friend -> new UserDtos.PublicFriend(friend.getUsername(), friend.getNickname(), avatarUrl(friend), friend.getEquippedFrame(), friend.getEquippedAccessory(), friend.getEquippedVaultTitle()))
+            .toList());
   }
 
   @Transactional(readOnly = true)
@@ -121,10 +133,12 @@ public class UserProfileService {
   }
 
   private User byUsername(String username) {
-    User user =
-        users
-            .findByUsernameIgnoreCase(username)
-            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    String reference = username == null ? "" : username.trim();
+    User user = users.findByUsernameIgnoreCase(reference).orElseGet(() -> {
+      List<User> matches = users.findTop2ByNicknameIgnoreCaseAndStatusNot(reference, "DELETED");
+      if (matches.size() == 1) return matches.get(0);
+      throw new EntityNotFoundException("User not found");
+    });
     if ("DELETED".equals(user.getStatus())) throw new EntityNotFoundException("User not found");
     return user;
   }

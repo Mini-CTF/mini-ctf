@@ -21,4 +21,8 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
   @Query(
       "select f from Friendship f join fetch f.requester join fetch f.recipient where (f.requester.id=:userId or f.recipient.id=:userId) and f.requester.status <> 'DELETED' and f.recipient.status <> 'DELETED' order by f.updatedAt desc")
   List<Friendship> findAllForUser(@Param("userId") Long userId);
+
+  @Query(
+      "select f from Friendship f join fetch f.requester join fetch f.recipient where (f.requester.id=:userId or f.recipient.id=:userId) and f.status = 'ACCEPTED' and f.requester.status <> 'DELETED' and f.recipient.status <> 'DELETED' order by f.updatedAt desc")
+  List<Friendship> findAcceptedForUser(@Param("userId") Long userId);
 }
