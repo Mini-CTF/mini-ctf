@@ -562,7 +562,7 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .public-profile-card { width: min(560px, 100%); max-height: min(760px, calc(100vh - 40px)); overflow: auto; position: relative; padding: 30px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); box-shadow: 0 28px 90px rgba(0, 0, 0, .45); }
 .public-profile-card > .vault-close { position: absolute; top: 16px; right: 16px; }
 .public-profile-hero { display: flex; align-items: center; gap: 16px; padding: 8px 50px 22px 0; border-bottom: 1px solid var(--line); }
-.public-profile-hero h2 { margin: 2px 0; font-size: 29px; color: var(--text); }
+.public-profile-hero h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin: 2px 0; font-size: 29px; color: var(--text); }
 .public-profile-hero .profile-avatar { flex: none; }
 .public-profile-status { margin: 20px 0; color: var(--text); font-size: 16px; line-height: 1.6; }
 .public-profile-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
