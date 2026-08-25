@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { api } from './api/client'
-import { subscribeToDirectMessages } from './api/realtime'
+import { subscribeToSocialUpdates } from './api/realtime'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
@@ -56,7 +56,7 @@ const englishToKorean: Record<string, string> = {
   'YOUR PROGRESS': '나의 학습 기록', 'Sign in to track your progress.': '학습 기록을 확인하려면 로그인하세요.', 'Your score and solved challenges are tied to your authenticated account.': '점수와 해결한 문제는 로그인한 계정에 안전하게 저장됩니다.',
   'OPERATOR PROFILE': '프로필', 'No status message yet.': '아직 상태 메시지가 없어요.', 'total points': '누적 점수', 'DAILY OPERATIONS': '오늘의 학습', 'Attendance': '출석', 'Checked in today': '오늘 출석 완료', 'Check in today': '오늘 출석하기',
   'Current streak': '현재 연속 출석', 'Longest streak': '최장 연속 출석', 'Total days': '누적 출석일', 'Profile title': '프로필 칭호', 'Earn a title to equip it': '칭호를 획득하면 여기서 적용할 수 있어요.',
-  'Customize profile': '프로필 꾸미기', 'Status message': '상태 메시지', 'What are you working on?': '지금 어떤 학습을 하고 있나요?', 'Save profile': '프로필 저장', 'Open Cipher Vault': '상점 열기', 'Browse challenges': '워게임 둘러보기',
+  'Customize profile': '프로필 꾸미기', 'Profile appearance': '프로필 장식', 'Choose a frame, accessory, or title from items you own.': '보유한 테두리, 장식, 칭호를 바로 적용해 보세요.', 'No appearance items yet.': '아직 보유한 꾸미기 아이템이 없어요.', 'Status message': '상태 메시지', 'What are you working on?': '지금 어떤 학습을 하고 있나요?', 'Save profile': '프로필 저장', 'Open Cipher Vault': '상점 열기', 'Browse challenges': '워게임 둘러보기',
   'Friends': '친구', 'Account username (e.g. @player_1)': '계정 아이디 (예: @player_1)', 'Add': '추가', 'No friends yet.': '아직 친구가 없어요.', 'Accept': '수락', 'Remove': '삭제', 'Write a private message': '개인 메시지를 입력하세요', 'Send': '보내기', 'Change photo': '사진 변경', 'Upload profile photo': '프로필 사진 업로드',
   'Write a post': '글쓰기', 'Post title': '게시글 제목', 'Question': '질문', 'Free': '자유', 'Publish': '게시', 'Publish notice': '공지 게시', 'Notice title': '공지 제목', 'Write the notice content': '공지 내용을 입력하세요',
   'Ask questions, share safe write-ups, and discuss the Mini CTF training labs.': '질문을 나누고, 안전한 풀이 기록을 공유하며 Mini-CTF 워게임을 함께 배워요.', 'PINNED NOTICES': '고정 공지', 'NOTICE': '공지', 'FREE': '자유', 'QUESTION': '질문', 'Opening post...': '게시글을 여는 중...',
@@ -524,11 +524,25 @@ function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged
   useEffect(() => { if (selectedFriend) void api.messages(selectedFriend).then(setMessages).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load messages.')) }, [selectedFriend])
   useEffect(() => {
     if (!user) return
-    return subscribeToDirectMessages((message) => {
-      if (message.sender !== selectedFriend) return
-      setMessages((currentMessages) => currentMessages.some((item) => item.id === message.id) ? currentMessages : [...currentMessages, message])
+    return subscribeToSocialUpdates({
+      onMessage: (message) => {
+        if (message.sender !== selectedFriend) return
+        setMessages((currentMessages) => currentMessages.some((item) => item.id === message.id) ? currentMessages : [...currentMessages, message])
+      },
+      onFriendship: (friendship) => {
+        setFriends((currentFriends) => {
+          const index = currentFriends.findIndex((item) => item.username === friendship.username)
+          if (index === -1) return [...currentFriends, friendship]
+          return currentFriends.map((item) => item.username === friendship.username ? friendship : item)
+        })
+      },
     })
   }, [user, selectedFriend])
+  useEffect(() => {
+    const messageList = document.querySelector<HTMLDivElement>('.message-list')
+    if (!messageList || messages.length === 0) return
+    messageList.scrollTo({ top: messageList.scrollHeight, behavior: 'smooth' })
+  }, [messages, selectedFriend])
   useEffect(() => () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview) }, [avatarPreview])
   if (!user) return <div className="page"><PageIntro eyebrow="YOUR PROGRESS" title="Sign in to track your progress." description="Your score and solved challenges are tied to your authenticated account." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
   const current = profile ?? { ...user, rank: 0, solvedCount: 0, statusMessage: null, avatarUrl: null, equippedFrame: null, equippedAccessory: null, equippedTitle: null }
@@ -537,7 +551,7 @@ function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged
   const selectTitle = async (event: ChangeEvent<HTMLSelectElement>) => { try { setAttendance(await api.selectAttendanceTitle(event.target.value)); await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update the title.') } }
   const uploadAvatar = async (file: File) => { setError(''); setAvatarPreview(URL.createObjectURL(file)); try { setProfile(await api.uploadAvatar(file)); setAvatarRevision(Date.now()); await onAppearanceChanged() } catch (cause) { setAvatarPreview(null); setError(cause instanceof Error ? cause.message : 'Could not upload avatar.') } }
   const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.currentTarget.value = ''; if (!file) return; const validType = !file.type || ['image/png', 'image/jpeg'].includes(file.type); const validName = /\.(png|jpe?g)$/i.test(file.name); if (!validType && !validName) { setError('PNG 또는 JPG 이미지만 업로드할 수 있습니다.'); return } if (file.size > 2 * 1024 * 1024) { setError('프로필 이미지는 2MB 이하만 업로드할 수 있습니다.'); return } void uploadAvatar(file) }
-  const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const formElement = event.currentTarget; setError(''); const username = String(new FormData(formElement).get('username')).trim().replace(/^@\s*/, ''); if (!/^[A-Za-z0-9_]{3,50}$/.test(username)) { setError('Enter the account username shown after @ (letters, numbers, and underscores only).'); return } try { await api.requestFriend(username); await refresh(); formElement.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
+  const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const formElement = event.currentTarget; setError(''); const reference = String(new FormData(formElement).get('username')).trim(); if (!reference || reference.length > 80) { setError('Enter an account ID or display name.'); return } try { await api.requestFriend(reference); await refresh(); formElement.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const formElement = event.currentTarget; if (!selectedFriend) return; const form = new FormData(formElement); try { const sent = await api.sendMessage(selectedFriend, String(form.get('content'))); setMessages((currentMessages) => [...currentMessages, sent]); formElement.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send message.') } }
   const editMessage = async (message: DirectMessage) => { const content = window.prompt('Edit message', message.content)?.trim(); if (!content || content === message.content) return; try { const updated = await api.updateMessage(message.id, content); setMessages((currentMessages) => currentMessages.map((item) => item.id === updated.id ? updated : item)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not edit message.') } }
   const deleteMessage = async (message: DirectMessage) => { if (!window.confirm('Delete this message?')) return; try { await api.deleteMessage(message.id); setMessages((currentMessages) => currentMessages.filter((item) => item.id !== message.id)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete message.') } }
@@ -554,8 +568,29 @@ function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged
     </div>
     <div className="profile-stats"><Stat value={current.score} label="Score" detail="total points" /><Stat value={current.solvedCount} label="Solves" detail={`rank #${current.rank || '—'}`} /></div>
     <section className="profile-layout"><div>{attendance && <section className="panel attendance-panel"><div className="attendance-heading"><div><p className="eyebrow">DAILY OPERATIONS</p><h2>Attendance</h2></div><button type="button" className="button primary" disabled={attendance.checkedInToday} onClick={() => void checkIn()}>{attendance.checkedInToday ? 'Checked in today' : 'Check in today'}</button></div><div className="attendance-stats"><div><strong>{attendance.currentStreak}</strong><small>Current streak</small></div><div><strong>{attendance.longestStreak}</strong><small>Longest streak</small></div><div><strong>{attendance.totalDays}</strong><small>Total days</small></div></div><label className="attendance-title-select">Profile title<select value={attendance.activeTitle ?? ''} onChange={selectTitle} disabled={attendance.earnedTitles.length === 0}><option value="" disabled>Earn a title to equip it</option>{attendance.earnedTitles.map((title) => <option key={title.id} value={title.id}>{title.name} · {title.requirement}</option>)}</select></label><div className="attendance-badges">{attendance.badges.map((badge) => <span className="attendance-badge" key={badge.id} title={badge.description}>✦ {badge.name}</span>)}</div></section>}<section className="panel profile-editor"><h2>Customize profile</h2><form onSubmit={(event) => void saveProfile(event)}><label>Display name<input name="nickname" defaultValue={current.nickname} maxLength={80} /></label><label>Status message<textarea name="statusMessage" defaultValue={current.statusMessage || ''} maxLength={160} placeholder="What are you working on?" /></label><button className="button primary" type="submit">Save profile</button></form><button className="button secondary profile-vault-button" type="button" onClick={onVault}>Open Cipher Vault</button></section><section className="content-section"><button className="button secondary" type="button" onClick={onChallenges}>Browse challenges</button></section></div><aside className="social-panel"><h2>Friends</h2><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Account username (e.g. @player_1)" minLength={3} maxLength={51} autoComplete="off" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={async () => { try { await api.acceptFriend(friend.username); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not accept request.') } }}>Accept</button> : <button type="button" className="text-link" onClick={async () => { if (!window.confirm('Remove this friend?')) return; try { await api.removeFriend(friend.username); if (selectedFriend === friend.username) setSelectedFriend(null); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove friend.') } }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list">{messages.map((message) => <article className={message.sender === current.username ? 'message sent' : 'message received'} key={message.id}><span>{message.content}</span>{message.sender === current.username && <div className="message-actions"><button type="button" onClick={() => void editMessage(message)}>Edit</button><button type="button" onClick={() => void deleteMessage(message)}>Delete</button></div>}</article>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</aside></section>
+    <ProfileLoadout onAppearanceChanged={onAppearanceChanged} onChanged={() => void refresh()} />
     {error && <p className="alert error">{error}</p>}
   </div>
+}
+
+function ProfileLoadout({ onAppearanceChanged, onChanged }: { onAppearanceChanged: () => Promise<void>; onChanged: () => void }) {
+  const [summary, setSummary] = useState<VaultSummary | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const refresh = useCallback(async () => {
+    try { setSummary(await api.vault()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not load profile appearance.') }
+  }, [])
+  useEffect(() => { void refresh() }, [refresh])
+  const equip = async (item: VaultCosmetic) => {
+    try {
+      setBusy(item.id); setError('')
+      setSummary(await api.equipVaultItem(item.id))
+      await onAppearanceChanged()
+      onChanged()
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update profile appearance.') } finally { setBusy(null) }
+  }
+  const items = summary?.cosmetics.filter((item) => item.owned && ['FRAME', 'ACCESSORY', 'TITLE'].includes(item.type)) ?? []
+  return <section className="panel profile-loadout"><div className="profile-loadout-heading"><div><p className="eyebrow">PERSONAL LOADOUT</p><h2>Profile appearance</h2><p>Choose a frame, accessory, or title from items you own.</p></div></div>{!summary ? <LoadingState label="Loading your collection..." /> : items.length === 0 ? <p className="muted">No appearance items yet.</p> : <div className="profile-loadout-items">{items.map((item) => <article className={`profile-loadout-item ${item.equipped ? 'equipped' : ''}`} key={item.id}><span className="profile-loadout-icon" aria-hidden="true">{item.type === 'FRAME' ? '▣' : item.type === 'ACCESSORY' ? '◇' : '✦'}</span><div><small>{item.type}</small><strong>{item.name}</strong><p>{item.description}</p></div><button className="button secondary" type="button" disabled={busy === item.id} onClick={() => void equip(item)}>{item.equipped ? 'Unequip' : 'Equip'}</button></article>)}</div>}{error && <p className="alert error">{error}</p>}</section>
 }
 
 function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: () => void }) {

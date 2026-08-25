@@ -24,7 +24,7 @@ public class SocialRealtimeService {
   }
 
   public void publishAfterCommit(String recipientUsername, SocialDtos.MessageView message) {
-    Runnable publish = () -> send(recipientUsername, message);
+    Runnable publish = () -> send(recipientUsername, "direct-message", message);
     if (TransactionSynchronizationManager.isSynchronizationActive()) {
       TransactionSynchronizationManager.registerSynchronization(
           new TransactionSynchronization() {
@@ -38,10 +38,25 @@ public class SocialRealtimeService {
     }
   }
 
-  private void send(String username, SocialDtos.MessageView message) {
+  public void publishFriendshipAfterCommit(String username, SocialDtos.FriendView friendship) {
+    Runnable publish = () -> send(username, "friendship", friendship);
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(
+          new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              publish.run();
+            }
+          });
+    } else {
+      publish.run();
+    }
+  }
+
+  private void send(String username, String eventName, Object data) {
     for (SseEmitter emitter : listeners.getOrDefault(username, new CopyOnWriteArraySet<>())) {
       try {
-        emitter.send(SseEmitter.event().name("direct-message").data(message));
+        emitter.send(SseEmitter.event().name(eventName).data(data));
       } catch (IOException | IllegalStateException ex) {
         remove(username, emitter);
       }

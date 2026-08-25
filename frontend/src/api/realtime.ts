@@ -1,8 +1,8 @@
-import type { DirectMessage } from '../types/api'
+import type { DirectMessage, Friend } from '../types/api'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
-export function subscribeToDirectMessages(onMessage: (message: DirectMessage) => void): () => void {
+export function subscribeToSocialUpdates({ onMessage, onFriendship }: { onMessage: (message: DirectMessage) => void; onFriendship: (friendship: Friend) => void }): () => void {
   const token = localStorage.getItem('mini-ctf-token')
   if (!token) return () => undefined
   const controller = new AbortController()
@@ -24,9 +24,11 @@ export function subscribeToDirectMessages(onMessage: (message: DirectMessage) =>
         const events = pending.split('\n\n')
         pending = events.pop() ?? ''
         for (const event of events) {
-          if (!event.startsWith('event:direct-message')) continue
+          const eventName = event.split('\n').find((line) => line.startsWith('event:'))?.slice(6)
           const data = event.split('\n').find((line) => line.startsWith('data:'))?.slice(5)
-          if (data) onMessage(JSON.parse(data) as DirectMessage)
+          if (!data) continue
+          if (eventName === 'direct-message') onMessage(JSON.parse(data) as DirectMessage)
+          if (eventName === 'friendship') onFriendship(JSON.parse(data) as Friend)
         }
       }
     } catch (cause) {

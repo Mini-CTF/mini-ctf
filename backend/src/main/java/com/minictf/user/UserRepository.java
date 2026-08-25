@@ -13,6 +13,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   Optional<User> findByUsernameIgnoreCase(String username);
 
+  List<User> findTop2ByNicknameIgnoreCaseAndStatusNot(String nickname, String status);
+
   boolean existsByUsernameIgnoreCase(String username);
 
   boolean existsByUsername(String username);

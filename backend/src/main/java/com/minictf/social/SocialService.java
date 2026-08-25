@@ -12,8 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SocialService {
-  private static final java.util.regex.Pattern USERNAME_PATTERN =
-      java.util.regex.Pattern.compile("[A-Za-z0-9_]{3,50}");
   private final UserRepository users;
   private final FriendshipRepository friendships;
   private final DirectMessageRepository messages;
@@ -52,7 +50,9 @@ public class SocialService {
       if ("DECLINED".equals(relationship.getStatus())
           && relationship.getRequester().getId().equals(current.getId())) {
         relationship.setStatus("PENDING");
-        return friendView(current, relationship);
+        SocialDtos.FriendView view = friendView(current, relationship);
+        realtime.publishFriendshipAfterCommit(other.getUsername(), friendView(other, relationship));
+        return view;
       }
       throw new IllegalArgumentException("Friend relationship already exists");
     }
@@ -60,7 +60,10 @@ public class SocialService {
     friend.setRequester(current);
     friend.setRecipient(other);
     try {
-      return friendView(current, friendships.saveAndFlush(friend));
+      Friendship saved = friendships.saveAndFlush(friend);
+      SocialDtos.FriendView view = friendView(current, saved);
+      realtime.publishFriendshipAfterCommit(other.getUsername(), friendView(other, saved));
+      return view;
     } catch (DataIntegrityViolationException ex) {
       throw new IllegalArgumentException("Friend relationship already exists");
     }
@@ -74,7 +77,9 @@ public class SocialService {
         || !"PENDING".equals(friend.getStatus()))
       throw new AccessDeniedException("No incoming friend request");
     friend.setStatus("ACCEPTED");
-    return friendView(current, friend);
+    SocialDtos.FriendView view = friendView(current, friend);
+    realtime.publishFriendshipAfterCommit(other.getUsername(), friendView(other, friend));
+    return view;
   }
 
   @Transactional
@@ -148,19 +153,26 @@ public class SocialService {
   }
 
   private User byUsername(String username) {
-    String normalized = normalizeUsername(username);
+    String normalized = normalizeUserReference(username);
     return users
         .findByUsernameIgnoreCase(normalized)
-        .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        .orElseGet(
+            () -> {
+              List<User> matches = users.findTop2ByNicknameIgnoreCaseAndStatusNot(normalized, "DELETED");
+              if (matches.size() > 1)
+                throw new IllegalArgumentException("Multiple users use this display name. Enter their @account ID instead");
+              if (matches.size() == 1) return matches.get(0);
+              throw new EntityNotFoundException("User not found");
+            });
   }
 
-  private String normalizeUsername(String username) {
+  private String normalizeUserReference(String username) {
     if (username == null) throw new IllegalArgumentException("Username is required");
     String normalized = username.trim();
     if (normalized.startsWith("@")) normalized = normalized.substring(1).trim();
-    if (!USERNAME_PATTERN.matcher(normalized).matches()) {
+    if (normalized.isBlank() || normalized.length() > 80) {
       throw new IllegalArgumentException(
-          "Username must be 3-50 characters using only letters, numbers, or underscore");
+          "Enter an account ID or a display name up to 80 characters");
     }
     return normalized;
   }
