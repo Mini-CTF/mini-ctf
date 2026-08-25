@@ -538,9 +538,9 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .attendance-heading .eyebrow { font-size: 12px; }
 .attendance-stats strong { font-size: 34px; }
 .attendance-stats small { font-size: 12px; font-weight: 700; }
-.attendance-title-select { font-size: 13px; font-weight: 700; }
-.attendance-title-select select { font-size: 14px; padding: 11px; }
-.attendance-badge { font-size: 12px; font-weight: 800; padding: 9px 12px; }
+.attendance-title-select { font-size: 16px; font-weight: 800; }
+.attendance-title-select select { font-size: 17px; padding: 12px 14px; }
+.attendance-badge { font-size: 15px; font-weight: 800; padding: 10px 14px; }
 
 .site-footer { font-size: 15px; color: #aeb9c8; }
 .site-footer strong { font-size: 15px; color: #e8edf5; }
