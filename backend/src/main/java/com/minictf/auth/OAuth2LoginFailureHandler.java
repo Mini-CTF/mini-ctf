@@ -54,8 +54,9 @@ public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
   }
 
   private String callbackRedirect(HttpServletRequest request) {
+    // Do not let a stale preview URL in Render's environment hide a useful
+    // OAuth error from the user on a different frontend deployment.
     return request.getServerName().endsWith(".onrender.com")
-            && redirect.startsWith("http://localhost")
         ? FLAGBOX_PRODUCTION_CALLBACK
         : redirect;
   }

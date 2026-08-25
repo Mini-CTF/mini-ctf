@@ -73,8 +73,11 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
   }
 
   private String callbackRedirect(HttpServletRequest request) {
+    // Render is the production OAuth callback host.  Always return to the
+    // canonical production frontend here: an old preview URL in an
+    // environment variable must never send a successfully authenticated user
+    // to a stale Vercel deployment.
     return request.getServerName().endsWith(".onrender.com")
-            && redirect.startsWith("http://localhost")
         ? FLAGBOX_PRODUCTION_CALLBACK
         : redirect;
   }
