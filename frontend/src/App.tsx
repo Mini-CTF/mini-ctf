@@ -72,6 +72,7 @@ const englishToKorean: Record<string, string> = {
   'QUICK ACTIONS': '빠른 작업', 'RECENT ACTIVITY': '최근 활동', 'SECURITY': '보안', 'Events to review': '확인이 필요한 이벤트', 'View all': '전체 보기', 'ACCOUNT MANAGEMENT': '계정 관리', 'COMMUNITY POSTS': '커뮤니티 게시글', 'COMMENTS': '댓글', 'PUBLISH NOTICE': '공지 게시', 'PUBLISHED': '게시됨', 'ANTI-CHEAT': '부정행위 방지', 'Security events': '보안 이벤트', 'CHALLENGE ACTIVITY': '문제 활동', 'Submission history': '제출 기록', 'SECURITY LOG': '보안 로그', 'Login and account events': '로그인 및 계정 이벤트', 'AUDIT TRAIL': '관리 기록', 'Administrator activity': '관리자 활동',
   'Delete account': '계정 삭제', 'Restore account': '계정 복구', 'Restore': '복구', 'Suspend': '정지', 'Loading administrator dashboard…': '관리자 대시보드를 불러오는 중…',
   'Learn safely. Solve it yourself.': '안전하게 배우고, 직접 풀어보세요.', 'Learning platform online': '학습 플랫폼 정상 운영 중', 'Skip': '건너뛰기',
+  'Nothing here yet.': '아직 준비된 게 없어요.', 'New content is on the way. Check back soon.': '새로운 콘텐츠가 곧 채워질 거예요.', 'Not the correct flag. Double-check the format and try again.': '정답이 아니에요. FLAG 형식을 다시 확인해 보세요.', 'Too many attempts. Please wait a moment and try again.': '너무 많이 시도했어요. 잠시 후에 다시 시도해 주세요.', 'You have already solved this challenge.': '이미 해결한 문제예요.', 'Correct!': '정답이에요!',
 }
 const koreanToEnglish = Object.fromEntries(Object.entries(englishToKorean).map(([english, korean]) => [korean, english])) as Record<string, string>
 
@@ -117,13 +118,14 @@ function App() {
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const [vaultOpen, setVaultOpen] = useState(false)
-  const [showIntro, setShowIntro] = useState(true)
+  const [showIntro, setShowIntro] = useState(() => localStorage.getItem('flagbox-intro-seen') !== 'true')
   const [introFilled, setIntroFilled] = useState(false)
 
   useEffect(() => {
     if (!showIntro) return
     const timer = window.setTimeout(() => {
       setShowIntro(false)
+      localStorage.setItem('flagbox-intro-seen', 'true')
     }, 3850)
     return () => window.clearTimeout(timer)
   }, [showIntro])
@@ -253,6 +255,7 @@ function App() {
   }
   const dismissIntro = () => {
     setShowIntro(false)
+    localStorage.setItem('flagbox-intro-seen', 'true')
   }
 
   return <div className="app-shell">
@@ -462,19 +465,21 @@ function ChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [hintBusy, setHintBusy] = useState(false)
+  const [awarded, setAwarded] = useState<number | null>(null)
   useEffect(() => {
     if (!loggedIn) return
     void api.challengeActivity(item.id, 'OPENED').catch(() => undefined)
   }, [item.id, loggedIn])
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    try { const result = await api.submitFlag(item.id, flag); setMessage(result.result === 'correct' ? `Correct flag · ${result.awardedScore} points awarded.` : result.result === 'already_solved' ? 'You have already solved this challenge.' : result.result); setFlag(''); onSubmitted() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Submission failed.') }
+    setAwarded(null)
+    try { const result = await api.submitFlag(item.id, flag.trim()); if (result.result === 'correct') { setMessage('Correct!'); setAwarded(result.awardedScore) } else if (result.result === 'already_solved') { setMessage('You have already solved this challenge.') } else { setMessage(result.result) } setFlag(''); onSubmitted() } catch (cause) { const reason = cause instanceof Error ? cause.message : ''; setError(/rate|limit|too many/i.test(reason) ? 'Too many attempts. Please wait a moment and try again.' : /connect|network|failed/i.test(reason) ? reason || 'Submission failed.' : 'Not the correct flag. Double-check the format and try again.') }
   }
   const revealHint = async () => {
     try { setHintBusy(true); setError(''); setHint((await api.challengeHint(item.id)).hint) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reveal the hint.') } finally { setHintBusy(false) }
   }
   const download = async () => { try { await api.downloadArtifact(item.id) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Download failed.') } }
-  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small></div><button type="button" className="button secondary" disabled={hintBusy || hint !== null} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
+  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small></div><button type="button" className="button secondary" disabled={hintBusy || hint !== null} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
 }
 
 function LegacyRankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceRows: AttendanceRankingRow[] }) {
@@ -496,7 +501,7 @@ function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' |
 function TierEmblem({ tier }: { tier: string }) {
   const label = tierLabel(tier).toUpperCase()
   const symbol = ({ beginner: '◇', rookie: '›', junior: '◆', senior: '✦', veteran: '⬟', master: '✹', root: '◈' } as Record<string, string>)[tier] ?? '◇'
-  return <span className={`tier-emblem tier-emblem-${tier}`} role="img" aria-label={`${label} tier`}><svg viewBox="0 0 102 32" aria-hidden="true"><path className="tier-emblem-shell" d="M4 16 14 3h74l10 13-10 13H14Z" /><path className="tier-emblem-core" d="M15 16 21 8h60l6 8-6 8H21Z" /><text className="tier-emblem-symbol" x="26" y="20">{symbol}</text><text className="tier-emblem-label" x="61" y="20">{label}</text></svg></span>
+  return <span className={`tier-emblem tier-emblem-${tier}`} role="img" aria-label={`${label} tier`}><svg viewBox="0 0 102 32" aria-hidden="true"><path className="tier-emblem-shell" d="M4 16 14 3h74l10 13-10 13H14Z" /><path className="tier-emblem-core" d="M15 16 21 8h60l6 8-6 8H21Z" /><text className="tier-emblem-symbol" x="26" y="20">{symbol}</text><text className="tier-emblem-label" x="61" y="20" textLength="42" lengthAdjust="spacingAndGlyphs">{label}</text></svg></span>
 }
 function tierLabel(tier: string) { return ({ beginner: 'Beginner', rookie: 'Rookie', junior: 'Junior', senior: 'Senior', veteran: 'Veteran', master: 'Master', root: 'Root' } as Record<string, string>)[tier] ?? 'Beginner' }
 
@@ -939,6 +944,6 @@ function ProviderIcon({ provider }: { provider: string }) {
 
 function PageIntro({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) { return <section className="page-intro"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p>{description}</p></section> }
 function Badge({ tone, children }: { tone: string; children: string }) { return <span className={`badge ${tone.toLowerCase()}`}>{children}</span> }
-function EmptyState() { return <div className="empty-state"><h2>No data available yet.</h2><p>Start the backend and add challenges to see them here.</p></div> }
+function EmptyState() { return <div className="empty-state"><h2>Nothing here yet.</h2><p>New content is on the way. Check back soon.</p></div> }
 
 export default App
