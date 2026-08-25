@@ -34,3 +34,5 @@ challenges/uploads/
 *.iml
 .DS_Store
 Thumbs.db
+
+.vercel
