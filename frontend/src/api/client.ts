@@ -148,9 +148,11 @@ export const api = {
       throw new Error(body?.error?.message ?? 'Artifact download failed.')
     }
     const url = URL.createObjectURL(await response.blob())
+    const disposition = response.headers.get('Content-Disposition') ?? ''
+    const named = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)
     const link = document.createElement('a')
     link.href = url
-    link.download = `challenge-${id}-artifact`
+    link.download = named?.[1] ?? `challenge-${id}-artifact`
     link.click()
     URL.revokeObjectURL(url)
   },
