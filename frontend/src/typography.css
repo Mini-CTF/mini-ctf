@@ -241,6 +241,7 @@ html[data-theme='light'] .admin-card { background: rgba(255, 255, 255, .78); }
 .ranking-identity strong { display: inline-flex; align-items: center; gap: 5px; }
 .ranking-identity .profile-accessory { font-style: normal; font-size: 12px; }
 .ranking-title { flex-basis: 100%; width: fit-content; margin: 0 !important; }
+.ranking-identity .ranking-title { flex: 0 0 auto; width: auto; max-width: 100%; }
 
 .flagbox-intro { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; overflow: hidden; background: #080b10; color: #fff; animation: flagbox-intro-out .36s ease 2.34s forwards; }
 .flagbox-intro::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 47%, rgba(40, 110, 234, .2), transparent 28rem); opacity: 0; animation: flagbox-intro-glow 1.8s ease .55s forwards; }
@@ -709,6 +710,34 @@ html[data-theme='dark'] .app-shell :is(.eyebrow, .badge, .vault-kicker, .ranking
 html[data-theme='light'] .app-shell :is(.eyebrow, .badge, .vault-kicker, .ranking-title, .profile-accessory, .ruby-price, .text-link) { color: var(--accent) !important; }
 html[data-theme='light'] .app-shell .button.primary,
 html[data-theme='dark'] .app-shell .button.primary { color: #fff !important; }
+.app-shell .ranking-identity .super-user-title {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 27px;
+  box-sizing: border-box;
+  margin: 0 !important;
+  padding: 4px 9px;
+  border: 2px solid #ff477e;
+  border-radius: 999px;
+  color: transparent !important;
+  background: linear-gradient(90deg, #ff3d71, #ff9d2e, #fff05a, #4ce89b, #4cbcff, #a675ff, #ff4fc3, #ff3d71);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: none;
+  white-space: nowrap;
+  animation: super-user-rgb 3s linear infinite, super-user-border-rgb 2.4s linear infinite;
+}
+@keyframes super-user-border-rgb {
+  0%, 100% { border-color: #ff477e; box-shadow: 0 0 10px rgba(255, 71, 126, .38); }
+  16% { border-color: #ff9d2e; box-shadow: 0 0 10px rgba(255, 157, 46, .38); }
+  33% { border-color: #e9dc37; box-shadow: 0 0 10px rgba(233, 220, 55, .38); }
+  50% { border-color: #43d98c; box-shadow: 0 0 10px rgba(67, 217, 140, .38); }
+  66% { border-color: #4cbcff; box-shadow: 0 0 10px rgba(76, 188, 255, .38); }
+  83% { border-color: #a675ff; box-shadow: 0 0 10px rgba(166, 117, 255, .38); }
+}
 @keyframes banner-content-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
 @media (max-width: 620px) {
   .home-page .hero-banner { min-height: 450px; margin: 24px 0 52px; }
