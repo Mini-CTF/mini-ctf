@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api } from './api/client'
 import { subscribeToSocialUpdates } from './api/realtime'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
@@ -7,8 +8,9 @@ import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
 import './App.css'
 import './typography.css'
 
-type View = 'home' | 'challenges' | 'ranking' | 'profile' | 'community' | 'admin' | 'login'
 type Filter = 'ALL' | 'WEB' | 'CRYPTO' | 'FORENSICS' | 'MISC'
+const difficultyOrder: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2, INSANE: 3 }
+const byDifficulty = (a: ChallengeSummary, b: ChallengeSummary) => (difficultyOrder[a.difficulty] ?? 9) - (difficultyOrder[b.difficulty] ?? 9) || a.score - b.score
 
 const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
 const initialOAuthError = new URLSearchParams(window.location.search).get('oauthError')
@@ -73,6 +75,8 @@ const englishToKorean: Record<string, string> = {
   'Delete account': '계정 삭제', 'Restore account': '계정 복구', 'Restore': '복구', 'Suspend': '정지', 'Loading administrator dashboard…': '관리자 대시보드를 불러오는 중…',
   'Learn safely. Solve it yourself.': '안전하게 배우고, 직접 풀어보세요.', 'Learning platform online': '학습 플랫폼 정상 운영 중', 'Skip': '건너뛰기',
   'Nothing here yet.': '아직 준비된 게 없어요.', 'New content is on the way. Check back soon.': '새로운 콘텐츠가 곧 채워질 거예요.', 'Not the correct flag. Double-check the format and try again.': '정답이 아니에요. FLAG 형식을 다시 확인해 보세요.', 'Too many attempts. Please wait a moment and try again.': '너무 많이 시도했어요. 잠시 후에 다시 시도해 주세요.', 'You have already solved this challenge.': '이미 해결한 문제예요.', 'Correct!': '정답이에요!',
+  'EASY': '쉬움', 'MEDIUM': '보통', 'HARD': '어려움', 'INSANE': '도전', 'WEB': '웹', 'CRYPTO': '암호학', 'FORENSICS': '포렌식', 'MISC': '기타', 'credits': '크레딧',
+  'You have credits left.': '남은 크레딧을 확인하세요.', 'Opening challenge...': '문제를 여는 중...', 'Could not load this challenge.': '문제를 불러오지 못했어요.', 'Not enough hint credits.': '힌트 크레딧이 부족해요.',
 }
 const koreanToEnglish = Object.fromEntries(Object.entries(englishToKorean).map(([english, korean]) => [korean, english])) as Record<string, string>
 
@@ -81,7 +85,14 @@ function localizeSystemInterface(language: Language) {
   if (!root) return
   const dictionary = language === 'ko' ? englishToKorean : koreanToEnglish
   const isProtected = (node: Node) => node.parentElement?.closest('code, pre, textarea, input, .community-content, .comment-content, .message, [data-i18n-skip]')
-  const replace = (value: string) => dictionary[value.trim()] ? value.replace(value.trim(), dictionary[value.trim()]) : value
+  const replace = (value: string) => {
+    const key = value.trim().replace(/^[^A-Za-z0-9가-힣]+/, '').trim()
+    const hit = key ? dictionary[key] : undefined
+    if (!hit) return value
+    const start = value.indexOf(key)
+    if (start === -1) return value
+    return value.slice(0, start) + hit + value.slice(start + key.length)
+  }
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   const textNodes: Text[] = []
   while (walker.nextNode()) textNodes.push(walker.currentNode as Text)
@@ -102,14 +113,17 @@ function localizeSystemInterface(language: Language) {
 }
 
 function App() {
-  const [view, setView] = useState<View>(initialOAuthError ? 'login' : 'home')
+  return <BrowserRouter><AppShell /></BrowserRouter>
+}
+
+function AppShell() {
+  const routerNavigate = useNavigate()
+  const location = useLocation()
   const [user, setUser] = useState<User | null>(null)
   const [, setStats] = useState<Stats>(emptyStats)
   const [challenges, setChallenges] = useState<ChallengeSummary[]>([])
   const [ranking, setRanking] = useState<RankingRow[]>([])
   const [attendanceRanking, setAttendanceRanking] = useState<AttendanceRankingRow[]>([])
-  const [selected, setSelected] = useState<ChallengeDetail | null>(null)
-  const [openingChallenge, setOpeningChallenge] = useState<string | null>(null)
   const [category, setCategory] = useState<Filter>('ALL')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [compactLayout, setCompactLayout] = useState(() => window.innerWidth <= 620)
@@ -118,20 +132,19 @@ function App() {
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const [vaultOpen, setVaultOpen] = useState(false)
-  const [showIntro, setShowIntro] = useState(() => localStorage.getItem('flagbox-intro-seen') !== 'true')
+  const [showIntro, setShowIntro] = useState(() => sessionStorage.getItem('flagbox-intro-seen') !== 'true')
   const [introFilled, setIntroFilled] = useState(false)
 
   useEffect(() => {
     if (!showIntro) return
     const timer = window.setTimeout(() => {
       setShowIntro(false)
-      localStorage.setItem('flagbox-intro-seen', 'true')
+      sessionStorage.setItem('flagbox-intro-seen', 'true')
     }, 3850)
     return () => window.clearTimeout(timer)
   }, [showIntro])
   useEffect(() => {
     if (!showIntro) return
-    setIntroFilled(false)
     const timer = window.setTimeout(() => setIntroFilled(true), 140)
     return () => window.clearTimeout(timer)
   }, [showIntro])
@@ -196,47 +209,38 @@ function App() {
     document.documentElement.lang = language
     localStorage.setItem('flagbox-language', language)
   }, [language])
-  useEffect(() => {
-    let frame = window.requestAnimationFrame(() => localizeSystemInterface(language))
+  useLayoutEffect(() => {
+    localizeSystemInterface(language)
     const root = document.querySelector('.app-shell')
-    if (!root) return () => window.cancelAnimationFrame(frame)
-    const observer = new MutationObserver(() => {
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => localizeSystemInterface(language))
-    })
+    if (!root) return
+    const observer = new MutationObserver(() => localizeSystemInterface(language))
     observer.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'aria-label', 'title'] })
-    return () => { observer.disconnect(); window.cancelAnimationFrame(frame) }
+    return () => observer.disconnect()
   }, [language])
 
   const text = uiCopy[language]
 
+  const featuredChallenges = useMemo(
+    () => [...challenges].sort(byDifficulty).slice(0, 3),
+    [challenges],
+  )
   const visibleChallenges = useMemo(
-    () => challenges.filter((item) => category === 'ALL' || item.category === category),
+    () => challenges.filter((item) => category === 'ALL' || item.category === category).sort(byDifficulty),
     [category, challenges],
   )
-  const navigate = (next: View) => {
-    setSelected(null)
-    setView(next)
+  useEffect(() => {
+    if (initialOAuthError) routerNavigate('/login', { replace: true })
+  }, [routerNavigate])
+  const go = (path: string) => {
     setMobileNavOpen(false)
     setError('')
     window.scrollTo({ top: 0, behavior: 'auto' })
-  }
-  const openChallenge = async (item: ChallengeSummary) => {
-    setError('')
-    setView('challenges')
-    setOpeningChallenge(item.title)
-    try {
-      setSelected(await api.challenge(item.id))
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not load the challenge.')
-    } finally {
-      setOpeningChallenge(null)
-    }
+    routerNavigate(path)
   }
   const completeAuth = (result: { token: string; user: User }) => {
     localStorage.setItem('mini-ctf-token', result.token)
     setUser(result.user)
-    navigate('challenges')
+    go('/challenges')
     void refresh()
   }
   const syncAppearance = async () => {
@@ -250,42 +254,49 @@ function App() {
   const logout = () => {
     localStorage.removeItem('mini-ctf-token')
     setUser(null)
-    navigate('home')
+    go('/')
     void refresh()
   }
   const dismissIntro = () => {
     setShowIntro(false)
-    localStorage.setItem('flagbox-intro-seen', 'true')
+    sessionStorage.setItem('flagbox-intro-seen', 'true')
   }
 
+  const path = location.pathname
+  const guarded = (node: ReactNode) => loading ? <div className="page"><LoadingState label="Loading live platform data..." /></div> : node
   return <div className="app-shell">
     {showIntro && <FlagBoxIntro onSkip={dismissIntro} filled={introFilled} />}
     <header className="site-header">
-      <button className="brand" type="button" onClick={() => navigate('home')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
+      <button className="brand" type="button" onClick={() => go('/')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
       <nav id="primary-navigation" className={mobileNavOpen ? 'primary-nav is-open' : 'primary-nav'} aria-label="Primary navigation">
-        <NavButton active={view === 'home'} onClick={() => navigate('home')}>{text.home}</NavButton>
-        <NavButton active={view === 'challenges'} onClick={() => navigate('challenges')}>{text.wargame}</NavButton>
-        <NavButton active={view === 'ranking'} onClick={() => navigate('ranking')}>{text.ranking}</NavButton>
-        <NavButton active={view === 'community'} onClick={() => navigate('community')}>{text.community}</NavButton>
-        <NavButton active={view === 'profile'} onClick={() => navigate('profile')}>{text.profile}</NavButton>
+        <NavButton active={path === '/'} onClick={() => go('/')}>{text.home}</NavButton>
+        <NavButton active={path.startsWith('/challenges')} onClick={() => go('/challenges')}>{text.wargame}</NavButton>
+        <NavButton active={path.startsWith('/ranking')} onClick={() => go('/ranking')}>{text.ranking}</NavButton>
+        <NavButton active={path.startsWith('/community')} onClick={() => go('/community')}>{text.community}</NavButton>
+        <NavButton active={path.startsWith('/profile')} onClick={() => go('/profile')}>{text.profile}</NavButton>
         {user && <NavButton active={false} onClick={() => { setMobileNavOpen(false); setVaultOpen(true) }}>{text.shop}</NavButton>}
-        {user?.role === 'ADMIN' && <NavButton active={view === 'admin'} onClick={() => navigate('admin')}>{text.admin}</NavButton>}
+        {user?.role === 'ADMIN' && <NavButton active={path.startsWith('/admin')} onClick={() => go('/admin')}>{text.admin}</NavButton>}
         <button className="nav-button mobile-language" type="button" onClick={() => setLanguage((current) => current === 'ko' ? 'en' : 'ko')} aria-label={text.language}><GlobeIcon /> {language === 'ko' ? 'EN' : 'KO'}</button>
-        {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>{text.logout}</button> : <button className="nav-button mobile-auth" type="button" onClick={() => navigate('login')}>{text.login}</button>}
+        {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>{text.logout}</button> : <button className="nav-button mobile-auth" type="button" onClick={() => go('/login')}>{text.login}</button>}
       </nav>
-      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={() => setLanguage((current) => current === 'ko' ? 'en' : 'ko')}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button></> : <button className="header-login" type="button" onClick={() => navigate('login')}>{text.login}</button>}</div>
+      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={() => setLanguage((current) => current === 'ko' ? 'en' : 'ko')}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button></> : <button className="header-login" type="button" onClick={() => go('/login')}>{text.login}</button>}</div>
     </header>
     <main>
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
-      {loading && <div className="page"><LoadingState label="Loading live platform data..." /></div>}
-      {!loading && view === 'home' && <Home language={language} challenges={challenges} onExplore={() => navigate('challenges')} onRanking={() => navigate('ranking')} onOpen={openChallenge} />}
-      {!loading && view === 'challenges' && (selected ? <ChallengeDetailView item={selected} loggedIn={Boolean(user)} onBack={() => setSelected(null)} onLogin={() => navigate('login')} onSubmitted={refresh} /> : openingChallenge ? <div className="page"><LoadingState label={`Opening ${openingChallenge}...`} /></div> : <ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} onOpen={openChallenge} />)}
-      {!loading && view === 'ranking' && <EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />}
-      {!loading && view === 'profile' && <ProfileView user={user} onChallenges={() => navigate('challenges')} onLogin={() => navigate('login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />}
-      {!loading && view === 'community' && <EnhancedCommunityView user={user} onLogin={() => navigate('login')} />}
-      {!loading && view === 'admin' && user?.role === 'ADMIN' && <AdminConsole />}
-      {!loading && view === 'login' && <LoginView onBack={() => navigate('home')} onAuth={completeAuth} />}
+      <Routes>
+        <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
+        <Route path="/challenges" element={guarded(<ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
+        <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={refresh} />)} />
+        <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
+        <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
+        <Route path="/community" element={guarded(<EnhancedCommunityView user={user} onLogin={() => go('/login')} />)} />
+        <Route path="/community/:postId" element={guarded(<CommunityPostRoute user={user} />)} />
+        <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole />) : <Navigate to="/" replace />} />
+        <Route path="/login" element={<LoginView onBack={() => go('/')} onAuth={completeAuth} />} />
+        <Route path="/auth/callback" element={<CallbackRoute />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </main>
     {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
     <PublicProfileDialog />
@@ -459,17 +470,34 @@ function LegacyChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitte
   return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p></section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
 }
 
-function ChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: { item: ChallengeDetail; loggedIn: boolean; onBack: () => void; onLogin: () => void; onSubmitted: () => void }) {
+function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitted }: { challengeId: string; loggedIn: boolean; onBack: () => void; onLogin: () => void; onSubmitted: () => void }) {
+  const id = Number(challengeId)
+  const [item, setItem] = useState<ChallengeDetail | null>(null)
+  const [loadError, setLoadError] = useState('')
   const [flag, setFlag] = useState('')
   const [hint, setHint] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [hintBusy, setHintBusy] = useState(false)
   const [awarded, setAwarded] = useState<number | null>(null)
+  const [hintCredits, setHintCredits] = useState<number | null>(null)
   useEffect(() => {
-    if (!loggedIn) return
-    void api.challengeActivity(item.id, 'OPENED').catch(() => undefined)
-  }, [item.id, loggedIn])
+    let active = true
+    api.challenge(id).then((next) => { if (active) setItem(next) }).catch((cause) => { if (active) setLoadError(cause instanceof Error ? cause.message : 'Could not load this challenge.') })
+    return () => { active = false }
+  }, [id])
+  useEffect(() => {
+    if (!loggedIn || !Number.isFinite(id)) return
+    void api.challengeActivity(id, 'OPENED').catch(() => undefined)
+  }, [id, loggedIn])
+  useEffect(() => {
+    if (!loggedIn || !item?.hintAvailable) return
+    let active = true
+    api.vault().then((summary) => { if (active) setHintCredits(summary.hintCredits) }).catch(() => undefined)
+    return () => { active = false }
+  }, [loggedIn, item?.hintAvailable])
+  if (loadError) return <div className="page"><p className="alert error">{loadError}</p><button type="button" className="button secondary" onClick={onBack}>← Back to challenges</button></div>
+  if (!item) return <div className="page"><LoadingState label="Opening challenge..." /></div>
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setAwarded(null)
@@ -479,7 +507,20 @@ function ChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: {
     try { setHintBusy(true); setError(''); setHint((await api.challengeHint(item.id)).hint) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reveal the hint.') } finally { setHintBusy(false) }
   }
   const download = async () => { try { await api.downloadArtifact(item.id) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Download failed.') } }
-  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small></div><button type="button" className="button secondary" disabled={hintBusy || hint !== null} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
+  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small>{hintCredits !== null && (hintCredits < item.hintCost ? <small>Not enough hint credits.</small> : <small> · {hintCredits} <span>credits</span></small>)}</div><button type="button" className="button secondary" disabled={hintBusy || hint !== null || (hintCredits !== null && hintCredits < item.hintCost)} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
+}
+
+function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; onSubmitted: () => void }) {
+  const { challengeId } = useParams()
+  const routerNavigate = useNavigate()
+  if (!challengeId || !Number.isFinite(Number(challengeId))) return <Navigate to="/challenges" replace />
+  return <ChallengeDetailView key={challengeId} challengeId={challengeId} loggedIn={loggedIn} onBack={() => routerNavigate('/challenges')} onLogin={() => routerNavigate('/login')} onSubmitted={onSubmitted} />
+}
+
+function CallbackRoute() {
+  const routerNavigate = useNavigate()
+  useEffect(() => { routerNavigate('/', { replace: true }) }, [routerNavigate])
+  return null
 }
 
 function LegacyRankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceRows: AttendanceRankingRow[] }) {
@@ -500,8 +541,7 @@ function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' |
 
 function TierEmblem({ tier }: { tier: string }) {
   const label = tierLabel(tier).toUpperCase()
-  const symbol = ({ beginner: '◇', rookie: '›', junior: '◆', senior: '✦', veteran: '⬟', master: '✹', root: '◈' } as Record<string, string>)[tier] ?? '◇'
-  return <span className={`tier-emblem tier-emblem-${tier}`} role="img" aria-label={`${label} tier`}><svg viewBox="0 0 102 32" aria-hidden="true"><path className="tier-emblem-shell" d="M4 16 14 3h74l10 13-10 13H14Z" /><path className="tier-emblem-core" d="M15 16 21 8h60l6 8-6 8H21Z" /><text className="tier-emblem-symbol" x="26" y="20">{symbol}</text><text className="tier-emblem-label" x="61" y="20" textLength="42" lengthAdjust="spacingAndGlyphs">{label}</text></svg></span>
+  return <span className={`tier-emblem tier-emblem-${tier}`} aria-label={`${label} tier`}>{label}</span>
 }
 function tierLabel(tier: string) { return ({ beginner: 'Beginner', rookie: 'Rookie', junior: 'Junior', senior: 'Senior', veteran: 'Veteran', master: 'Master', root: 'Root' } as Record<string, string>)[tier] ?? 'Beginner' }
 
@@ -509,6 +549,12 @@ function PublicProfileDialog() {
   const [username, setUsername] = useState<string | null>(null)
   const [profile, setProfile] = useState<PublicProfile | null>(null)
   const [error, setError] = useState('')
+  const [loadedUsername, setLoadedUsername] = useState<string | null>(username)
+  if (username !== loadedUsername) {
+    setLoadedUsername(username)
+    setProfile(null)
+    setError('')
+  }
   useEffect(() => {
     const open = (event: Event) => setUsername((event as CustomEvent<string>).detail)
     window.addEventListener(publicProfileEvent, open)
@@ -528,7 +574,6 @@ function PublicProfileDialog() {
   }, [])
   useEffect(() => {
     if (!username) return
-    setProfile(null); setError('')
     void api.publicProfile(username).then(setProfile).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load this profile.'))
   }, [username])
   if (!username) return null
@@ -638,10 +683,8 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   const [category, setCategory] = useState<CommunityCategory | undefined>()
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [notices, setNotices] = useState<PostSummary[]>([])
-  const [selected, setSelected] = useState<PostDetail | null>(null)
-  const [openingPostId, setOpeningPostId] = useState<number | null>(null)
   const [error, setError] = useState('')
-  const postCache = useRef(new Map<number, PostDetail>())
+  const routerNavigate = useNavigate()
   const refresh = useCallback(async () => {
     try {
       const [nextPosts, nextNotices] = await Promise.all([api.communityPosts(category), api.communityPosts('NOTICE')])
@@ -655,29 +698,12 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
     const timer = window.setTimeout(() => void refresh(), 0)
     return () => window.clearTimeout(timer)
   }, [refresh])
-  if (selected) return <EnhancedCommunityPostView post={selected} user={user} onBack={() => { setSelected(null); void refresh() }} />
-  const preloadPost = (id: number) => {
-    if (postCache.current.has(id)) return
-    api.communityPost(id).then((post) => postCache.current.set(id, post)).catch(() => undefined)
-  }
-  const openPost = async (id: number) => {
-    setOpeningPostId(id)
-    try {
-      const cached = postCache.current.get(id)
-      const post = cached ?? await api.communityPost(id)
-      postCache.current.set(id, post)
-      setSelected(post)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not open post.')
-    } finally {
-      setOpeningPostId(null)
-    }
-  }
+  const openPost = (id: number) => routerNavigate(`/community/${id}`)
   const visiblePosts = category === 'NOTICE' ? notices : posts
   return <div className="page community-page"><PageIntro eyebrow="COMMUNITY" title="Learn together." description="Ask questions, share safe write-ups, and discuss the Mini CTF training labs." />
-    {category !== 'NOTICE' && notices.length > 0 && <section className="pinned-notices"><div className="pinned-notices-heading"><p className="eyebrow">PINNED NOTICES</p><span>{notices.length}</span></div>{notices.map((notice) => <button type="button" className="pinned-notice" key={notice.id} onMouseEnter={() => preloadPost(notice.id)} onFocus={() => preloadPost(notice.id)} onClick={() => void openPost(notice.id)}><Badge tone="NOTICE">NOTICE</Badge><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleDateString()}</small></button>)}</section>}
-    <div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0, likeCount: 0, dislikeCount: 0, recommendCount: 0, viewerReactions: [] }, ...current]); setSelected(post) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>
-    {error && <p className="alert error">{error}</p>}{openingPostId !== null && <p className="muted">Opening post...</p>}<div className="community-list">{visiblePosts.map((post) => <button type="button" className="community-post-row" key={post.id} onMouseEnter={() => preloadPost(post.id)} onFocus={() => preloadPost(post.id)} onClick={() => void openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span>{post.authorNickname || post.author}{post.authorTitle && <small className="community-title">{cosmeticLabel(post.authorTitle)}</small>}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{visiblePosts.length === 0 && <EmptyState />}</div>
+    {category !== 'NOTICE' && notices.length > 0 && <section className="pinned-notices"><div className="pinned-notices-heading"><p className="eyebrow">PINNED NOTICES</p><span>{notices.length}</span></div>{notices.map((notice) => <button type="button" className="pinned-notice" key={notice.id} onClick={() => openPost(notice.id)}><Badge tone="NOTICE">NOTICE</Badge><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleDateString()}</small></button>)}</section>}
+    <div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0, likeCount: 0, dislikeCount: 0, recommendCount: 0, viewerReactions: [] }, ...current]); routerNavigate(`/community/${post.id}`) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>
+    {error && <p className="alert error">{error}</p>}<div className="community-list">{visiblePosts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span>{post.authorNickname || post.author}{post.authorTitle && <small className="community-title">{cosmeticLabel(post.authorTitle)}</small>}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{visiblePosts.length === 0 && <EmptyState />}</div>
   </div>
 }
 
@@ -700,6 +726,24 @@ function EnhancedCommunityPostView({ post, user, onBack }: { post: PostDetail; u
   return <div className="page community-page"><button className="back-link" type="button" onClick={onBack}>← Back to community</button><article className="community-detail"><div className="badge-line"><Badge tone={current.category}>{current.category}</Badge></div>{editing ? <PostEditor post={current} onSaved={(next) => { setCurrent(next); setEditing(false) }} onCancel={() => setEditing(false)} /> : <><h1>{current.title}</h1><p className="muted">by {current.authorNickname || current.author}{current.authorTitle && <span className="community-title"> · {cosmeticLabel(current.authorTitle)}</span>} · {new Date(current.createdAt).toLocaleString()}</p><p className="community-content">{current.content}</p><ReactionBar post={current} disabled={!user} onReact={(reaction) => void react(reaction)} />{current.editable && <div className="inline-actions"><button className="button secondary" type="button" onClick={() => setEditing(true)}>Edit</button><button className="button ghost danger-button" type="button" onClick={() => void deletePost()}>Delete</button></div>}</>}</article>
     <section className="comment-section"><div className="comment-section-heading"><h2>Comments <span>{current.commentCount}</span></h2><small>Replies can be pinned by the post author.</small></div>{user ? <ThreadedCommentWriter postId={current.id} onCreated={(comment) => { setComments((items) => [...items, comment]); setCurrent((previous) => ({ ...previous, commentCount: previous.commentCount + 1 })) }} /> : <p className="muted">Sign in to join the conversation.</p>}{error && <p className="alert error">{error}</p>}{roots.map((comment) => <ThreadedComment key={comment.id} comment={comment} replies={repliesFor(comment.id)} postId={current.id} canPin={user?.username === current.author} signedIn={Boolean(user)} onReplyAdded={(reply) => { setComments((items) => [...items, reply]); setCurrent((previous) => ({ ...previous, commentCount: previous.commentCount + 1 })) }} onDelete={(id) => void deleteComment(id)} onPin={(id) => void pinReply(id)} />)}</section>
   </div>
+}
+
+function CommunityPostRoute({ user }: { user: User | null }) {
+  const { postId } = useParams()
+  const routerNavigate = useNavigate()
+  const [post, setPost] = useState<PostDetail | null>(null)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    const id = Number(postId)
+    if (!Number.isFinite(id)) return
+    let active = true
+    api.communityPost(id).then((next) => { if (active) setPost(next) }).catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : 'Could not open post.') })
+    return () => { active = false }
+  }, [postId])
+  if (!postId || !Number.isFinite(Number(postId))) return <Navigate to="/community" replace />
+  if (error) return <div className="page"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => routerNavigate('/community')}>← Back to community</button></div>
+  if (!post) return <div className="page"><LoadingState label="Opening post..." /></div>
+  return <EnhancedCommunityPostView key={post.id} post={post} user={user} onBack={() => routerNavigate('/community')} />
 }
 
 function ReactionBar({ post, disabled, onReact }: { post: PostDetail; disabled: boolean; onReact: (reaction: 'LIKE' | 'DISLIKE' | 'RECOMMEND') => void }) {

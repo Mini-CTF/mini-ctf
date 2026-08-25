@@ -547,19 +547,14 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .super-user-profile .profile-title, .ranking-title { color: #ffcf38 !important; font-weight: 900; letter-spacing: .08em; text-shadow: 0 0 10px rgba(255, 92, 38, .8), 0 0 22px rgba(255, 205, 56, .55); }
 .super-user-profile .profile-title, .super-user-title { display: inline-block; color: transparent !important; background: linear-gradient(90deg, #ff3d71, #ff9d2e, #fff05a, #4ce89b, #4cbcff, #a675ff, #ff4fc3, #ff3d71); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; text-shadow: 0 0 11px rgba(255, 255, 255, .32); animation: super-user-rgb 3s linear infinite; }
 @keyframes super-user-rgb { from { background-position: 0% 50%; } to { background-position: 300% 50%; } }
-.tier-emblem { --tier-ink: #263648; --tier-core: #49627a; --tier-edge: #b8c8d8; --tier-light: #f6fbff; display: inline-flex; width: 102px; height: 32px; flex: 0 0 auto; vertical-align: middle; filter: drop-shadow(0 3px 5px rgba(0,0,0,.18)); }
-.tier-emblem svg { width: 100%; height: 100%; overflow: hidden; }
-.tier-emblem-shell { fill: var(--tier-ink); stroke: var(--tier-edge); stroke-width: 1.4; }
-.tier-emblem-core { fill: var(--tier-core); stroke: color-mix(in srgb, var(--tier-edge) 74%, white); stroke-width: .7; }
-.tier-emblem-symbol { fill: var(--tier-light); font: 800 15px/1 var(--sans); text-anchor: middle; }
-.tier-emblem-label { fill: var(--tier-light); font-family: var(--sans); font-size: 8px; font-weight: 850; letter-spacing: .02em; text-anchor: middle; }
-.tier-emblem-beginner { --tier-ink: #314355; --tier-core: #637b91; --tier-edge: #b4c5d4; }
-.tier-emblem-rookie { --tier-ink: #075a3b; --tier-core: #179461; --tier-edge: #58e4a4; }
-.tier-emblem-junior { --tier-ink: #0c4d8c; --tier-core: #328bd8; --tier-edge: #95d1ff; }
-.tier-emblem-senior { --tier-ink: #482386; --tier-core: #8653d2; --tier-edge: #ceb7ff; }
-.tier-emblem-veteran { --tier-ink: #87380e; --tier-core: #d96721; --tier-edge: #ffbd82; }
-.tier-emblem-master { --tier-ink: #741866; --tier-core: #bd3a9c; --tier-edge: #ffb4e8; }
-.tier-emblem-root { --tier-ink: #07080b; --tier-core: #500814; --tier-edge: #f23c52; --tier-light: #fff4f5; filter: drop-shadow(0 3px 8px rgba(228, 34, 58, .36)); }
+.tier-emblem { --tier-ink: #e9f1fa; --tier-edge: #b8c8d8; --tier-glow: rgba(184,200,216,.28); display: inline-flex; align-items: center; justify-content: center; width: max-content; min-height: 28px; box-sizing: border-box; padding: 5px 10px; flex: 0 0 auto; vertical-align: middle; border: 2px solid var(--tier-edge); border-radius: 999px; background: transparent; color: var(--tier-ink) !important; box-shadow: 0 0 10px var(--tier-glow), inset 0 0 8px color-mix(in srgb, var(--tier-edge) 12%, transparent); font-family: inherit; font-size: 12px; font-weight: 800; line-height: 1; letter-spacing: -.025em; text-shadow: none; white-space: nowrap; }
+.tier-emblem-beginner { --tier-ink: #e9f1fa; --tier-edge: #b8c8d8; --tier-glow: rgba(184,200,216,.28); }
+.tier-emblem-rookie { --tier-ink: #73efb4; --tier-edge: #58e4a4; --tier-glow: rgba(88,228,164,.28); }
+.tier-emblem-junior { --tier-ink: #a8d9ff; --tier-edge: #95d1ff; --tier-glow: rgba(149,209,255,.3); }
+.tier-emblem-senior { --tier-ink: #decaff; --tier-edge: #ceb7ff; --tier-glow: rgba(206,183,255,.3); }
+.tier-emblem-veteran { --tier-ink: #ffd0a4; --tier-edge: #ffbd82; --tier-glow: rgba(255,189,130,.3); }
+.tier-emblem-master { --tier-ink: #ffc6ef; --tier-edge: #ffb4e8; --tier-glow: rgba(255,180,232,.3); }
+.tier-emblem-root { --tier-ink: #ffe9eb; --tier-edge: #f23c52; --tier-glow: rgba(242,60,82,.38); }
 .public-profile-trigger { border: 0; background: transparent; padding: 5px; text-align: left; cursor: pointer; }
 .public-profile-trigger:hover strong { color: var(--accent); }
 .community-post-row > span, .threaded-comment .comment > strong, .comment.reply > strong { cursor: pointer; }
