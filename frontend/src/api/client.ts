@@ -134,6 +134,8 @@ export const api = {
   removeFriend: (username: string) => request<void>(`/social/friends/${encodeURIComponent(username)}`, { method: 'DELETE' }),
   messages: (username: string) => request<DirectMessage[]>(`/social/messages/${encodeURIComponent(username)}`),
   sendMessage: (username: string, content: string) => request<DirectMessage>(`/social/messages/${encodeURIComponent(username)}`, { method: 'POST', body: JSON.stringify({ content }) }),
+  updateMessage: (id: number, content: string) => request<DirectMessage>(`/social/messages/${id}`, { method: 'PATCH', body: JSON.stringify({ content }) }),
+  deleteMessage: (id: number) => request<void>(`/social/messages/${id}`, { method: 'DELETE' }),
   async downloadArtifact(id: number) {
     const token = localStorage.getItem('mini-ctf-token')
     const response = await fetch(`${baseUrl}/challenges/${id}/artifact`, {

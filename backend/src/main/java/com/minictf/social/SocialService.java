@@ -112,10 +112,33 @@ public class SocialService {
     return view;
   }
 
+  @Transactional
+  public SocialDtos.MessageView updateMessage(
+      User current, Long messageId, SocialDtos.MessageRequest request) {
+    DirectMessage message = ownedMessage(current, messageId);
+    message.setContent(request.content().trim());
+    return messageView(message);
+  }
+
+  @Transactional
+  public void deleteMessage(User current, Long messageId) {
+    messages.delete(ownedMessage(current, messageId));
+  }
+
   private Friendship relationship(User current, User other) {
     return friendships
         .findRelationship(current.getId(), other.getId())
         .orElseThrow(() -> new EntityNotFoundException("Friend relationship not found"));
+  }
+
+  private DirectMessage ownedMessage(User current, Long messageId) {
+    DirectMessage message =
+        messages
+            .findById(messageId)
+            .orElseThrow(() -> new EntityNotFoundException("Message not found"));
+    if (!message.getSender().getId().equals(current.getId()))
+      throw new AccessDeniedException("Only the sender can change this message");
+    return message;
   }
 
   private void requireAccepted(User current, User other) {

@@ -67,6 +67,20 @@ public class SocialController {
         .body(ApiResponse.ok(service.send(current(auth), username, request, http.getRemoteAddr())));
   }
 
+  @PatchMapping("/messages/{id}")
+  public ApiResponse<?> update(
+      @PathVariable Long id,
+      @Valid @RequestBody SocialDtos.MessageRequest request,
+      Authentication auth) {
+    return ApiResponse.ok(service.updateMessage(current(auth), id, request));
+  }
+
+  @DeleteMapping("/messages/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable Long id, Authentication auth) {
+    service.deleteMessage(current(auth), id);
+  }
+
   private User current(Authentication auth) {
     return users.findByUsernameIgnoreCase(auth.getName()).orElseThrow();
   }

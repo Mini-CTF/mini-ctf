@@ -524,6 +524,10 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .message-panel h3 { color: #fff; font-size: 18px; }
 .message-list { max-height: 300px; overflow-y: auto; display: grid; gap: 8px; margin-bottom: 12px; }
 .message { width: fit-content; max-width: 88%; margin: 0; padding: 9px 11px; color: #eaf1fa; line-height: 1.45; white-space: pre-wrap; }
+.message > span { display: block; }
+.message-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 7px; }
+.message-actions button { padding: 0; border: 0; background: transparent; color: inherit; font: 700 11px/1 var(--sans); opacity: .72; }
+.message-actions button:hover { opacity: 1; text-decoration: underline; }
 .message.sent { justify-self: end; background: #254161; }
 .message.received { background: #202733; }
 .message-panel form { display: grid; gap: 8px; }
