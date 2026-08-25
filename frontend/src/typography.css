@@ -534,20 +534,13 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .message-panel form { display: grid; gap: 8px; }
 .message-panel textarea { min-height: 74px; resize: vertical; }
 
-.profile-loadout { margin-top: 24px; }
-.profile-loadout-heading { display: flex; justify-content: space-between; gap: 20px; align-items: start; margin-bottom: 16px; }
-.profile-loadout-heading h2 { margin: 4px 0 6px; }
-.profile-loadout-heading p:last-child { margin: 0; color: var(--muted); }
-.profile-loadout-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 12px; }
-.profile-loadout-item { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, .025); }
-.profile-loadout-item.equipped { border-color: #d73d4e; box-shadow: inset 0 0 0 1px rgba(215, 61, 78, .22); }
-.profile-loadout-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: #35191e; color: #ff6c75; font-size: 20px; }
-.profile-loadout-item small, .profile-loadout-item strong, .profile-loadout-item p { display: block; }
-.profile-loadout-item small { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; }
-.profile-loadout-item strong { margin-top: 2px; }
-.profile-loadout-item p { margin: 3px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
-html[data-theme='light'] .profile-loadout-item { background: #f8fbff; }
-html[data-theme='light'] .profile-loadout-icon { background: #ffe8ea; color: #b62437; }
+.attendance-heading h2 { font-size: 27px; }
+.attendance-heading .eyebrow { font-size: 12px; }
+.attendance-stats strong { font-size: 34px; }
+.attendance-stats small { font-size: 12px; font-weight: 700; }
+.attendance-title-select { font-size: 13px; font-weight: 700; }
+.attendance-title-select select { font-size: 14px; padding: 11px; }
+.attendance-badge { font-size: 12px; font-weight: 800; padding: 9px 12px; }
 
 .site-footer { font-size: 15px; color: #aeb9c8; }
 .site-footer strong { font-size: 15px; color: #e8edf5; }
