@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
+  private static final String FLAGBOX_PRODUCTION_CALLBACK =
+      "https://frontend-mini-ctf.vercel.app/auth/callback";
   private final OAuthAccountRepository accounts;
   private final UserRepository users;
   private final JwtService jwt;
@@ -64,10 +66,17 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     securityEvents.record(
         user, "OAUTH_LOGIN_SUCCESS", user.getUsername(), request.getRemoteAddr(), provider);
     response.sendRedirect(
-        redirect
+        callbackRedirect(request)
             + "#token="
             + URLEncoder.encode(
                 jwt.createToken(user.getId(), user.getRole()), StandardCharsets.UTF_8));
+  }
+
+  private String callbackRedirect(HttpServletRequest request) {
+    return request.getServerName().endsWith(".onrender.com")
+            && redirect.startsWith("http://localhost")
+        ? FLAGBOX_PRODUCTION_CALLBACK
+        : redirect;
   }
 
   private User create(String provider, String subject, OAuth2User principal) {

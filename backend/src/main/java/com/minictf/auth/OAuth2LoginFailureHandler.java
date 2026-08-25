@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
   private static final Logger log = LoggerFactory.getLogger(OAuth2LoginFailureHandler.class);
+  private static final String FLAGBOX_PRODUCTION_CALLBACK =
+      "https://frontend-mini-ctf.vercel.app/auth/callback";
   private final String redirect;
 
   public OAuth2LoginFailureHandler(
@@ -42,8 +44,19 @@ public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
       code = "discord_rate_limited";
     }
     log.warn("OAuth login failed path={} code={} detail={}", request.getRequestURI(), code, detail);
-    String separator = redirect.contains("?") ? "&" : "?";
+    String callbackRedirect = callbackRedirect(request);
+    String separator = callbackRedirect.contains("?") ? "&" : "?";
     response.sendRedirect(
-        redirect + separator + "oauthError=" + URLEncoder.encode(code, StandardCharsets.UTF_8));
+        callbackRedirect
+            + separator
+            + "oauthError="
+            + URLEncoder.encode(code, StandardCharsets.UTF_8));
+  }
+
+  private String callbackRedirect(HttpServletRequest request) {
+    return request.getServerName().endsWith(".onrender.com")
+            && redirect.startsWith("http://localhost")
+        ? FLAGBOX_PRODUCTION_CALLBACK
+        : redirect;
   }
 }
