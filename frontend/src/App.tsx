@@ -13,14 +13,15 @@ const difficultyOrder: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2, I
 const byDifficulty = (a: ChallengeSummary, b: ChallengeSummary) => (difficultyOrder[a.difficulty] ?? 9) - (difficultyOrder[b.difficulty] ?? 9) || a.score - b.score
 
 const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
-const initialOAuthError = new URLSearchParams(window.location.search).get('oauthError')
-const initialLoginError = initialOAuthError
-  ? initialOAuthError === 'authorization_request_not_found'
+function oauthErrorMessage(code: string | null) {
+  return code
+    ? code === 'authorization_request_not_found'
     ? 'OAuth session expired. Open the login page and try again.'
-    : initialOAuthError === 'discord_rate_limited'
+    : code === 'discord_rate_limited'
       ? 'Discord temporarily rate-limited the sign-in request. Please wait a few minutes and try again.'
-      : `OAuth sign-in could not be completed. Error code: ${initialOAuthError}`
-  : ''
+      : `OAuth sign-in could not be completed. Error code: ${code}`
+    : ''
+}
 type Theme = 'dark' | 'light'
 type Language = 'ko' | 'en'
 const initialTheme: Theme = localStorage.getItem('mini-ctf-theme') === 'light' ? 'light' : 'dark'
@@ -127,7 +128,7 @@ function AppShell() {
   const [category, setCategory] = useState<Filter>('ALL')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [compactLayout, setCompactLayout] = useState(() => window.innerWidth <= 620)
-  const [error, setError] = useState(initialLoginError)
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [language, setLanguage] = useState<Language>(initialLanguage)
@@ -174,9 +175,6 @@ function AppShell() {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('token')
     if (token) {
       localStorage.setItem('mini-ctf-token', token)
-      window.history.replaceState(null, '', window.location.pathname)
-    }
-    if (initialOAuthError) {
       window.history.replaceState(null, '', window.location.pathname)
     }
     if (localStorage.getItem('mini-ctf-token')) {
@@ -228,9 +226,6 @@ function AppShell() {
     () => challenges.filter((item) => category === 'ALL' || item.category === category).sort(byDifficulty),
     [category, challenges],
   )
-  useEffect(() => {
-    if (initialOAuthError) routerNavigate('/login', { replace: true })
-  }, [routerNavigate])
   const go = (path: string) => {
     setMobileNavOpen(false)
     setError('')
@@ -519,7 +514,8 @@ function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; on
 
 function CallbackRoute() {
   const routerNavigate = useNavigate()
-  useEffect(() => { routerNavigate('/', { replace: true }) }, [routerNavigate])
+  const location = useLocation()
+  useEffect(() => { routerNavigate(`/login${location.search}`, { replace: true }) }, [location.search, routerNavigate])
   return null
 }
 
@@ -967,9 +963,12 @@ function LogList({ items, onControl }: { items: { id: number; title: string; det
 }
 
 function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void }) {
+  const location = useLocation()
   const [registering, setRegistering] = useState(false)
-  const [error, setError] = useState('')
+  const oauthError = oauthErrorMessage(new URLSearchParams(location.search).get('oauthError'))
+  const [error, setError] = useState(oauthError)
   const [providers, setProviders] = useState<string[]>([])
+  useEffect(() => { setError(oauthError) }, [oauthError])
   useEffect(() => {
     api.oauthProviders().then(setProviders).catch(() => setProviders(['google', 'github', 'discord']))
   }, [])
@@ -977,7 +976,7 @@ function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { 
     event.preventDefault(); setError(''); const form = new FormData(event.currentTarget)
     const username = String(form.get('username')).trim(); const password = String(form.get('password')); const passwordConfirmation = String(form.get('passwordConfirmation')); if (registering && password !== passwordConfirmation) { setError('Passwords do not match.'); return } try { const result = registering ? await api.register({ username, nickname: String(form.get('nickname')).trim(), password, passwordConfirmation }) : await api.login({ username, password }); onAuth(result) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Authentication failed.') }
   }
-  return <div className="auth-page"><div className="auth-card"><button className="back-link" type="button" onClick={onBack}>← Back home</button><p className="eyebrow">SECURE ACCESS</p><h1>{registering ? 'Create your account.' : 'Sign in to continue.'}</h1><form className="auth-form" onSubmit={submit}><label>Username<input name="username" required minLength={3} maxLength={50} pattern="[A-Za-z0-9_]+" title="Use only letters, numbers, and underscores." autoComplete="username" /></label>{registering && <label>Display name (optional)<input name="nickname" maxLength={80} /></label>}<label>Password<input name="password" type="password" required minLength={registering ? 8 : undefined} maxLength={100} autoComplete={registering ? 'new-password' : 'current-password'} /></label>{registering && <label>Confirm password<input name="passwordConfirmation" type="password" required minLength={8} maxLength={100} autoComplete="new-password" /></label>}<button className="button primary" type="submit">{registering ? 'Create account' : 'Sign in'}</button></form>{error && <p className="alert error">{error}</p>}{providers.length > 0 && <><div className="auth-divider"><span>or continue with</span></div><div className="social-buttons">{providers.map((provider) => <button className={`social-button oauth-${provider}`} type="button" key={provider} onClick={() => { window.location.href = `${oauthBaseUrl}/oauth2/authorization/${provider}` }}><ProviderIcon provider={provider} /><span>Continue with {provider[0].toUpperCase() + provider.slice(1)}</span></button>)}</div></>}<p className="auth-footnote">{registering ? 'Already have an account?' : 'New to Mini CTF?'} <button type="button" onClick={() => setRegistering(!registering)}>{registering ? 'Sign in' : 'Create an account'}</button></p></div></div>
+  return <div className="auth-page"><div className="auth-card"><button className="back-link" type="button" onClick={onBack}>← Back home</button><p className="eyebrow">SECURE ACCESS</p><h1>{registering ? 'Create your account.' : 'Sign in to continue.'}</h1><form className="auth-form" onSubmit={submit}><label>Username<input name="username" required minLength={3} maxLength={50} pattern="[A-Za-z0-9_]+" title="Use only letters, numbers, and underscores." autoComplete="username" /></label>{registering && <label>Display name (optional)<input name="nickname" maxLength={80} /></label>}<label>Password<input name="password" type="password" required minLength={registering ? 8 : undefined} maxLength={100} autoComplete={registering ? 'new-password' : 'current-password'} /></label>{registering && <label>Confirm password<input name="passwordConfirmation" type="password" required minLength={8} maxLength={100} autoComplete="new-password" /></label>}<button className="button primary" type="submit">{registering ? 'Create account' : 'Sign in'}</button></form>{error && <p className="alert error">{error}</p>}{providers.length > 0 && <><div className="auth-divider"><span>or continue with</span></div><div className="social-buttons">{providers.map((provider) => <button className={`social-button oauth-${provider}`} type="button" key={provider} onClick={() => { window.location.href = `${oauthBaseUrl}/api/auth/oauth/${provider}/authorize` }}><ProviderIcon provider={provider} /><span>Continue with {provider[0].toUpperCase() + provider.slice(1)}</span></button>)}</div></>}<p className="auth-footnote">{registering ? 'Already have an account?' : 'New to Mini CTF?'} <button type="button" onClick={() => setRegistering(!registering)}>{registering ? 'Sign in' : 'Create an account'}</button></p></div></div>
 }
 
 function ProviderIcon({ provider }: { provider: string }) {
