@@ -26,10 +26,12 @@ public class DataInitializer {
       if (u.getId() == null) {
         u.setUsername(username);
         u.setNickname(username);
-        u.setScore(0);
+        u.setScore(20_000);
       }
       u.setPasswordHash(encoder.encode(password));
       u.setRole("ADMIN");
+      // Keep the platform administrator at the top tier even after restarts.
+      u.setScore(20_000);
       if ("super_user".equals(u.getEquippedVaultTitle())) u.setEquippedVaultTitle(null);
       u.setStatus("ACTIVE");
       u.setSuspensionReason(null);

@@ -1,5 +1,7 @@
 package com.minictf.user;
 
+import java.util.List;
+
 /** Score-based learning tier. Thresholds are intentionally centralized for easy balancing. */
 public final class UserTier {
   private UserTier() {}
@@ -23,5 +25,9 @@ public final class UserTier {
       current = tier;
     }
     return current;
+  }
+
+  public static List<Tier> all() {
+    return List.of(TIERS);
   }
 }
