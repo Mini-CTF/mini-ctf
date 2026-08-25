@@ -739,6 +739,40 @@ html[data-theme='dark'] .app-shell .button.primary { color: #fff !important; }
   66% { border-color: #4cbcff; box-shadow: 0 0 10px rgba(76, 188, 255, .38); }
   83% { border-color: #a675ff; box-shadow: 0 0 10px rgba(166, 117, 255, .38); }
 }
+.page-intro > .eyebrow,
+.profile-hero > div > .eyebrow {
+  margin-bottom: 16px;
+  color: var(--accent) !important;
+  font-size: clamp(24px, 2.15vw, 34px);
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: .055em;
+}
+.app-shell :is(.profile-title, .ranking-title, .community-title):not(.super-user-title) {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  box-sizing: border-box;
+  margin: 3px 0 0 !important;
+  padding: 5px 9px;
+  border: 1px solid rgba(91, 190, 255, .62);
+  border-radius: 8px;
+  background: rgba(80, 178, 245, .12);
+  color: #8ed5ff !important;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  line-height: 1;
+  text-shadow: none;
+}
+.app-shell .community-title:not(.super-user-title) { margin-left: 6px !important; }
+html[data-theme='light'] .app-shell :is(.profile-title, .ranking-title, .community-title):not(.super-user-title) {
+  border-color: #287ec2;
+  background: #dcefff;
+  color: #075eaa !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.85);
+}
 @keyframes banner-content-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
 @media (max-width: 620px) {
   .home-page .hero-banner { min-height: 450px; margin: 24px 0 52px; }
