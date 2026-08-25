@@ -136,6 +136,16 @@ public class CipherVaultService {
               true,
               false),
           new Item(
+              "super_user",
+              "Super User",
+              "Administrator-only title with unrestricted access.",
+              "TITLE",
+              "ADMIN",
+              0,
+              0,
+              true,
+              false),
+          new Item(
               "zero_day_title",
               "Zero-Day Operative",
               "A title for operators who found the signal.",

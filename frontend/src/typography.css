@@ -516,10 +516,12 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
 .friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
 .friend-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
-.friend-row > button:first-child { display: flex; min-width: 0; align-items: center; gap: 10px; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; }
+.friend-row > button:first-child { display: flex; flex: 1 1 0; min-width: 0; align-items: center; gap: 10px; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; }
+.friend-row > button:first-child > span:last-child { min-width: 0; overflow: hidden; }
 .friend-row strong,.friend-row small { display: block; }
 .friend-row strong { color: #fff; }
-.friend-row small { color: var(--muted); font-size: 13px; }
+.friend-row small { overflow: hidden; color: var(--muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.friend-row > button:last-child { flex: 0 0 auto; min-width: max-content; white-space: nowrap; }
 .message-panel { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 18px; }
 .message-panel h3 { color: #fff; font-size: 18px; }
 .message-list { max-height: 300px; overflow-y: auto; -ms-overflow-style: none; scrollbar-width: none; display: grid; gap: 8px; margin-bottom: 12px; }
@@ -541,6 +543,7 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .attendance-title-select { font-size: 16px; font-weight: 800; }
 .attendance-title-select select { font-size: 17px; padding: 12px 14px; }
 .attendance-badge { font-size: 15px; font-weight: 800; padding: 10px 14px; }
+.super-user-profile .vault-profile-title, .ranking-title { color: #ffcf38 !important; font-weight: 900; letter-spacing: .08em; text-shadow: 0 0 10px rgba(255, 92, 38, .8), 0 0 22px rgba(255, 205, 56, .55); }
 
 .site-footer { font-size: 15px; color: #aeb9c8; }
 .site-footer strong { font-size: 15px; color: #e8edf5; }

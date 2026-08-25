@@ -558,7 +558,7 @@ function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged
   const avatarSrc = avatarPreview ?? (current.avatarUrl ? `${current.avatarUrl}${current.avatarUrl.includes('?') ? '&' : '?'}view=${avatarRevision}` : null)
   const activeTitle = attendance?.earnedTitles.find((title) => title.id === attendance.activeTitle)
   return <div className="page profile-page">
-    <div className={`profile-hero ${current.equippedFrame ? `equipped-${current.equippedFrame}` : ''}`}>
+    <div className={`profile-hero ${current.equippedFrame ? `equipped-${current.equippedFrame}` : ''} ${current.equippedTitle === 'super_user' ? 'super-user-profile' : ''}`}>
       <button className="profile-avatar avatar-large avatar-picker" type="button" onClick={() => avatarInput.current?.click()} aria-label="Upload profile photo">
         {avatarSrc ? <img src={avatarSrc} alt="" /> : (current.nickname || current.username).slice(0, 2).toUpperCase()}
         <span className="avatar-picker-label">Change photo</span>
