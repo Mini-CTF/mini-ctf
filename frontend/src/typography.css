@@ -544,6 +544,8 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .attendance-title-select select { font-size: 17px; padding: 12px 14px; }
 .attendance-badge { font-size: 15px; font-weight: 800; padding: 10px 14px; }
 .super-user-profile .profile-title, .ranking-title { color: #ffcf38 !important; font-weight: 900; letter-spacing: .08em; text-shadow: 0 0 10px rgba(255, 92, 38, .8), 0 0 22px rgba(255, 205, 56, .55); }
+.super-user-profile .profile-title, .super-user-title { display: inline-block; color: transparent !important; background: linear-gradient(90deg, #ff3d71, #ff9d2e, #fff05a, #4ce89b, #4cbcff, #a675ff, #ff4fc3, #ff3d71); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; text-shadow: 0 0 11px rgba(255, 255, 255, .32); animation: super-user-rgb 3s linear infinite; }
+@keyframes super-user-rgb { from { background-position: 0% 50%; } to { background-position: 300% 50%; } }
 .profile-tier-row { margin: 15px 0 -5px; }
 .tier-badge { display: inline-flex; align-items: center; width: fit-content; padding: 5px 10px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-shadow: none; }
 .tier-beginner { color: #45566c !important; background: #e7edf4; border-color: #8c9db0; }
