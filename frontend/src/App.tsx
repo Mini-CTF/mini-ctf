@@ -515,7 +515,8 @@ function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; on
 function CallbackRoute() {
   const routerNavigate = useNavigate()
   const location = useLocation()
-  useEffect(() => { routerNavigate(`/login${location.search}`, { replace: true }) }, [location.search, routerNavigate])
+  const hasToken = new URLSearchParams(window.location.hash.slice(1)).has('token')
+  useEffect(() => { routerNavigate(hasToken ? '/' : `/login${location.search}`, { replace: true }) }, [hasToken, location.search, routerNavigate])
   return null
 }
 
