@@ -30,4 +30,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select u from User u where lower(u.username) = lower(:username)")
   Optional<User> findByUsernameForUpdate(@Param("username") String username);
+
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("select u from User u where u.id = :id")
+  Optional<User> findByIdForUpdate(@Param("id") Long id);
 }

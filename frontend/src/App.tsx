@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { api } from './api/client'
+import { api, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
 import { subscribeToSocialUpdates } from './api/realtime'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
@@ -172,6 +172,17 @@ function AppShell() {
   }
 
   useEffect(() => {
+    const expireSession = () => {
+      localStorage.removeItem('mini-ctf-token')
+      setUser(null)
+      setError(sessionExpiredMessage)
+      routerNavigate('/login?sessionExpired=1', { replace: true })
+    }
+    window.addEventListener(sessionExpiredEvent, expireSession)
+    return () => window.removeEventListener(sessionExpiredEvent, expireSession)
+  }, [routerNavigate])
+
+  useEffect(() => {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('token')
     if (token) {
       localStorage.setItem('mini-ctf-token', token)
@@ -191,6 +202,14 @@ function AppShell() {
         setError(cause instanceof Error ? cause.message : 'Could not connect to the API.')
       })
       .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (!localStorage.getItem('mini-ctf-token')) return
+      void api.me().then(setUser).catch(() => undefined)
+    }, 15000)
+    return () => window.clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -967,9 +986,10 @@ function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { 
   const location = useLocation()
   const [registering, setRegistering] = useState(false)
   const oauthError = oauthErrorMessage(new URLSearchParams(location.search).get('oauthError'))
-  const [error, setError] = useState(oauthError)
+  const sessionExpired = new URLSearchParams(location.search).get('sessionExpired') === '1'
+  const [error, setError] = useState(sessionExpired ? sessionExpiredMessage : oauthError)
   const [providers, setProviders] = useState<string[]>([])
-  useEffect(() => { setError(oauthError) }, [oauthError])
+  useEffect(() => { setError(sessionExpired ? sessionExpiredMessage : oauthError) }, [oauthError, sessionExpired])
   useEffect(() => {
     api.oauthProviders().then(setProviders).catch(() => setProviders(['google', 'github', 'discord']))
   }, [])

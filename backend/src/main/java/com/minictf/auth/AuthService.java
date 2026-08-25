@@ -45,10 +45,10 @@ public class AuthService {
     User saved = users.save(user);
     securityEvents.record(
         saved, "ACCOUNT_REGISTERED", saved.getUsername(), ip, "Local account created");
-    return issue(saved);
+    return issueNewSession(saved.getId());
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request, String ip) {
     User user =
         users
@@ -67,11 +67,18 @@ public class AuthService {
     }
     securityEvents.recordIndependent(
         user, "LOGIN_SUCCESS", user.getUsername(), ip, "Local password login");
-    return issue(user);
+    return issueNewSession(user.getId());
   }
 
-  public AuthDtos.AuthResponse issue(User user) {
-    return new AuthDtos.AuthResponse(jwt.createToken(user.getId(), user.getRole()), toView(user));
+  public AuthDtos.AuthResponse issueNewSession(Long userId) {
+    User user = users.findByIdForUpdate(userId).orElseThrow();
+    user.setAuthSessionVersion(user.getAuthSessionVersion() + 1);
+    return new AuthDtos.AuthResponse(
+        jwt.createToken(user.getId(), user.getRole(), user.getAuthSessionVersion()), toView(user));
+  }
+
+  public String issueOAuthSession(User user) {
+    return issueNewSession(user.getId()).token();
   }
 
   public AuthDtos.UserView toView(User user) {

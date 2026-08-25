@@ -24,19 +24,19 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
       "https://frontend-mini-ctf.vercel.app/auth/callback";
   private final OAuthAccountRepository accounts;
   private final UserRepository users;
-  private final JwtService jwt;
+  private final AuthService authService;
   private final String redirect;
   private final SecurityEventService securityEvents;
 
   public OAuth2LoginSuccessHandler(
       OAuthAccountRepository accounts,
       UserRepository users,
-      JwtService jwt,
+      AuthService authService,
       SecurityEventService securityEvents,
       @Value("${app.oauth.success-redirect}") String redirect) {
     this.accounts = accounts;
     this.users = users;
-    this.jwt = jwt;
+    this.authService = authService;
     this.securityEvents = securityEvents;
     this.redirect = redirect;
   }
@@ -69,7 +69,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         callbackRedirect(request)
             + "#token="
             + URLEncoder.encode(
-                jwt.createToken(user.getId(), user.getRole()), StandardCharsets.UTF_8));
+                authService.issueOAuthSession(user), StandardCharsets.UTF_8));
   }
 
   private String callbackRedirect(HttpServletRequest request) {

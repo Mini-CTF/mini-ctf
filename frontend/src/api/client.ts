@@ -24,6 +24,8 @@ import type {
 } from '../types/api'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
+export const sessionExpiredEvent = 'flagbox:session-expired'
+export const sessionExpiredMessage = '다른 기기에서 로그인되어 세션이 만료되었습니다.'
 
 function normalizeUsername(username: string): string {
   return username.trim().replace(/^@\s*/, '')
@@ -37,6 +39,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const response = await fetch(`${baseUrl}${path}`, { ...init, headers })
   const body = await response.json().catch(() => null)
+  if (body?.error?.code === 'SESSION_EXPIRED_OTHER_LOGIN') {
+    localStorage.removeItem('mini-ctf-token')
+    window.dispatchEvent(new CustomEvent(sessionExpiredEvent, { detail: sessionExpiredMessage }))
+  }
   if (!response.ok) throw new Error(body?.error?.message ?? 'Request failed. Please try again.')
   return (body?.data ?? body) as T
 }

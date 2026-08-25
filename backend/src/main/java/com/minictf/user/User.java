@@ -30,6 +30,9 @@ public class User {
   @Column(nullable = false, length = 20)
   private String status = "ACTIVE";
 
+  @Column(name = "auth_session_version", nullable = false)
+  private long authSessionVersion;
+
   @Column(name = "suspension_reason", length = 500)
   private String suspensionReason;
 
@@ -148,6 +151,14 @@ public class User {
 
   public void setStatus(String value) {
     status = value;
+  }
+
+  public long getAuthSessionVersion() {
+    return authSessionVersion;
+  }
+
+  public void setAuthSessionVersion(long value) {
+    authSessionVersion = value;
   }
 
   public String getSuspensionReason() {
