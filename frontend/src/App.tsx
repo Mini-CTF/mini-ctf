@@ -116,12 +116,9 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [language, setLanguage] = useState<Language>(initialLanguage)
-  const [vaultOpening, setVaultOpening] = useState(false)
   const [vaultOpen, setVaultOpen] = useState(false)
-  const [hiddenOpen, setHiddenOpen] = useState(false)
   const [showIntro, setShowIntro] = useState(true)
   const [introFilled, setIntroFilled] = useState(false)
-  const vaultClicks = useRef<number[]>([])
 
   useEffect(() => {
     if (!showIntro) return
@@ -254,24 +251,13 @@ function App() {
     navigate('home')
     void refresh()
   }
-  const triggerVault = () => {
-    if (!user) { navigate('login'); return }
-    vaultClicks.current.push(Date.now())
-    if (vaultClicks.current.length < 5) {
-      return
-    }
-    vaultClicks.current = []
-    setVaultOpening(true)
-    window.setTimeout(() => { setVaultOpening(false); setHiddenOpen(true) }, 1800)
-  }
-
   const dismissIntro = () => {
     setShowIntro(false)
   }
 
   return <div className="app-shell">
     {showIntro && <FlagBoxIntro onSkip={dismissIntro} filled={introFilled} />}
-    <header className="site-header" onClick={(event) => { if ((event.target as Element).closest('.brand')) triggerVault() }}>
+    <header className="site-header">
       <button className="brand" type="button" onClick={() => navigate('home')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
       <nav id="primary-navigation" className={mobileNavOpen ? 'primary-nav is-open' : 'primary-nav'} aria-label="Primary navigation">
@@ -298,8 +284,6 @@ function App() {
       {!loading && view === 'admin' && user?.role === 'ADMIN' && <AdminConsole />}
       {!loading && view === 'login' && <LoginView onBack={() => navigate('home')} onAuth={completeAuth} />}
     </main>
-    {vaultOpening && <VaultOpening />}
-    {hiddenOpen && user && <HiddenOperation user={user} language={language} onClose={() => setHiddenOpen(false)} />}
     {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
     <PublicProfileDialog />
     <footer className="site-footer"><span><strong>FlagBox</strong> · {text.footer}</span><span className="footer-status">{text.status}</span></footer>
@@ -506,10 +490,14 @@ function EnhancedRankingView({ rows, attendanceRows }: { rows: RankingRow[]; att
 
 function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' | 'avatarUrl' | 'equippedFrame' | 'equippedAccessory' | 'equippedTitle' | 'tier'> }) {
   const name = row.nickname || row.username
-  return <button className="operator public-profile-trigger" type="button" onClick={() => openPublicProfile(row.username)} aria-label={`${name} profile`}><span className={`mini-avatar ranking-avatar ${row.equippedFrame ? `equipped-${row.equippedFrame}` : ''}`}>{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}{row.equippedAccessory && <i className="profile-accessory" aria-label={cosmeticLabel(row.equippedAccessory)}>◈</i>}</strong><TierBadge tier={row.tier} />{row.equippedTitle && <small className={row.equippedTitle.toLowerCase() === 'super_user' ? 'ranking-title super-user-title' : `ranking-title ${titleTone(row.equippedTitle)}`}>{cosmeticLabel(row.equippedTitle)}</small>}</span></button>
+  return <button className="operator public-profile-trigger" type="button" onClick={() => openPublicProfile(row.username)} aria-label={`${name} profile`}><span className={`mini-avatar ranking-avatar ${row.equippedFrame ? `equipped-${row.equippedFrame}` : ''}`}>{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}{row.equippedAccessory && <i className="profile-accessory" aria-label={cosmeticLabel(row.equippedAccessory)}>◈</i>}</strong><TierEmblem tier={row.tier} />{row.equippedTitle && <small className={row.equippedTitle.toLowerCase() === 'super_user' ? 'ranking-title super-user-title' : `ranking-title ${titleTone(row.equippedTitle)}`}>{cosmeticLabel(row.equippedTitle)}</small>}</span></button>
 }
 
-function TierBadge({ tier }: { tier: string }) { return <small className={`tier-badge tier-${tier}`}>{tierLabel(tier)}</small> }
+function TierEmblem({ tier }: { tier: string }) {
+  const label = tierLabel(tier).toUpperCase()
+  const symbol = ({ beginner: '◇', rookie: '›', junior: '◆', senior: '✦', veteran: '⬟', master: '✹', root: '◈' } as Record<string, string>)[tier] ?? '◇'
+  return <span className={`tier-emblem tier-emblem-${tier}`} role="img" aria-label={`${label} tier`}><svg viewBox="0 0 102 32" aria-hidden="true"><path className="tier-emblem-shell" d="M4 16 14 3h74l10 13-10 13H14Z" /><path className="tier-emblem-core" d="M15 16 21 8h60l6 8-6 8H21Z" /><text className="tier-emblem-symbol" x="26" y="20">{symbol}</text><text className="tier-emblem-label" x="61" y="20">{label}</text></svg></span>
+}
 function tierLabel(tier: string) { return ({ beginner: 'Beginner', rookie: 'Rookie', junior: 'Junior', senior: 'Senior', veteran: 'Veteran', master: 'Master', root: 'Root' } as Record<string, string>)[tier] ?? 'Beginner' }
 
 function PublicProfileDialog() {
@@ -552,6 +540,10 @@ void LegacyCipherVault
 void LegacyChallengeDetailView
 void LegacyRankingView
 void RankingView
+void VaultOpening
+void HiddenOperation
+void hiddenMissionText
+void hiddenRewardText
 
 function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged }: { user: User | null; onChallenges: () => void; onLogin: () => void; onVault: () => void; onAppearanceChanged: () => Promise<void> }) {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -629,7 +621,7 @@ function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged
         <span className="avatar-picker-label">Change photo</span>
       </button>
       <input ref={avatarInput} className="sr-only" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={selectAvatar} />
-      <div><p className="eyebrow">OPERATOR PROFILE</p><h1>{current.nickname || current.username} {current.equippedAccessory && <span className="profile-accessory" title={cosmeticLabel(current.equippedAccessory)}>◈</span>}<TierBadge tier={current.tier} /></h1>{current.equippedTitle ? <p className={`profile-title vault-profile-title ${titleTone(current.equippedTitle)}`}>{cosmeticLabel(current.equippedTitle)}</p> : activeTitle && <p className={`profile-title ${titleTone(activeTitle.id)}`}>{activeTitle.name}</p>}<p className="muted">@{current.username}</p><p className="status-message">{current.statusMessage || 'No status message yet.'}</p></div>
+      <div><p className="eyebrow">OPERATOR PROFILE</p><h1>{current.nickname || current.username} {current.equippedAccessory && <span className="profile-accessory" title={cosmeticLabel(current.equippedAccessory)}>◈</span>}<TierEmblem tier={current.tier} /></h1>{current.equippedTitle ? <p className={`profile-title vault-profile-title ${titleTone(current.equippedTitle)}`}>{cosmeticLabel(current.equippedTitle)}</p> : activeTitle && <p className={`profile-title ${titleTone(activeTitle.id)}`}>{activeTitle.name}</p>}<p className="muted">@{current.username}</p><p className="status-message">{current.statusMessage || 'No status message yet.'}</p></div>
     </div>
     <div className="profile-stats"><Stat value={current.score} label="Score" detail="total points" /><Stat value={current.solvedCount} label="Solves" detail={`rank #${current.rank || '—'}`} /></div>
     <section className="profile-layout"><div>{attendance && <section className="panel attendance-panel"><div className="attendance-heading"><div><p className="eyebrow">DAILY OPERATIONS</p><h2>Attendance</h2></div><button type="button" className="button primary" disabled={attendance.checkedInToday} onClick={() => void checkIn()}>{attendance.checkedInToday ? 'Checked in today' : 'Check in today'}</button></div><div className="attendance-stats"><div><strong>{attendance.currentStreak}</strong><small>Current streak</small></div><div><strong>{attendance.longestStreak}</strong><small>Longest streak</small></div><div><strong>{attendance.totalDays}</strong><small>Total days</small></div></div><label className="attendance-title-select">Profile title<select value={attendance.activeTitle ?? ''} onChange={selectTitle} disabled={attendance.earnedTitles.length === 0}><option value="" disabled>Earn a title to equip it</option>{attendance.earnedTitles.map((title) => <option key={title.id} value={title.id}>{title.name} · {title.requirement}</option>)}</select></label><div className="attendance-badges">{attendance.badges.map((badge) => <span className="attendance-badge" key={badge.id} title={badge.description}>✦ {badge.name}</span>)}</div></section>}<section className="panel profile-editor"><h2>Customize profile</h2><form onSubmit={(event) => void saveProfile(event)}><label>Display name<input name="nickname" defaultValue={current.nickname} maxLength={80} /></label><label>Status message<textarea name="statusMessage" defaultValue={current.statusMessage || ''} maxLength={160} placeholder="What are you working on?" /></label><button className="button primary" type="submit">Save profile</button></form><button className="button secondary profile-vault-button" type="button" onClick={onVault}>Open Cipher Vault</button></section><section className="content-section"><button className="button secondary" type="button" onClick={onChallenges}>Browse challenges</button></section></div><aside className="social-panel"><h2>Friends</h2><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Account username (e.g. @player_1)" minLength={3} maxLength={51} autoComplete="off" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={async () => { try { await api.acceptFriend(friend.username); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not accept request.') } }}>Accept</button> : <button type="button" className="text-link" onClick={async () => { if (!window.confirm('Remove this friend?')) return; try { await api.removeFriend(friend.username); if (selectedFriend === friend.username) setSelectedFriend(null); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove friend.') } }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list">{messages.map((message) => <article className={message.sender === current.username ? 'message sent' : 'message received'} key={message.id}><span>{message.content}</span>{message.sender === current.username && <div className="message-actions"><button type="button" onClick={() => void editMessage(message)}>Edit</button><button type="button" onClick={() => void deleteMessage(message)}>Delete</button></div>}</article>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</aside></section>
