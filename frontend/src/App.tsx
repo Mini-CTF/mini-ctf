@@ -299,7 +299,7 @@ function App() {
       {!loading && view === 'login' && <LoginView onBack={() => navigate('home')} onAuth={completeAuth} />}
     </main>
     {vaultOpening && <VaultOpening />}
-    {hiddenOpen && user && <HiddenOperation user={user} onClose={() => setHiddenOpen(false)} />}
+    {hiddenOpen && user && <HiddenOperation user={user} language={language} onClose={() => setHiddenOpen(false)} />}
     {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
     <PublicProfileDialog />
     <footer className="site-footer"><span><strong>FlagBox</strong> · {text.footer}</span><span className="footer-status">{text.status}</span></footer>
@@ -361,7 +361,7 @@ function VaultOpening() {
   return <div className="vault-opening" role="status" aria-label="Opening hidden operation"><div className="vault-opening-scan" /><div className="vault-rings" aria-hidden="true"><i /><i /><i /></div><div className="vault-opening-mark">◆</div><p>SEQUENCE ACCEPTED</p><strong>ACCESS GRANTED</strong><small>OPENING HIDDEN OPERATION</small></div>
 }
 
-function HiddenOperation({ user, onClose }: { user: User; onClose: () => void }) {
+function HiddenOperation({ user, language, onClose }: { user: User; language: Language; onClose: () => void }) {
   const [summary, setSummary] = useState<HiddenSummary | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
@@ -372,7 +372,25 @@ function HiddenOperation({ user, onClose }: { user: User; onClose: () => void })
   const claim = async (id: string) => {
     try { setBusy(id); setError(''); setSummary(await api.claimHiddenMission(id)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Hidden mission failed.') } finally { setBusy(null) }
   }
-  return <div className="hidden-operation-backdrop" role="dialog" aria-modal="true" aria-label="Hidden operation"><section className="hidden-operation"><header><div><p className="eyebrow">UNLISTED CHANNEL // 05</p><h2>Signal recovered.</h2><p>The logo was the entrance. Complete every operation to claim the classified profile set.</p></div><button className="vault-close" type="button" onClick={onClose} aria-label="Close hidden operation">×</button></header>{!summary ? <LoadingState label="Decrypting the recovered signal..." /> : <><div className="hidden-operation-status"><span className="ruby-gem" aria-hidden="true" /><div><strong>{summary.rewarded ? 'Operation complete' : 'Operation in progress'}</strong><small>{summary.rewarded ? 'Classified rewards are now in your collection.' : user.role === 'ADMIN' ? 'Administrator access: all rewards available.' : 'Three fragments. One hidden reward set.'}</small></div></div><div className="hidden-mission-list">{summary.missions.map((mission, index) => <article className={`hidden-mission ${mission.completed ? 'complete' : ''}`} key={mission.id}><span className="hidden-mission-number">0{index + 1}</span><div><span className="vault-kicker">CLASSIFIED TASK</span><h3>{mission.name}</h3><p>{mission.description}</p></div><button className="button primary" type="button" disabled={mission.completed || !mission.eligible || busy === mission.id} onClick={() => void claim(mission.id)}>{mission.completed ? 'Complete' : mission.eligible ? 'Claim fragment' : 'Locked'}</button></article>)}</div><div className="hidden-reward-grid">{summary.rewards.map((reward) => <div className={`hidden-reward ${reward.owned ? 'owned' : ''}`} key={reward.id}><span>{reward.type === 'FRAME' ? '▣' : reward.type === 'TITLE' ? '✦' : '◇'}</span><strong>{reward.name}</strong><small>{reward.owned ? 'Unlocked' : 'Classified reward'}</small></div>)}</div>{error && <p className="alert error vault-error">{error}</p>}</>}</section></div>
+  const ko = language === 'ko'
+  const completedCount = summary?.missions.filter((mission) => mission.completed).length ?? 0
+  return <div className="hidden-operation-backdrop" role="dialog" aria-modal="true" aria-label={ko ? '히든 미션' : 'Hidden operation'}><section className="hidden-operation"><header><div><p className="eyebrow">{ko ? '비공개 작전 // 05' : 'UNLISTED CHANNEL // 05'}</p><h2>{ko ? '숨겨진 신호를 찾았어요.' : 'Signal recovered.'}</h2><p>{ko ? '로고는 입구였어요. 아래 미션 3개를 모두 완료하면 전용 프로필 보상을 받을 수 있어요.' : 'The logo was the entrance. Complete all three missions to claim the exclusive profile rewards.'}</p></div><button className="vault-close" type="button" onClick={onClose} aria-label={ko ? '닫기' : 'Close hidden operation'}>×</button></header>{!summary ? <LoadingState label={ko ? '숨겨진 신호를 해독하는 중...' : 'Decrypting the recovered signal...'} /> : <><div className="hidden-operation-status"><span className="ruby-gem" aria-hidden="true" /><div><strong>{summary.rewarded ? (ko ? '작전 완료' : 'Operation complete') : (ko ? `${completedCount}/3 미션 완료` : `${completedCount}/3 missions complete`)}</strong><small>{summary.rewarded ? (ko ? '전용 테두리, 장식, 칭호가 내 꾸미기에 추가됐어요.' : 'The exclusive frame, accent, and title are now in your loadout.') : user.role === 'ADMIN' ? (ko ? '관리자 계정은 모든 보상을 바로 사용할 수 있어요.' : 'Administrator access: all rewards available.') : (ko ? '세 가지 조각을 모아 전용 보상을 해제하세요.' : 'Collect all three fragments to unlock the reward set.')}</small></div></div><section className="hidden-section"><div className="hidden-section-heading"><h3>{ko ? '미션' : 'Missions'}</h3><small>{ko ? '완료 조건을 확인하고 보상을 받으세요.' : 'Check each requirement and claim its fragment.'}</small></div><div className="hidden-mission-list">{summary.missions.map((mission, index) => { const text = hiddenMissionText(mission.id, mission.name, mission.description, ko); return <article className={`hidden-mission ${mission.completed ? 'complete' : ''}`} key={mission.id}><span className="hidden-mission-number">0{index + 1}</span><div><span className="vault-kicker">{ko ? '비밀 미션' : 'CLASSIFIED TASK'}</span><h3>{text.name}</h3><p>{text.description}</p></div><button className="button primary" type="button" disabled={mission.completed || !mission.eligible || busy === mission.id} onClick={() => void claim(mission.id)}>{mission.completed ? (ko ? '완료' : 'Complete') : mission.eligible ? (ko ? '조각 받기' : 'Claim fragment') : (ko ? '조건 미달' : 'Locked')}</button></article> })}</div></section><section className="hidden-section hidden-rewards"><div className="hidden-section-heading"><h3>{ko ? '완료 보상' : 'Completion rewards'}</h3><small>{ko ? '미션을 모두 완료하면 3개 보상을 한 번에 획득해요.' : 'Finish every mission to unlock all three rewards.'}</small></div><div className="hidden-reward-grid">{summary.rewards.map((reward) => { const text = hiddenRewardText(reward.id, reward.name, ko); return <div className={`hidden-reward ${reward.owned ? 'owned' : ''}`} key={reward.id}><span>{reward.type === 'FRAME' ? '▣' : reward.type === 'TITLE' ? '✦' : '◇'}</span><div><strong>{text.name}</strong><small>{reward.type === 'TITLE' ? (ko ? '칭호 보상' : 'TITLE REWARD') : reward.type === 'FRAME' ? (ko ? '프로필 테두리' : 'PROFILE FRAME') : (ko ? '프로필 장식' : 'PROFILE ACCENT')}</small></div><em>{reward.owned ? (ko ? '획득 완료' : 'Unlocked') : (ko ? '미션 완료 후 해제' : 'Unlock after all missions')}</em></div> })}</div></section>{error && <p className="alert error vault-error">{error}</p>}</>}</section></div>
+}
+
+function hiddenMissionText(id: string, name: string, description: string, ko: boolean) {
+  if (!ko) return { name, description }
+  const copy: Record<string, { name: string; description: string }> = {
+    hidden_signal: { name: '숨겨진 신호 발견', description: '로고를 통해 이 비밀 작전을 처음 열어 보세요.' },
+    hidden_pulse: { name: '신호에 맞추기', description: '오늘 출석 체크를 완료하세요.' },
+    hidden_breaker: { name: '암호 해독', description: '플랫폼의 워게임 문제를 하나 이상 해결하세요.' },
+  }
+  return copy[id] ?? { name, description }
+}
+
+function hiddenRewardText(id: string, name: string, ko: boolean) {
+  if (!ko) return { name }
+  const copy: Record<string, string> = { crimson_lock_frame: '크림슨 락', ruby_signal: '루비 시그널', zero_day_title: '제로데이 탐험가' }
+  return { name: copy[id] ?? name }
 }
 
 function LegacyCipherVault({ user, onClose }: { user: User; onClose: () => void }) {
