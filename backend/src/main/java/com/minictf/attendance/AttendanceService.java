@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AttendanceService {
   private static final ZoneId PLATFORM_ZONE = ZoneId.of("Asia/Seoul");
   private static final String FIRST_CHECK = "FIRST_CHECK";
+  private static final String SUPER_USER = "SUPER_USER";
   private static final List<BadgeRule> BADGES =
       List.of(
           new BadgeRule(
@@ -71,16 +72,19 @@ public class AttendanceService {
                     rule.streak ? longestStreak >= rule.threshold : dates.size() >= rule.threshold)
             .map(rule -> new AttendanceDtos.Badge(rule.id, rule.name, rule.description))
             .toList();
-    List<AttendanceDtos.Title> earnedTitles =
+    List<AttendanceDtos.Title> earnedTitles = new ArrayList<>(
         TITLES.stream()
             .filter(
                 rule ->
                     rule.streak ? longestStreak >= rule.threshold : dates.size() >= rule.threshold)
             .map(rule -> new AttendanceDtos.Title(rule.id, rule.name, rule.requirement))
-            .toList();
+            .toList());
+    if ("ADMIN".equals(user.getRole()))
+      earnedTitles.add(new AttendanceDtos.Title(SUPER_USER, "Super User", "Administrator title"));
     String activeTitle = user.getAttendanceTitle();
     String selectedTitle = activeTitle;
-    if (earnedTitles.stream().noneMatch(title -> title.id().equals(selectedTitle)))
+    if (!"NONE".equals(selectedTitle)
+        && earnedTitles.stream().noneMatch(title -> title.id().equals(selectedTitle)))
       activeTitle = earnedTitles.isEmpty() ? null : earnedTitles.get(earnedTitles.size() - 1).id();
     return new AttendanceDtos.Summary(
         dates.size(),
@@ -94,6 +98,11 @@ public class AttendanceService {
 
   @Transactional
   public AttendanceDtos.Summary selectTitle(User user, AttendanceDtos.TitleRequest request) {
+    if ("NONE".equals(request.titleId())) {
+      user.setAttendanceTitle("NONE");
+      users.save(user);
+      return summary(user);
+    }
     AttendanceDtos.Summary current = summary(user);
     if (current.earnedTitles().stream().noneMatch(title -> title.id().equals(request.titleId())))
       throw new IllegalArgumentException("That title has not been earned");
@@ -123,7 +132,7 @@ public class AttendanceService {
               row.getEquippedAccessory(),
               row.getEquippedVaultTitle() != null
                   ? row.getEquippedVaultTitle()
-                  : row.getAttendanceTitle()));
+                  : "NONE".equals(row.getAttendanceTitle()) ? null : row.getAttendanceTitle()));
       previousTotal = row.getTotalDays();
     }
     return rows;

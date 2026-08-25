@@ -500,6 +500,6 @@ public class CommunityService {
   private String titleFor(User user) {
     return user.getEquippedVaultTitle() != null
         ? user.getEquippedVaultTitle()
-        : user.getAttendanceTitle();
+        : "NONE".equals(user.getAttendanceTitle()) ? null : user.getAttendanceTitle();
   }
 }

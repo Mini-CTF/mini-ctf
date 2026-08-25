@@ -543,7 +543,7 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .attendance-title-select { font-size: 16px; font-weight: 800; }
 .attendance-title-select select { font-size: 17px; padding: 12px 14px; }
 .attendance-badge { font-size: 15px; font-weight: 800; padding: 10px 14px; }
-.super-user-profile .vault-profile-title, .ranking-title { color: #ffcf38 !important; font-weight: 900; letter-spacing: .08em; text-shadow: 0 0 10px rgba(255, 92, 38, .8), 0 0 22px rgba(255, 205, 56, .55); }
+.super-user-profile .profile-title, .ranking-title { color: #ffcf38 !important; font-weight: 900; letter-spacing: .08em; text-shadow: 0 0 10px rgba(255, 92, 38, .8), 0 0 22px rgba(255, 205, 56, .55); }
 .public-profile-trigger { border: 0; background: transparent; padding: 5px; text-align: left; cursor: pointer; }
 .public-profile-trigger:hover strong { color: var(--accent); }
 .community-post-row > span, .threaded-comment .comment > strong, .comment.reply > strong { cursor: pointer; }

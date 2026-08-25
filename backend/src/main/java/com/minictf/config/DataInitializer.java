@@ -30,7 +30,7 @@ public class DataInitializer {
       }
       u.setPasswordHash(encoder.encode(password));
       u.setRole("ADMIN");
-      u.setEquippedVaultTitle("super_user");
+      if ("super_user".equals(u.getEquippedVaultTitle())) u.setEquippedVaultTitle(null);
       u.setStatus("ACTIVE");
       u.setSuspensionReason(null);
       u.setSuspendedAt(null);

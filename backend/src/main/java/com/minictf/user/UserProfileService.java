@@ -98,7 +98,7 @@ public class UserProfileService {
         avatarUrl(user),
         user.getEquippedFrame(),
         user.getEquippedAccessory(),
-        user.getEquippedVaultTitle(),
+        displayTitle(user),
         friendships.findAcceptedForUser(user.getId()).stream()
             .map(friendship -> friendship.getRequester().getId().equals(user.getId()) ? friendship.getRecipient() : friendship.getRequester())
             .map(friend -> new UserDtos.PublicFriend(friend.getUsername(), friend.getNickname(), avatarUrl(friend), friend.getEquippedFrame(), friend.getEquippedAccessory(), friend.getEquippedVaultTitle()))
@@ -147,6 +147,11 @@ public class UserProfileService {
     if (user.getAvatarPath() == null) return null;
     String version = Integer.toUnsignedString(user.getAvatarPath().hashCode());
     return "/api/users/" + user.getUsername() + "/avatar?v=" + version;
+  }
+
+  private String displayTitle(User user) {
+    if (user.getEquippedVaultTitle() != null) return user.getEquippedVaultTitle();
+    return "NONE".equals(user.getAttendanceTitle()) ? null : user.getAttendanceTitle();
   }
 
   private String cleanOptional(String value, int max) {
