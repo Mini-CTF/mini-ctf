@@ -469,6 +469,29 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .footer-status { font-size: 15px; color: #aeb9c8; }
 .mobile-auth { display: none; }
 
+/* FlagBox brand layer: warm, rounded, beginner-friendly while preserving existing behaviour. */
+.site-header { border-bottom-color: color-mix(in srgb, var(--line) 78%, transparent); }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #fff; font-family: inherit; font-size: 22px; font-weight: 800; letter-spacing: -.045em; }
+.brand img { width: 34px; height: 34px; object-fit: contain; filter: invert(1); }
+html[data-theme='light'] .brand { color: #152438 !important; }
+html[data-theme='light'] .brand img { filter: none; }
+.nav-button, .header-login { font-family: inherit; font-size: 14px; }
+.button, .nav-button, .header-login, .theme-toggle, .category-filter button { border-radius: 999px; }
+.button.primary { box-shadow: 0 8px 20px rgba(52, 133, 228, .20); }
+.hero-section { min-height: 510px; }
+.hero-copy h1 { letter-spacing: -.065em; }
+.hero-copy h1 span { color: var(--accent); }
+.hero-description { max-width: 550px; line-height: 1.7; }
+.hero-visual { border-radius: 48% 52% 46% 54% / 52% 45% 55% 48%; background: color-mix(in srgb, var(--accent-dim) 72%, transparent); }
+.hero-hero-logo { width: min(330px, 68vw); height: min(330px, 68vw); padding: 28px; filter: invert(1); }
+html[data-theme='light'] .hero-hero-logo { filter: none; }
+.stat-strip, .content-section, .challenge-card, .challenge-row, .category-tile, .profile-hero, .profile-editor, .social-panel, .auth-card, .community-post-row, .pinned-notice { border-radius: 22px; }
+.challenge-row:hover, .challenge-card:hover { transform: translateY(-2px); }
+.eyebrow { color: var(--accent); font-family: inherit; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+.live-badge { border-radius: 999px; }
+html[data-theme='light'] .hero-copy h1, html[data-theme='light'] .section-heading h2 { color: #162234 !important; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
 @media (max-width: 620px) {
   .eyebrow { font-size: 12px; letter-spacing: .12em; }
   .hero-description,
@@ -511,6 +534,64 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
   .footer-status { font-size: 14px; }
 }
 
+/* OAuth provider buttons keep their required contrast regardless of the page theme. */
+html[data-theme='dark'] .app-shell .social-button.oauth-google,
+html[data-theme='light'] .app-shell .social-button.oauth-google { background: #fff; border-color: #fff; color: #202124 !important; }
+html[data-theme='dark'] .app-shell .social-button.oauth-google span,
+html[data-theme='light'] .app-shell .social-button.oauth-google span { color: #202124 !important; }
+html[data-theme='dark'] .app-shell .social-button.oauth-github span,
+html[data-theme='light'] .app-shell .social-button.oauth-github span,
+html[data-theme='dark'] .app-shell .social-button.oauth-discord span,
+html[data-theme='light'] .app-shell .social-button.oauth-discord span { color: #fff !important; }
+
+/* Explicit slide entrance on every keyed banner change. */
+.hero-banner-content.banner-slide { animation: flagbox-banner-slide-in .62s cubic-bezier(.2, .78, .24, 1) both !important; }
+.hero-banner::before { animation: flagbox-banner-wash .62s ease-out both; }
+@keyframes flagbox-banner-slide-in { from { opacity: 0; transform: translate3d(54px, 0, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes flagbox-banner-wash { from { opacity: .15; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+
+/* The header logo remains transparent; these values are a seamless fallback for any browser image-compositing edge case. */
+.brand img { background-color: #090909; mix-blend-mode: screen; }
+html[data-theme='light'] .brand img { background-color: #f7f7f7; mix-blend-mode: multiply; }
+.site-footer { font-family: inherit; font-size: 17px; font-weight: 600; letter-spacing: -.018em; line-height: 1.8; }
+.site-footer strong { font-family: inherit; font-size: 18px; font-weight: 800; letter-spacing: -.025em; }
+.footer-status { font-family: inherit; font-size: 15px; font-weight: 650; letter-spacing: -.012em; }
+.app-shell button, .app-shell input, .app-shell select, .app-shell textarea { font-family: inherit; }
+
+/* Full-width carousel, intentionally separate from the header and following content. */
+.home-page { width: 100%; max-width: none; padding: 0; }
+.home-page .hero-banner { width: 100%; min-height: 510px; margin: 38px 0 86px; border-right: 0; border-left: 0; border-radius: 0; }
+.home-page .featured-section { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+.hero-banner-content { margin-left: max(7vw, 72px); }
+.hero-banner-content { animation: banner-content-in .42s ease-out both; }
+.hero-banner-arrow { position: absolute; z-index: 3; top: 50%; width: 52px; height: 52px; border: 1px solid color-mix(in srgb, var(--line) 85%, transparent); border-radius: 50%; background: color-mix(in srgb, var(--bg) 78%, transparent); color: var(--accent); transform: translateY(-50%); }
+.hero-banner-arrow::before { display: block; font-size: 30px; font-weight: 400; line-height: 1; }
+.hero-banner-arrow.previous { left: 36px; }
+.hero-banner-arrow.next { right: 36px; }
+.hero-banner-arrow.previous::before { content: '\2190'; }
+.hero-banner-arrow.next::before { content: '\2192'; }
+.hero-banner-arrow:hover { border-color: var(--accent); background: var(--accent); color: #fff; }
+.hero-banner-dots { left: max(7vw, 72px); right: auto; }
+.primary-nav { gap: 15px; }
+.nav-button, .header-login { padding: 11px 16px; font-size: 17px; font-weight: 750; letter-spacing: -.02em; }
+html[data-theme='dark'] .app-shell :is(h1, h2, h3, p, span, small, strong, label, button, a) { color: #f5f5f5; }
+html[data-theme='light'] .app-shell :is(h1, h2, h3, p, span, small, strong, label, button, a) { color: #111 !important; }
+html[data-theme='dark'] .app-shell :is(.eyebrow, .badge, .vault-kicker, .ranking-title, .profile-accessory, .ruby-price, .text-link),
+html[data-theme='light'] .app-shell :is(.eyebrow, .badge, .vault-kicker, .ranking-title, .profile-accessory, .ruby-price, .text-link) { color: var(--accent) !important; }
+html[data-theme='light'] .app-shell .button.primary,
+html[data-theme='dark'] .app-shell .button.primary { color: #fff !important; }
+@keyframes banner-content-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+@media (max-width: 620px) {
+  .home-page .hero-banner { min-height: 450px; margin: 24px 0 52px; }
+  .home-page .featured-section { width: calc(100% - 40px); }
+  .hero-banner-content { margin-left: 0; }
+  .hero-banner-arrow { width: 42px; height: 42px; top: auto; bottom: 22px; transform: none; }
+  .hero-banner-arrow.previous { left: 22px; }
+  .hero-banner-arrow.next { left: 74px; right: auto; }
+  .hero-banner-dots { left: auto; right: 24px; bottom: 38px; }
+  .nav-button { font-size: 16px; }
+}
+
 @media (max-width: 620px) {
   .site-header { display: block; padding: 0; }
   .brand { position: absolute; top: 24px; left: 20px; }
@@ -534,4 +615,45 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
   .stat strong { font-size: 27px; }
   .live-badge { margin: 12px 0 2px; }
   .page-intro { padding-top: 54px; }
+}
+
+/* FlagBox polish: logo background blends into either theme and the home banner replaces the old emblem panel. */
+.brand img { background: transparent; mix-blend-mode: screen; }
+html[data-theme='light'] .brand img { mix-blend-mode: multiply; }
+.hero-visual { background: transparent !important; border-radius: 0; }
+.site-header { min-height: 82px; padding-top: 20px; padding-bottom: 20px; }
+.brand { gap: 13px; font-size: 24px; letter-spacing: -.025em; }
+.brand img { width: 38px; height: 38px; }
+.primary-nav { gap: 8px; }
+.nav-button, .header-login { padding: 10px 14px; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.header-actions { gap: 16px; }
+.site-footer { margin-top: 84px; padding-top: 30px; padding-bottom: 32px; font-size: 16px; line-height: 1.7; letter-spacing: -.01em; }
+.site-footer strong { font-size: 17px; letter-spacing: -.015em; }
+.footer-status { font-size: 14px; letter-spacing: .01em; }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .13em; }
+.page p, .challenge-card > p, .row-main small, .stat small, .footer-status { font-weight: 550; letter-spacing: -.012em; }
+.badge, .filter-tab, .panel-heading, .submit-kicker, .challenge-count { font-weight: 750; letter-spacing: .035em; }
+.hero-banner { position: relative; display: flex; align-items: stretch; min-height: 500px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--line) 68%, transparent); border-radius: 32px; background: var(--surface); }
+.hero-banner::before { content: ''; position: absolute; width: 460px; height: 460px; right: -170px; top: -230px; border-radius: 50%; background: var(--accent-dim); pointer-events: none; }
+.hero-banner::after { content: ''; position: absolute; width: 260px; height: 260px; left: 52%; bottom: -190px; border-radius: 50%; background: color-mix(in srgb, var(--accent-dim) 65%, transparent); pointer-events: none; }
+.hero-banner-content { position: relative; z-index: 1; display: flex; width: min(840px, 100%); flex-direction: column; justify-content: center; padding: clamp(42px, 7vw, 92px); }
+.hero-banner-content h1 { margin: 15px 0 22px; color: var(--text, #f4f7fb); font-size: clamp(40px, 4.9vw, 65px); font-weight: 800; line-height: 1.23; letter-spacing: -.06em; }
+.hero-banner-content h1 span { display: block; white-space: nowrap; }
+.hero-banner-content p:not(.eyebrow) { max-width: 520px; margin: 0 0 32px; color: var(--muted); font-size: 18px; font-weight: 550; line-height: 1.75; letter-spacing: -.02em; }
+.hero-banner-content .button { width: fit-content; min-height: 52px; padding: 0 23px; font-weight: 750; }
+.hero-banner-dots { position: absolute; z-index: 2; display: flex; gap: 9px; right: clamp(32px, 5vw, 70px); bottom: 38px; }
+.hero-banner-dots button { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--muted) 55%, transparent); transition: width .24s ease, background-color .24s ease; }
+.hero-banner-dots button.active { width: 34px; background: var(--accent); }
+html[data-theme='light'] .hero-banner-content h1 { color: #18263a !important; }
+@media (max-width: 620px) {
+  .site-header { min-height: 72px; }
+  .brand { top: 18px; gap: 10px; font-size: 21px; }
+  .brand img { width: 32px; height: 32px; }
+  .hero-banner { min-height: 440px; border-radius: 24px; }
+  .hero-banner-content { padding: 76px 30px 66px; }
+  .hero-banner-content h1 { font-size: clamp(36px, 10.2vw, 48px); line-height: 1.27; }
+  .hero-banner-content h1 span { white-space: normal; }
+  .hero-banner-content p:not(.eyebrow) { font-size: 16px; }
+  .hero-banner-dots { right: 30px; bottom: 28px; }
+  .site-footer { margin-top: 56px; padding-bottom: 28px; }
 }
