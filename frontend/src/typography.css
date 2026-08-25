@@ -545,14 +545,21 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .attendance-badge { font-size: 15px; font-weight: 800; padding: 10px 14px; }
 .super-user-profile .profile-title, .ranking-title { color: #ffcf38 !important; font-weight: 900; letter-spacing: .08em; text-shadow: 0 0 10px rgba(255, 92, 38, .8), 0 0 22px rgba(255, 205, 56, .55); }
 .profile-tier-row { margin: 15px 0 -5px; }
-.tier-badge { display: inline-flex; align-items: center; width: fit-content; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .05em; }
-.tier-beginner { color: #9fb0c3; background: rgba(159, 176, 195, .08); }
-.tier-rookie { color: #7bd8a5; background: rgba(123, 216, 165, .09); }
-.tier-junior { color: #63b9ff; background: rgba(99, 185, 255, .09); }
-.tier-senior { color: #a990ff; background: rgba(169, 144, 255, .1); }
-.tier-veteran { color: #ffae5d; background: rgba(255, 174, 93, .1); }
-.tier-master { color: #ff6ea5; background: rgba(255, 110, 165, .1); }
-.tier-root { color: #ffcf38; background: rgba(255, 207, 56, .12); box-shadow: 0 0 14px rgba(255, 181, 42, .2); }
+.tier-badge { display: inline-flex; align-items: center; width: fit-content; padding: 5px 10px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .06em; text-shadow: none; }
+.tier-beginner { color: #45566c !important; background: #e7edf4; border-color: #8c9db0; }
+.tier-rookie { color: #087043 !important; background: #dcf8e8; border-color: #22a768; }
+.tier-junior { color: #075da9 !important; background: #ddecff; border-color: #3497ec; }
+.tier-senior { color: #6335bd !important; background: #eee4ff; border-color: #9669ec; }
+.tier-veteran { color: #a54a08 !important; background: #ffecd9; border-color: #f28a36; }
+.tier-master { color: #b21759 !important; background: #ffe1ee; border-color: #ef5c9b; }
+.tier-root { color: #8c5600 !important; background: #fff0b5; border-color: #efb20b; box-shadow: 0 0 14px rgba(239, 178, 11, .34); }
+html[data-theme='dark'] .tier-beginner { color: #d7e0eb !important; background: #344152; border-color: #73869b; }
+html[data-theme='dark'] .tier-rookie { color: #a5f4c9 !important; background: #123f2c; border-color: #36b873; }
+html[data-theme='dark'] .tier-junior { color: #a8d7ff !important; background: #12395f; border-color: #419fe9; }
+html[data-theme='dark'] .tier-senior { color: #d8c2ff !important; background: #35225e; border-color: #9b73e8; }
+html[data-theme='dark'] .tier-veteran { color: #ffd09d !important; background: #593012; border-color: #ee954b; }
+html[data-theme='dark'] .tier-master { color: #ffb4d2 !important; background: #5a1539; border-color: #eb6099; }
+html[data-theme='dark'] .tier-root { color: #ffe68a !important; background: #5a4100; border-color: #f3bf18; box-shadow: 0 0 16px rgba(243, 191, 24, .28); }
 .public-profile-trigger { border: 0; background: transparent; padding: 5px; text-align: left; cursor: pointer; }
 .public-profile-trigger:hover strong { color: var(--accent); }
 .community-post-row > span, .threaded-comment .comment > strong, .comment.reply > strong { cursor: pointer; }
