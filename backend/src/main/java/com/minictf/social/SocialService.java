@@ -94,7 +94,13 @@ public class SocialService {
     List<DirectMessage> result = messages.conversation(current.getId(), other.getId());
     result.stream()
         .filter(message -> message.getRecipient().getId().equals(current.getId()))
-        .forEach(DirectMessage::markRead);
+        .filter(message -> message.getReadAt() == null)
+        .forEach(
+            message -> {
+              message.markRead();
+              // The sender also receives the updated message so "Read" changes without refresh.
+              realtime.publishAfterCommit(message.getSender().getUsername(), messageView(message));
+            });
     return result.stream().map(this::messageView).toList();
   }
 

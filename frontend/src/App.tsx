@@ -290,6 +290,7 @@ function AppShell() {
         <NavButton active={path.startsWith('/ranking')} onClick={() => go('/ranking')}>{text.ranking}</NavButton>
         <NavButton active={path.startsWith('/community')} onClick={() => go('/community')}>{text.community}</NavButton>
         <NavButton active={path.startsWith('/profile')} onClick={() => go('/profile')}>{text.profile}</NavButton>
+        {user && <NavButton active={path.startsWith('/friends')} onClick={() => go('/friends')}>Friends</NavButton>}
         {user && <NavButton active={false} onClick={() => { setMobileNavOpen(false); setVaultOpen(true) }}>{text.shop}</NavButton>}
         {user?.role === 'ADMIN' && <NavButton active={path.startsWith('/admin')} onClick={() => go('/admin')}>{text.admin}</NavButton>}
         <button className="nav-button mobile-language" type="button" onClick={() => setLanguage((current) => current === 'ko' ? 'en' : 'ko')} aria-label={text.language}><GlobeIcon /> {language === 'ko' ? 'EN' : 'KO'}</button>
@@ -305,6 +306,7 @@ function AppShell() {
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={refresh} />)} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
         <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
+        <Route path="/friends" element={guarded(<FriendsView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community" element={guarded(<EnhancedCommunityView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community/:postId" element={guarded(<CommunityPostRoute user={user} />)} />
         <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole />) : <Navigate to="/" replace />} />
@@ -708,6 +710,50 @@ function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged
     <section className="profile-layout"><div>{attendance && <section className="panel attendance-panel"><div className="attendance-heading"><div><p className="eyebrow">DAILY OPERATIONS</p><h2>Attendance</h2></div><button type="button" className="button primary" disabled={attendance.checkedInToday} onClick={() => void checkIn()}>{attendance.checkedInToday ? 'Checked in today' : 'Check in today'}</button></div><div className="attendance-stats"><div><strong>{attendance.currentStreak}</strong><small>Current streak</small></div><div><strong>{attendance.longestStreak}</strong><small>Longest streak</small></div><div><strong>{attendance.totalDays}</strong><small>Total days</small></div></div><label className="attendance-title-select">Profile title<select value={attendance.activeTitle ?? ''} onChange={selectTitle} disabled={attendance.earnedTitles.length === 0}><option value="" disabled>Earn a title to equip it</option>{attendance.earnedTitles.map((title) => <option key={title.id} value={title.id}>{title.name} · {title.requirement}</option>)}</select></label><div className="attendance-badges">{attendance.badges.map((badge) => <span className="attendance-badge" key={badge.id} title={badge.description}>✦ {badge.name}</span>)}</div></section>}<section className="panel profile-editor"><h2>Customize profile</h2><form onSubmit={(event) => void saveProfile(event)}><label>Display name<input name="nickname" defaultValue={current.nickname} maxLength={80} /></label><label>Status message<textarea name="statusMessage" defaultValue={current.statusMessage || ''} maxLength={160} placeholder="What are you working on?" /></label><button className="button primary" type="submit">Save profile</button></form><button className="button secondary profile-vault-button" type="button" onClick={onVault}>Open Cipher Vault</button></section><section className="content-section"><button className="button secondary" type="button" onClick={onChallenges}>Browse challenges</button></section></div><aside className="social-panel"><h2>Friends</h2><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Account username (e.g. @player_1)" minLength={3} maxLength={51} autoComplete="off" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={async () => { try { await api.acceptFriend(friend.username); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not accept request.') } }}>Accept</button> : <button type="button" className="text-link" onClick={async () => { if (!window.confirm('Remove this friend?')) return; try { await api.removeFriend(friend.username); if (selectedFriend === friend.username) setSelectedFriend(null); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove friend.') } }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list">{messages.map((message) => <article className={message.sender === current.username ? 'message sent' : 'message received'} key={message.id}><span>{message.content}</span>{message.sender === current.username && <div className="message-actions"><button type="button" onClick={() => void editMessage(message)}>Edit</button><button type="button" onClick={() => void deleteMessage(message)}>Delete</button></div>}</article>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</aside></section>
     {error && <p className="alert error">{error}</p>}
   </div>
+}
+
+function FriendsView({ user, onLogin }: { user: User | null; onLogin: () => void }) {
+  const [friends, setFriends] = useState<Friend[]>([])
+  const [selectedFriend, setSelectedFriend] = useState<string | null>(null)
+  const [messages, setMessages] = useState<DirectMessage[]>([])
+  const [error, setError] = useState('')
+  const messageList = useRef<HTMLDivElement>(null)
+  const refresh = useCallback(async () => {
+    try { setFriends(await api.friends()) }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not load friends.') }
+  }, [])
+  const upsertMessage = useCallback((message: DirectMessage) => {
+    setMessages((current) => current.some((item) => item.id === message.id)
+      ? current.map((item) => item.id === message.id ? message : item)
+      : [...current, message])
+  }, [])
+  useEffect(() => { if (user) void refresh() }, [user, refresh])
+  useEffect(() => {
+    if (!selectedFriend) { setMessages([]); return }
+    void api.messages(selectedFriend).then(setMessages).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load messages.'))
+  }, [selectedFriend])
+  useEffect(() => {
+    if (!user) return
+    return subscribeToSocialUpdates({
+      onMessage: (message) => {
+        const other = message.sender === user.username ? message.recipient : message.sender
+        if (other === selectedFriend) upsertMessage(message)
+      },
+      onFriendship: (friendship) => setFriends((current) => {
+        const exists = current.some((item) => item.username === friendship.username)
+        return exists ? current.map((item) => item.username === friendship.username ? friendship : item) : [...current, friendship]
+      }),
+    })
+  }, [selectedFriend, upsertMessage, user])
+  useEffect(() => {
+    if (messages.length) messageList.current?.scrollTo({ top: messageList.current.scrollHeight, behavior: 'smooth' })
+  }, [messages])
+  if (!user) return <div className="page"><PageIntro eyebrow="FRIENDS" title="Sign in to message your friends." description="Friend requests and private messages are available after sign-in." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
+  const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = event.currentTarget; const username = String(new FormData(form).get('username')).trim(); try { await api.requestFriend(username); await refresh(); form.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
+  const sendMessage = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!selectedFriend) return; const form = event.currentTarget; try { upsertMessage(await api.sendMessage(selectedFriend, String(new FormData(form).get('content')))); form.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send message.') } }
+  const editMessage = async (message: DirectMessage) => { const content = window.prompt('Edit message', message.content)?.trim(); if (!content || content === message.content) return; try { upsertMessage(await api.updateMessage(message.id, content)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not edit message.') } }
+  const deleteMessage = async (message: DirectMessage) => { if (!window.confirm('Delete this message?')) return; try { await api.deleteMessage(message.id); setMessages((current) => current.filter((item) => item.id !== message.id)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete message.') } }
+  return <div className="page friends-page"><PageIntro eyebrow="FRIENDS & MESSAGES" title="Friends" description="Add fellow learners and keep the conversation private." /><section className="social-panel"><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Account username (e.g. @player_1)" minLength={3} maxLength={80} autoComplete="off" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={() => void api.acceptFriend(friend.username).then(refresh).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not accept request.'))}>Accept</button> : <button type="button" className="text-link" onClick={() => { if (!window.confirm('Remove this friend?')) return; void api.removeFriend(friend.username).then(() => { if (selectedFriend === friend.username) setSelectedFriend(null); return refresh() }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not remove friend.')) }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list" ref={messageList}>{messages.map((message) => <article className={message.sender === user.username ? 'message sent' : 'message received'} key={message.id}><span>{message.content}</span>{message.sender === user.username && <div className="message-meta"><small>{message.read ? 'Read' : 'Sent'}</small><div className="message-actions"><button type="button" onClick={() => void editMessage(message)}>Edit</button><button type="button" onClick={() => void deleteMessage(message)}>Delete</button></div></div>}</article>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</section>{error && <p className="alert error">{error}</p>}</div>
 }
 
 function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: () => void }) {

@@ -515,6 +515,8 @@ html[data-theme='light'] .submit-panel .flag-input input,
 html[data-theme='light'] .submit-panel .submit-button { color: #102941 !important; }
 .status-message { color: #c8d2df; font-size: 17px; margin: 12px 0 0; }
 .social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
+.profile-page .social-panel { display: none; }
+.friends-page .social-panel { width: min(760px, 100%); margin: 0 auto; }
 .friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
 .friend-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
 .friend-row > button:first-child { display: flex; flex: 1 1 0; min-width: 0; align-items: center; gap: 10px; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; }
@@ -530,6 +532,8 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .message { width: fit-content; max-width: 88%; margin: 0; padding: 9px 11px; color: #eaf1fa; line-height: 1.45; white-space: pre-wrap; }
 .message > span { display: block; }
 .message-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 7px; }
+.message-meta { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 7px; }
+.message-meta small { color: var(--muted); font-size: 11px; font-weight: 700; }
 .message-actions button { padding: 0; border: 0; background: transparent; color: inherit; font: 700 11px/1 var(--sans); opacity: .72; }
 .message-actions button:hover { opacity: 1; text-decoration: underline; }
 .message.sent { justify-self: end; background: #254161; }
