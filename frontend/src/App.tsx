@@ -411,7 +411,7 @@ function LearnView({ lang }: { lang: 'ko' | 'en' }) {
       <div className="learn-list">
         {list.map((article) => (
           <button key={article.slug} type="button" className="learn-card" onClick={() => routerNavigate(`/learn/${article.slug}`)}>
-            <span className={`badge ${article.field.toLowerCase()}`}>{article.field}</span>
+            <span className={`badge ${article.field.toLowerCase()}`}>{lang === 'ko' ? ({ WEB: '웹', FORENSIC: '포렌식', REVERSING: '리버싱' } as Record<string, string>)[article.field] ?? article.field : article.field}</span>
             <strong>{lang === 'ko' ? article.title : learnEn[article.slug]?.title ?? article.title}</strong>
             <small>{lang === 'ko' ? article.summary : learnEn[article.slug]?.summary ?? article.summary}</small>
             <span className="learn-minutes">⏱ {article.minutes}{lang === 'ko' ? '분 소요' : ' min read'}</span>

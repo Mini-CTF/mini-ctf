@@ -36,3 +36,4 @@ challenges/uploads/
 Thumbs.db
 
 .vercel
+.gradle-verify

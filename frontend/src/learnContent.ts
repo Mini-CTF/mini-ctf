@@ -15,7 +15,68 @@ export type LearnArticle = {
 
 // English copy can be added per article without breaking the Korean-first curriculum.
 // The UI falls back to the original article while a translation is being prepared.
-export const learnEn: Partial<Record<string, Pick<LearnArticle, 'title' | 'summary' | 'check'>>> = {}
+export const learnEn: Partial<Record<string, Pick<LearnArticle, 'title' | 'summary' | 'check'>>> = {
+  'web-http-basics': {
+    title: 'HTTP — learning the language of the web',
+    summary: 'How to read the request/response exchange between your browser and a server.',
+    check: ['Can you explain the difference between GET and POST?', 'What does the browser do after a 302 response?'],
+  },
+  'web-encoding': {
+    title: 'Base64, URL encoding & HTML entities',
+    summary: 'Tell apart the three common "disguises" you meet on the web — and undo them.',
+    check: ['Can you describe how Base64 looks different from URL encoding?'],
+  },
+  'web-auth-session': {
+    title: 'Cookies, sessions & JWT — how login works',
+    summary: 'The three ways "who you are" is remembered, and the risks of each.',
+    check: ['Why should a password never live inside a JWT payload?'],
+  },
+  'web-input-trust': {
+    title: 'Never trust input — validate on the server',
+    summary: 'Why disabled fields and front-end checks are toys, not walls.',
+    check: ['Name one attack that client-side validation alone cannot stop.'],
+  },
+  'forensic-signature': {
+    title: 'File signatures — extensions can lie',
+    summary: 'Magic numbers reveal what a file really is, whatever it is named.',
+    check: ['Write down the PNG signature in hex from memory.'],
+  },
+  'forensic-log-analysis': {
+    title: 'Log analysis — spotting the odd line out',
+    summary: 'Train your eye for the one weird row in thousands of normal ones.',
+    check: ['Describe what brute-force attempts look like in an auth log.'],
+  },
+  'forensic-metadata': {
+    title: 'Metadata — data about data',
+    summary: 'EXIF, document properties, deletion traces: what files say on their own.',
+    check: ['If you hide a secret in EXIF UserComment, how could it surface?'],
+  },
+  'forensic-packet-basics': {
+    title: 'Packet sniffing 101',
+    summary: 'Start network forensics from a plain-text capture, no Wireshark required.',
+    check: ['Explain why HTTPS being default matters for packet capture.'],
+  },
+  'reversing-encoding-inverse': {
+    title: 'Inverse thinking — encodings are reversible',
+    summary: 'Base64, hex, ROT13 and XOR undone — all in one place.',
+    check: ['Explain why applying XOR twice restores the original.'],
+  },
+  'reversing-read-code': {
+    title: 'Reading verifier code — behind the if',
+    summary: 'The three questions to ask when you meet any checker script.',
+    check: ['Why might the submitted value differ even after your solver prints OK?'],
+  },
+  'reversing-asm-taste': {
+    title: 'A taste of assembly — mov, add, xor',
+    summary: 'Read pseudo-assembly with just a handful of opcodes.',
+    check: ['In "add al, cl", what does cl usually represent?'],
+  },
+  'reversing-prng-vm': {
+    title: 'PRNG & the tiny VM — past the first wall',
+    summary: 'Two classic themes: predictable randomness and instruction interpreters.',
+    check: ['Say in one sentence why an exposed PRNG seed is fatal for secrecy.'],
+  },
+}
 
 export const LEARN_FIELDS = [
   { key: 'ALL', label: '전체' },

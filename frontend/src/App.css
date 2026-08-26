@@ -2874,8 +2874,19 @@ html[data-theme="light"] .app-shell .difficulty-tabs .diff-hard.active {
   animation: none;
 }
 @keyframes onboarding-focus-pulse {
-  0%, 100% { border-color: rgba(86, 155, 255, 0.9); box-shadow: 0 0 0 200vmax rgba(4, 7, 12, 0.68), 0 0 28px rgba(61, 130, 246, 0.38); }
-  50% { border-color: rgba(159, 204, 255, 1); box-shadow: 0 0 0 200vmax rgba(4, 7, 12, 0.68), 0 0 52px rgba(61, 130, 246, 0.72); }
+  0%,
+  100% {
+    border-color: rgba(86, 155, 255, 0.9);
+    box-shadow:
+      0 0 0 200vmax rgba(4, 7, 12, 0.68),
+      0 0 28px rgba(61, 130, 246, 0.38);
+  }
+  50% {
+    border-color: rgba(159, 204, 255, 1);
+    box-shadow:
+      0 0 0 200vmax rgba(4, 7, 12, 0.68),
+      0 0 52px rgba(61, 130, 246, 0.72);
+  }
 }
 .onboarding-card {
   position: relative;
@@ -3168,4 +3179,67 @@ html[data-theme="light"] .learn-card small {
 html[data-theme="light"] .learn-article p,
 html[data-theme="light"] .learn-check li {
   color: #2a3547 !important;
+}
+
+/* ���� �α��� ������ ������ ���� ���� */
+.auth-page {
+  padding: 60px 24px;
+}
+.auth-card {
+  padding: 42px 38px;
+  border-radius: 20px;
+}
+.auth-form {
+  gap: 22px;
+}
+.auth-form label {
+  font-size: 13px;
+  gap: 10px;
+}
+.auth-form input {
+  font-size: 15px;
+  padding: 14px;
+}
+.auth-divider span {
+  font-size: 12px;
+}
+.auth-footnote {
+  font-size: 13px;
+}
+
+/* ���� �н� ���� ���� Ȯ�� ���� */
+.learn-list {
+  margin-top: 26px;
+  gap: 18px;
+}
+.learn-card {
+  padding: 24px;
+  gap: 10px;
+}
+.article-page h1 {
+  font-size: 30px;
+  margin: 12px 0 8px;
+}
+.learn-article section {
+  margin: 28px 0;
+}
+.learn-article p,
+.learn-check li {
+  line-height: 1.85;
+  font-size: 15.5px;
+}
+.learn-notice {
+  color: #fbbf24;
+  font-size: 13px;
+  border-left: 3px solid rgba(251, 191, 36, 0.5);
+  padding-left: 10px;
+}
+
+/* ���� ���� ī�� ���� = ���� �ǰ� ������ ũ�⡤��� ���� */
+.card-top .badge,
+.badge-line .badge {
+  font-size: 10px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-weight: 700;
 }

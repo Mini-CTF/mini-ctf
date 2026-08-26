@@ -5,7 +5,7 @@ type Lang = 'ko' | 'en'
 type LocalizedText = { title: string; body: string; action: string }
 type Step = { path?: string; selector?: string; ko: LocalizedText; en: LocalizedText }
 
-export function buildTutorialSteps(firstChallengeId?: number, scope: 'public' | 'member' = 'public'): Step[] {
+function buildTutorialSteps(firstChallengeId?: number, scope: 'public' | 'member' = 'public'): Step[] {
   if (scope === 'member') {
     return [
       { path: '/profile', selector: '.profile-stats', ko: { title: '내 학습 기록', body: '점수, 해결한 문제 수, 현재 순위를 여기서 바로 확인해요.', action: '다음' }, en: { title: 'Your learning record', body: 'See your score, solved challenges, and current rank at a glance.', action: 'Next' } },
