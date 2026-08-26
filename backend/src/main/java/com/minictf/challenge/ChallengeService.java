@@ -225,8 +225,7 @@ public class ChallengeService {
     if (challenge.getHintText() != null && !challenge.getHintText().isBlank())
       return challenge.getHintText();
     return switch (challenge.getCategory()) {
-      case "CRYPTO" -> "Identify the encoding layer before trying to break the message.";
-      case "FORENSICS" -> "Follow the suspicious request and decode each representation in order.";
+      case "FORENSIC" -> "Follow the suspicious request and decode each representation in order.";
       case "REVERSING" ->
           "Work backwards from the verifier's final comparison and undo one round at a time.";
       default ->

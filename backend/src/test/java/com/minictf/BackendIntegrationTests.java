@@ -81,7 +81,7 @@ class BackendIntegrationTests {
   void cipherVaultAwardsDailyRewardsAndLetsAdminsEquipEverything() throws Exception {
     mvc.perform(get("/api/vault")).andExpect(status().isUnauthorized());
     User learner = user("vault_learner", "USER");
-    String learnerToken = jwt.createToken(learner.getId(), learner.getRole());
+    String learnerToken = jwt.createToken(learner.getId(), learner.getRole(), 0L);
     mvc.perform(post("/api/attendance/check-in").header("Authorization", bearer(learnerToken)))
         .andExpect(status().isCreated());
     mvc.perform(
@@ -98,7 +98,7 @@ class BackendIntegrationTests {
         .andExpect(jsonPath("$.data.cosmetics[?(@.id == 'ghost_protocol')].owned").value(true));
 
     User admin = user("vault_admin", "ADMIN");
-    String adminToken = jwt.createToken(admin.getId(), admin.getRole());
+    String adminToken = jwt.createToken(admin.getId(), admin.getRole(), 0L);
     mvc.perform(
             put("/api/vault/equip")
                 .header("Authorization", bearer(adminToken))
@@ -117,7 +117,7 @@ class BackendIntegrationTests {
     challenge.setHintText("Decode the payload before changing its representation.");
     challenge.setHintCost(1);
     challenges.saveAndFlush(challenge);
-    String token = jwt.createToken(learner.getId(), learner.getRole());
+    String token = jwt.createToken(learner.getId(), learner.getRole(), 0L);
 
     mvc.perform(post("/api/vault/hidden/discover").header("Authorization", bearer(token)))
         .andExpect(status().isOk())
@@ -170,8 +170,8 @@ class BackendIntegrationTests {
   void friendRequestAcceptAndUsernameNormalizationWorkEndToEnd() throws Exception {
     User alice = user("alice", "USER");
     User bob = user("bob_1", "USER");
-    String aliceToken = jwt.createToken(alice.getId(), alice.getRole());
-    String bobToken = jwt.createToken(bob.getId(), bob.getRole());
+    String aliceToken = jwt.createToken(alice.getId(), alice.getRole(), 0L);
+    String bobToken = jwt.createToken(bob.getId(), bob.getRole(), 0L);
 
     mvc.perform(
             post("/api/social/friends/{username}", "@bob_1")
@@ -254,7 +254,7 @@ class BackendIntegrationTests {
   void flagSubmissionPersistsIncorrectAttemptsAndAwardsOnlyOnce() throws Exception {
     User user = user("solver", "USER");
     Challenge challenge = challenge(true, "CTF{correct}");
-    String token = jwt.createToken(user.getId(), user.getRole());
+    String token = jwt.createToken(user.getId(), user.getRole(), 0L);
 
     mvc.perform(
             post("/api/challenges/{id}/submit", challenge.getId())
@@ -321,13 +321,15 @@ class BackendIntegrationTests {
     mvc.perform(get("/api/challenges/{id}", hidden.getId())).andExpect(status().isNotFound());
     mvc.perform(
             get("/api/admin/challenges")
-                .header("Authorization", bearer(jwt.createToken(normal.getId(), normal.getRole()))))
+                .header(
+                    "Authorization", bearer(jwt.createToken(normal.getId(), normal.getRole(), 0L))))
         .andExpect(status().isForbidden());
     String response =
         mvc.perform(
                 get("/api/admin/challenges")
                     .header(
-                        "Authorization", bearer(jwt.createToken(admin.getId(), admin.getRole()))))
+                        "Authorization",
+                        bearer(jwt.createToken(admin.getId(), admin.getRole(), 0L))))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -339,7 +341,7 @@ class BackendIntegrationTests {
   void adminArtifactUploadIsValidatedAndDownloadable() throws Exception {
     User admin = user("artifact_admin", "ADMIN");
     Challenge challenge = challenge(true, "CTF{artifact}");
-    String token = jwt.createToken(admin.getId(), admin.getRole());
+    String token = jwt.createToken(admin.getId(), admin.getRole(), 0L);
     MockMultipartFile forbidden =
         new MockMultipartFile("file", "payload.exe", "application/octet-stream", new byte[] {1, 2});
     mvc.perform(
@@ -377,8 +379,8 @@ class BackendIntegrationTests {
     User author = user("author", "USER");
     User other = user("other", "USER");
     Challenge challenge = challenge(true, "CTF{discussion}");
-    String authorToken = jwt.createToken(author.getId(), author.getRole());
-    String otherToken = jwt.createToken(other.getId(), other.getRole());
+    String authorToken = jwt.createToken(author.getId(), author.getRole(), 0L);
+    String otherToken = jwt.createToken(other.getId(), other.getRole(), 0L);
 
     mvc.perform(
             get("/api/challenges/{id}/comments", challenge.getId())
@@ -427,7 +429,7 @@ class BackendIntegrationTests {
     User admin = user("moderator", "ADMIN");
     User learner = user("learner", "USER");
     Challenge challenge = challenge(true, "CTF{review}");
-    String learnerToken = jwt.createToken(learner.getId(), learner.getRole());
+    String learnerToken = jwt.createToken(learner.getId(), learner.getRole(), 0L);
 
     challengeService.submit(challenge.getId(), learner.getUsername(), "CTF{review}", "test-ip");
     assertThat(antiCheatEvents.findTop100ByOrderByCreatedAtDesc())

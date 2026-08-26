@@ -39,7 +39,7 @@ public final class ChallengeDtos {
   public record AdminRequest(
       @NotBlank @Size(max = 160) String title,
       @NotBlank @Size(max = 20_000) String description,
-      @NotBlank @Pattern(regexp = "(?i)WEB|CRYPTO|FORENSICS|MISC|REVERSING|PWN") String category,
+      @NotBlank @Pattern(regexp = "(?i)WEB|FORENSIC|REVERSING") String category,
       @NotBlank @Pattern(regexp = "(?i)EASY|MEDIUM|HARD|INSANE") String difficulty,
       @Min(1) @Max(1_000_000) int score,
       @Size(max = 200) String flag,

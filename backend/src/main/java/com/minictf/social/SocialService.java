@@ -164,9 +164,11 @@ public class SocialService {
         .findByUsernameIgnoreCase(normalized)
         .orElseGet(
             () -> {
-              List<User> matches = users.findTop2ByNicknameIgnoreCaseAndStatusNot(normalized, "DELETED");
+              List<User> matches =
+                  users.findTop2ByNicknameIgnoreCaseAndStatusNot(normalized, "DELETED");
               if (matches.size() > 1)
-                throw new IllegalArgumentException("Multiple users use this display name. Enter their @account ID instead");
+                throw new IllegalArgumentException(
+                    "Multiple users use this display name. Enter their @account ID instead");
               if (matches.size() == 1) return matches.get(0);
               throw new EntityNotFoundException("User not found");
             });
@@ -179,6 +181,9 @@ public class SocialService {
     if (normalized.isBlank() || normalized.length() > 80) {
       throw new IllegalArgumentException(
           "Enter an account ID or a display name up to 80 characters");
+    }
+    if (!normalized.matches("[A-Za-z0-9_]+")) {
+      throw new IllegalArgumentException("Use letters, numbers, and underscores only");
     }
     return normalized;
   }

@@ -5,9 +5,10 @@
 ```text
 challenges/
 ├─ web/
-├─ crypto/
-├─ forensics/
-├─ misc/
+├─ forensic/
+├─ reversing/
+├─ flagbox/        FlagBox 60문제 시더가 부팅 때 생성하는 배포 파일
+├─ mvp/            초기 MVP 3문제의 배포 파일
 └─ uploads/      관리자 API의 런타임 업로드, Git 제외
 ```
 

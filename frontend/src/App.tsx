@@ -9,7 +9,7 @@ import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
 import './App.css'
 import './typography.css'
 
-type Filter = 'ALL' | 'WEB' | 'CRYPTO' | 'FORENSICS' | 'MISC'
+type Filter = 'ALL' | 'WEB' | 'FORENSIC' | 'REVERSING'
 const difficultyOrder: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2, INSANE: 3 }
 const byDifficulty = (a: ChallengeSummary, b: ChallengeSummary) => (difficultyOrder[a.difficulty] ?? 9) - (difficultyOrder[b.difficulty] ?? 9) || a.score - b.score
 
@@ -77,7 +77,7 @@ const englishToKorean: Record<string, string> = {
   'Delete account': '계정 삭제', 'Restore account': '계정 복구', 'Restore': '복구', 'Suspend': '정지', 'Loading administrator dashboard…': '관리자 대시보드를 불러오는 중…',
   'Learn safely. Solve it yourself.': '안전하게 배우고, 직접 풀어보세요.', 'Learning platform online': '학습 플랫폼 정상 운영 중', 'Skip': '건너뛰기',
   'Nothing here yet.': '아직 준비된 게 없어요.', 'New content is on the way. Check back soon.': '새로운 콘텐츠가 곧 채워질 거예요.', 'Not the correct flag. Double-check the format and try again.': '정답이 아니에요. FLAG 형식을 다시 확인해 보세요.', 'Too many attempts. Please wait a moment and try again.': '너무 많이 시도했어요. 잠시 후에 다시 시도해 주세요.', 'You have already solved this challenge.': '이미 해결한 문제예요.', 'Correct!': '정답이에요!',
-  'EASY': '쉬움', 'MEDIUM': '보통', 'HARD': '어려움', 'INSANE': '도전', 'WEB': '웹', 'CRYPTO': '암호학', 'FORENSICS': '포렌식', 'MISC': '기타', 'credits': '크레딧',
+  'EASY': '쉬움', 'MEDIUM': '보통', 'HARD': '어려움', 'INSANE': '도전', 'WEB': '웹', 'FORENSIC': '포렌식', 'REVERSING': '리버싱', 'credits': '크레딧',
   'You have credits left.': '남은 크레딧을 확인하세요.', 'Opening challenge...': '문제를 여는 중...', 'Could not load this challenge.': '문제를 불러오지 못했어요.', 'Not enough hint credits.': '힌트 크레딧이 부족해요.',
 }
 const koreanToEnglish = Object.fromEntries(Object.entries(englishToKorean).map(([english, korean]) => [korean, english])) as Record<string, string>
@@ -477,7 +477,7 @@ function titleTone(id: string) { return ['beginner', 'rookie', 'junior', 'senior
 function ChallengeRow({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <button className="challenge-row" type="button" onClick={() => onOpen(item)}><span className={`category-mark ${item.category.toLowerCase()}`} /><span className="row-main"><strong>{item.title}</strong><small>{item.category} · {item.difficulty}</small></span><span className="row-meta"><b>{item.score} pts</b>{item.solved && <span className="solved">SOLVED</span>}</span></button> }
 
 function ChallengesView({ items, total, category, onCategory, onOpen }: { items: ChallengeSummary[]; total: number; category: Filter; onCategory: (value: Filter) => void; onOpen: (item: ChallengeSummary) => void }) {
-  return <div className="page"><PageIntro eyebrow="WARGAME" title="어떤 문제부터 풀어볼까요?" description="부담 없이 골라보고, 막히면 힌트를 사용해 보세요." /><section className="challenge-toolbar"><div className="filter-tabs">{(['ALL', 'WEB', 'CRYPTO', 'FORENSICS', 'MISC'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? '전체' : item}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{items.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{items.length === 0 && <EmptyState />}</div>
+  return <div className="page"><PageIntro eyebrow="WARGAME" title="어떤 문제부터 풀어볼까요?" description="부담 없이 골라보고, 막히면 힌트를 사용해 보세요." /><section className="challenge-toolbar"><div className="filter-tabs">{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? '전체' : item}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{items.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{items.length === 0 && <EmptyState />}</div>
 }
 
 function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h3>{item.title}</h3><p>문제를 읽고, 차근차근 단서를 찾아 FLAG를 제출해 보세요.</p><div className="card-bottom"><strong>{item.score}<small>점</small></strong>{item.solved && <span className="solved">해결 완료</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? '다시 보기' : '문제 열기'}</button></div></article> }
@@ -741,10 +741,12 @@ function FriendsView({ user, onLogin }: { user: User | null; onLogin: () => void
       ? current.map((item) => item.id === message.id ? message : item)
       : [...current, message])
   }, [])
-  useEffect(() => { if (user) void refresh() }, [user, refresh])
+  useEffect(() => { if (!user) return; const timer = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(timer) }, [user, refresh])
   useEffect(() => {
-    if (!selectedFriend) { setMessages([]); return }
-    void api.messages(selectedFriend).then(setMessages).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load messages.'))
+    if (!selectedFriend) return
+    let active = true
+    void api.messages(selectedFriend).then((next) => { if (active) { setMessages(next); setError('') } }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Could not load messages.') })
+    return () => { active = false }
   }, [selectedFriend])
   useEffect(() => {
     if (!user) return
@@ -1063,8 +1065,12 @@ function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { 
   const oauthError = oauthErrorMessage(new URLSearchParams(location.search).get('oauthError'))
   const sessionExpired = new URLSearchParams(location.search).get('sessionExpired') === '1'
   const [error, setError] = useState(sessionExpired ? sessionExpiredMessage : oauthError)
+  const [errorCause, setErrorCause] = useState({ oauthError, sessionExpired })
+  if (errorCause.oauthError !== oauthError || errorCause.sessionExpired !== sessionExpired) {
+    setErrorCause({ oauthError, sessionExpired })
+    setError(sessionExpired ? sessionExpiredMessage : oauthError)
+  }
   const [providers, setProviders] = useState<string[]>([])
-  useEffect(() => { setError(sessionExpired ? sessionExpiredMessage : oauthError) }, [oauthError, sessionExpired])
   useEffect(() => {
     api.oauthProviders().then(setProviders).catch(() => setProviders(['google', 'github', 'discord']))
   }, [])
