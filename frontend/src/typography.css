@@ -516,7 +516,28 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .status-message { color: #c8d2df; font-size: 17px; margin: 12px 0 0; }
 .social-panel { border: 1px solid var(--line); background: var(--surface); padding: 22px; align-self: start; }
 .profile-page .social-panel { display: none; }
-.friends-page .social-panel { width: min(760px, 100%); margin: 0 auto; }
+.profile-page { max-width: 1360px; padding-top: 28px; padding-bottom: 120px; }
+.profile-page .profile-layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 32px; }
+.profile-page .profile-layout > div { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr); gap: 22px; align-items: start; }
+.profile-page .attendance-panel,
+.profile-page .profile-editor { height: 100%; box-sizing: border-box; }
+.profile-page .profile-layout > div > .content-section { grid-column: 1 / -1; margin-top: 2px; }
+
+.friends-page { max-width: 1360px; padding-top: 72px; padding-bottom: 132px; }
+.friends-page .page-intro { margin-bottom: 34px; }
+.friends-page .social-panel { width: min(1080px, 100%); margin: 0 auto; padding: 0; border: 0; background: transparent; display: grid; grid-template-columns: minmax(280px, .76fr) minmax(0, 1.24fr); gap: 22px; }
+.friends-page .friend-request,
+.friends-page .friend-list,
+.friends-page .message-panel { border: 1px solid var(--line); border-radius: 22px; background: var(--surface); }
+.friends-page .friend-request { position: relative; display: grid; align-content: end; min-height: 132px; margin: 0; padding: 24px; gap: 10px; }
+.friends-page .friend-request::before,
+.friends-page .friend-list::before { display: block; margin-bottom: 13px; color: var(--text); font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+.friends-page .friend-request::before { content: '친구 추가'; grid-column: 1 / -1; }
+.friends-page .friend-list { min-height: 132px; padding: 15px 24px; }
+.friends-page .friend-list::before { content: '내 친구'; padding-top: 5px; }
+.friends-page .friend-list .muted { padding: 12px 0 8px; }
+.friends-page .message-panel { grid-column: 1 / -1; margin: 0; padding: 24px; }
+.friends-page .message-panel h3 { margin: 0 0 16px; }
 .friend-request { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 15px; }
 .friend-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
 .friend-row > button:first-child { display: flex; flex: 1 1 0; min-width: 0; align-items: center; gap: 10px; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; }
@@ -654,6 +675,14 @@ html[data-theme='light'] .hero-copy h1, html[data-theme='light'] .section-headin
   .admin-section-heading { align-items: flex-start; flex-direction: column; }
   .admin-section-heading > small { text-align: left; }
   .profile-layout { grid-template-columns: 1fr; }
+  .profile-page { padding-top: 10px; padding-bottom: 82px; }
+  .profile-page .profile-layout > div { grid-template-columns: 1fr; gap: 18px; }
+  .profile-page .profile-layout > div > .content-section { grid-column: auto; }
+  .friends-page { padding-top: 42px; padding-bottom: 86px; }
+  .friends-page .social-panel { grid-template-columns: 1fr; gap: 16px; }
+  .friends-page .message-panel { grid-column: auto; padding: 19px; }
+  .friends-page .friend-request { min-height: auto; padding: 20px; }
+  .friends-page .friend-list { padding: 13px 20px; }
   .challenge-card h3 { font-size: 21px; }
   .site-footer,
   .site-footer strong,
