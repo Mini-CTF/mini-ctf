@@ -536,7 +536,15 @@ function CallbackRoute() {
   const routerNavigate = useNavigate()
   const location = useLocation()
   const hasToken = new URLSearchParams(window.location.hash.slice(1)).has('token')
-  useEffect(() => { routerNavigate(hasToken ? '/' : `/login${location.search}`, { replace: true }) }, [hasToken, location.search, routerNavigate])
+  useEffect(() => {
+    if (hasToken) {
+      routerNavigate('/', { replace: true })
+      return
+    }
+    const query = new URLSearchParams(location.search)
+    if (!query.has('oauthError')) query.set('oauthError', 'oauth_callback_failed')
+    routerNavigate(`/login?${query.toString()}`, { replace: true })
+  }, [hasToken, location.search, routerNavigate])
   return null
 }
 
