@@ -480,7 +480,8 @@
 }
 .badge.web {
   color: var(--accent);
-  border-color: rgba(99, 169, 255, 0.3);
+  border-color: rgba(99, 169, 255, 0.35);
+  background: rgba(99, 169, 255, 0.1);
 }
 .badge.crypto {
   color: #86c9ff;
@@ -492,11 +493,13 @@
 }
 .badge.forensic {
   color: #ffc088;
-  border-color: rgba(255, 173, 102, 0.3);
+  border-color: rgba(255, 173, 102, 0.35);
+  background: rgba(255, 173, 102, 0.1);
 }
 .badge.reversing {
   color: #c3adff;
-  border-color: rgba(161, 132, 255, 0.3);
+  border-color: rgba(161, 132, 255, 0.35);
+  background: rgba(161, 132, 255, 0.12);
 }
 .badge.misc {
   color: #c3adff;
@@ -2697,4 +2700,81 @@ html[data-theme="light"] .primary-nav.is-open {
   margin: 0 0 14px;
   color: #8b93a3;
   font-size: 14px;
+}
+
+/* ── 난이도 배지: 쉬움/보통/어려움 색상 체계 ── */
+.badge.easy {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.08);
+}
+.badge.medium {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
+}
+.badge.hard {
+  color: #fb7185;
+  border-color: rgba(251, 113, 133, 0.35);
+  background: rgba(251, 113, 133, 0.08);
+}
+.badge.insane {
+  color: #e879f9;
+  border-color: rgba(232, 121, 249, 0.35);
+  background: rgba(232, 121, 249, 0.08);
+}
+
+/* ── 난이도 필터 탭 강조 ── */
+.difficulty-tabs .diff-easy.active {
+  color: #4ade80;
+}
+.difficulty-tabs .diff-medium.active {
+  color: #fbbf24;
+}
+.difficulty-tabs .diff-hard.active {
+  color: #fb7185;
+}
+.difficulty-tabs .diff-insane.active {
+  color: #e879f9;
+}
+
+/* ── 라이트 테마 대응 ── */
+html[data-theme="light"] .badge.easy {
+  color: #15803d;
+  border-color: rgba(21, 128, 61, 0.35);
+  background: rgba(21, 128, 61, 0.07);
+}
+html[data-theme="light"] .badge.medium {
+  color: #b45309;
+  border-color: rgba(180, 83, 9, 0.35);
+  background: rgba(180, 83, 9, 0.07);
+}
+html[data-theme="light"] .badge.hard {
+  color: #be123c;
+  border-color: rgba(190, 18, 60, 0.35);
+  background: rgba(190, 18, 60, 0.07);
+}
+html[data-theme="light"] .badge.insane {
+  color: #a21caf;
+  border-color: rgba(162, 28, 175, 0.35);
+  background: rgba(162, 28, 175, 0.07);
+}
+html[data-theme="light"] .badge.forensic {
+  color: #c2410c;
+  border-color: rgba(194, 65, 12, 0.35);
+  background: rgba(194, 65, 12, 0.08);
+}
+html[data-theme="light"] .badge.reversing {
+  color: #6d28d9;
+  border-color: rgba(109, 40, 217, 0.35);
+  background: rgba(109, 40, 217, 0.08);
+}
+html[data-theme="light"] .difficulty-tabs .diff-easy.active {
+  color: #15803d;
+}
+html[data-theme="light"] .difficulty-tabs .diff-medium.active {
+  color: #b45309;
+}
+html[data-theme="light"] .difficulty-tabs .diff-hard.active {
+  color: #be123c;
 }
