@@ -43,7 +43,10 @@ public class FlagboxChallengeInitializer {
 
       for (FlagboxChallengeCatalog.Seed seed : FlagboxChallengeCatalog.SEEDS) {
         String flag = ensureFlag(flags, seed.key());
-        if (challenges.existsByTitle(seed.title())) {
+        var existing = challenges.findByTitle(seed.title()).orElse(null);
+        if (existing != null) {
+          syncExisting(existing, seed);
+          challenges.save(existing);
           continue;
         }
         String artifactPath = null;
@@ -65,6 +68,24 @@ public class FlagboxChallengeInitializer {
       }
       saveFlags(root, flags);
     };
+  }
+
+  /** 카탈로그 정의가 바뀐 경우(난이도·점수 조정 등) 기존 행을 최신 정의로 맞춘다. */
+  private static void syncExisting(
+      com.minictf.challenge.Challenge existing, FlagboxChallengeCatalog.Seed seed) {
+    boolean changed = false;
+    if (!existing.getCategory().equals(seed.category())) {
+      existing.setCategory(seed.category());
+      changed = true;
+    }
+    if (!existing.getDifficulty().equals(seed.difficulty())) {
+      existing.setDifficulty(seed.difficulty());
+      changed = true;
+    }
+    if (existing.getScore() != seed.score()) {
+      existing.setScore(seed.score());
+      changed = true;
+    }
   }
 
   private static String artifactName(FlagboxChallengeCatalog.Seed seed) {
