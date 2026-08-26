@@ -1,4 +1,4 @@
-﻿.app-shell {
+.app-shell {
   min-height: 100vh;
   background: radial-gradient(
     circle at 80% 0%,
@@ -479,9 +479,9 @@
   color: #cbd1da;
 }
 .badge.web {
-  color: var(--accent);
-  border-color: rgba(99, 169, 255, 0.35);
-  background: rgba(99, 169, 255, 0.1);
+  color: #53c7ff;
+  border-color: rgba(83, 199, 255, 0.45);
+  background: rgba(83, 199, 255, 0.14);
 }
 .badge.crypto {
   color: #86c9ff;
@@ -492,14 +492,14 @@
   border-color: rgba(255, 173, 102, 0.3);
 }
 .badge.forensic {
-  color: #ffc088;
-  border-color: rgba(255, 173, 102, 0.35);
-  background: rgba(255, 173, 102, 0.1);
+  color: #ffab66;
+  border-color: rgba(255, 171, 102, 0.45);
+  background: rgba(255, 171, 102, 0.13);
 }
 .badge.reversing {
-  color: #c3adff;
-  border-color: rgba(161, 132, 255, 0.35);
-  background: rgba(161, 132, 255, 0.12);
+  color: #c9a2ff;
+  border-color: rgba(201, 162, 255, 0.45);
+  background: rgba(201, 162, 255, 0.15);
 }
 .badge.misc {
   color: #c3adff;
@@ -2750,52 +2750,57 @@ html[data-theme="light"] .primary-nav.is-open {
   background: rgba(232, 121, 249, 0.08);
 }
 
-/* ── 라이트 테마 대응 ── */
-html[data-theme="light"] .badge.easy {
-  color: #15803d;
-  border-color: rgba(21, 128, 61, 0.35);
-  background: rgba(21, 128, 61, 0.07);
+/* ── 라이트 테마 배지: 전역 스팬 가드보다 우선 적용 ── */
+html[data-theme="light"] .app-shell span.badge.web {
+  color: #0b69a3 !important;
+  border-color: rgba(11, 105, 163, 0.4) !important;
+  background: rgba(11, 105, 163, 0.08) !important;
 }
-html[data-theme="light"] .badge.medium {
-  color: #b45309;
-  border-color: rgba(180, 83, 9, 0.35);
-  background: rgba(180, 83, 9, 0.07);
+html[data-theme="light"] .app-shell span.badge.forensic {
+  color: #c2410c !important;
+  border-color: rgba(194, 65, 12, 0.4) !important;
+  background: rgba(194, 65, 12, 0.08) !important;
 }
-html[data-theme="light"] .badge.hard {
-  color: #be123c;
-  border-color: rgba(190, 18, 60, 0.35);
-  background: rgba(190, 18, 60, 0.07);
+html[data-theme="light"] .app-shell span.badge.reversing {
+  color: #6d28d9 !important;
+  border-color: rgba(109, 40, 217, 0.4) !important;
+  background: rgba(109, 40, 217, 0.08) !important;
 }
-html[data-theme="light"] .badge.insane {
-  color: #a21caf;
-  border-color: rgba(162, 28, 175, 0.35);
-  background: rgba(162, 28, 175, 0.07);
+html[data-theme="light"] .app-shell span.badge.easy {
+  color: #15803d !important;
+  border-color: rgba(21, 128, 61, 0.4) !important;
+  background: rgba(21, 128, 61, 0.07) !important;
 }
-html[data-theme="light"] .badge.forensic {
-  color: #c2410c;
-  border-color: rgba(194, 65, 12, 0.35);
-  background: rgba(194, 65, 12, 0.08);
+html[data-theme="light"] .app-shell span.badge.medium {
+  color: #b45309 !important;
+  border-color: rgba(180, 83, 9, 0.4) !important;
+  background: rgba(180, 83, 9, 0.07) !important;
 }
-html[data-theme="light"] .badge.reversing {
-  color: #6d28d9;
-  border-color: rgba(109, 40, 217, 0.35);
-  background: rgba(109, 40, 217, 0.08);
+html[data-theme="light"] .app-shell span.badge.hard {
+  color: #be123c !important;
+  border-color: rgba(190, 18, 60, 0.4) !important;
+  background: rgba(190, 18, 60, 0.07) !important;
 }
-html[data-theme="light"] .difficulty-tabs .diff-easy:hover,
-html[data-theme="light"] .difficulty-tabs .diff-easy.active {
-  color: #15803d;
-  border-color: rgba(21, 128, 61, 0.35);
-  background: rgba(21, 128, 61, 0.07);
+html[data-theme="light"] .app-shell span.badge.insane {
+  color: #a21caf !important;
+  border-color: rgba(162, 28, 175, 0.4) !important;
+  background: rgba(162, 28, 175, 0.07) !important;
 }
-html[data-theme="light"] .difficulty-tabs .diff-medium:hover,
-html[data-theme="light"] .difficulty-tabs .diff-medium.active {
-  color: #b45309;
-  border-color: rgba(180, 83, 9, 0.35);
-  background: rgba(180, 83, 9, 0.07);
+html[data-theme="light"] .app-shell .difficulty-tabs .diff-easy:hover,
+html[data-theme="light"] .app-shell .difficulty-tabs .diff-easy.active {
+  color: #15803d !important;
+  border-color: rgba(21, 128, 61, 0.4) !important;
+  background: rgba(21, 128, 61, 0.07) !important;
 }
-html[data-theme="light"] .difficulty-tabs .diff-hard:hover,
-html[data-theme="light"] .difficulty-tabs .diff-hard.active {
-  color: #be123c;
-  border-color: rgba(190, 18, 60, 0.35);
-  background: rgba(190, 18, 60, 0.07);
+html[data-theme="light"] .app-shell .difficulty-tabs .diff-medium:hover,
+html[data-theme="light"] .app-shell .difficulty-tabs .diff-medium.active {
+  color: #b45309 !important;
+  border-color: rgba(180, 83, 9, 0.4) !important;
+  background: rgba(180, 83, 9, 0.07) !important;
+}
+html[data-theme="light"] .app-shell .difficulty-tabs .diff-hard:hover,
+html[data-theme="light"] .app-shell .difficulty-tabs .diff-hard.active {
+  color: #be123c !important;
+  border-color: rgba(190, 18, 60, 0.4) !important;
+  background: rgba(190, 18, 60, 0.07) !important;
 }

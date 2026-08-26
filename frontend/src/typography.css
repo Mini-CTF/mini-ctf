@@ -731,8 +731,8 @@ html[data-theme='light'] .brand img { background-color: #f7f7f7; mix-blend-mode:
 .nav-button, .header-login { padding: 11px 16px; font-size: 17px; font-weight: 750; letter-spacing: -.02em; }
 html[data-theme='dark'] .app-shell :is(h1, h2, h3, p, span, small, strong, label, button, a) { color: #f5f5f5; }
 html[data-theme='light'] .app-shell :is(h1, h2, h3, p, span, small, strong, label, button, a) { color: #111 !important; }
-html[data-theme='dark'] .app-shell :is(.eyebrow, .badge, .vault-kicker, .ranking-title, .profile-accessory, .ruby-price, .text-link),
-html[data-theme='light'] .app-shell :is(.eyebrow, .badge, .vault-kicker, .ranking-title, .profile-accessory, .ruby-price, .text-link) { color: var(--accent) !important; }
+html[data-theme='dark'] .app-shell :is(.eyebrow, .vault-kicker, .ranking-title, .profile-accessory, .ruby-price, .text-link),
+html[data-theme='light'] .app-shell :is(.eyebrow, .vault-kicker, .ranking-title, .profile-accessory, .ruby-price, .text-link) { color: var(--accent) !important; }
 html[data-theme='light'] .app-shell .button.primary,
 html[data-theme='dark'] .app-shell .button.primary { color: #fff !important; }
 .app-shell .ranking-identity .super-user-title {
