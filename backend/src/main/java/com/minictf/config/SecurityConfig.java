@@ -1,6 +1,7 @@
 package com.minictf.config;
 
 import com.minictf.auth.JwtAuthenticationFilter;
+import com.minictf.auth.DatabaseOAuth2AuthorizationRequestRepository;
 import com.minictf.auth.OAuth2LoginFailureHandler;
 import com.minictf.auth.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletRequest;
@@ -124,6 +125,7 @@ public class SecurityConfig {
       OAuth2LoginFailureHandler oauthFailureHandler,
       RestSecurityHandlers handlers,
       OAuth2AuthorizationRequestResolver oauthResolver,
+      DatabaseOAuth2AuthorizationRequestRepository oauthAuthorizationRequests,
       OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> tokenResponseClient,
       OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService)
       throws Exception {
@@ -164,9 +166,12 @@ public class SecurityConfig {
                     .accessDeniedHandler(
                         (request, response, exception) -> handlers.forbidden(response)))
         .oauth2Login(
-            o ->
+                o ->
                 o.authorizationEndpoint(
-                        endpoint -> endpoint.authorizationRequestResolver(oauthResolver))
+                        endpoint ->
+                            endpoint
+                                .authorizationRequestResolver(oauthResolver)
+                                .authorizationRequestRepository(oauthAuthorizationRequests))
                     .tokenEndpoint(
                         endpoint -> endpoint.accessTokenResponseClient(tokenResponseClient))
                     .userInfoEndpoint(endpoint -> endpoint.userService(oauth2UserService))
