@@ -3243,3 +3243,89 @@ html[data-theme="light"] .learn-check li {
   border-radius: 999px;
   font-weight: 700;
 }
+
+/* ���� ����������: �� �ٹ̱� �г� ���� */
+.loadout-panel {
+  margin-top: 20px;
+}
+.loadout-panel h2 {
+  margin: 4px 0 14px;
+}
+.loadout-group {
+  margin-bottom: 14px;
+}
+.loadout-group h3 {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 8px;
+}
+.loadout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.loadout-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.loadout-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+}
+.loadout-item.equipped {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+}
+.loadout-glyph {
+  font-size: 16px;
+  opacity: 0.7;
+}
+.loadout-item.equipped .loadout-glyph {
+  opacity: 1;
+}
+.loadout-name {
+  flex: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.loadout-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.15);
+  padding: 3px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.loadout-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.loadout-footer small {
+  font-size: 13px;
+  opacity: 0.7;
+}
+.loadout-footer small span {
+  opacity: 1;
+}
