@@ -22,6 +22,7 @@ import type {
   VaultSummary,
   HiddenSummary,
 } from '../types/api'
+import { clearAuthToken, getAuthToken } from './session'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 export const sessionExpiredEvent = 'flagbox:session-expired'
@@ -32,7 +33,7 @@ function normalizeUsername(username: string): string {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('mini-ctf-token')
+  const token = getAuthToken()
   const headers = new Headers(init.headers)
   if (init.body) headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
@@ -40,7 +41,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${baseUrl}${path}`, { ...init, headers })
   const body = await response.json().catch(() => null)
   if (body?.error?.code === 'SESSION_EXPIRED_OTHER_LOGIN') {
-    localStorage.removeItem('mini-ctf-token')
+    clearAuthToken()
     window.dispatchEvent(new CustomEvent(sessionExpiredEvent, { detail: sessionExpiredMessage }))
   }
   if (!response.ok) throw new Error(body?.error?.message ?? 'Request failed. Please try again.')
@@ -118,7 +119,7 @@ export const api = {
   updateProfile: (payload: { nickname?: string; statusMessage?: string }) =>
     request<Profile>('/users/me/profile', { method: 'PUT', body: JSON.stringify(payload) }),
   async uploadAvatar(file: File): Promise<Profile> {
-    const token = localStorage.getItem('mini-ctf-token')
+    const token = getAuthToken()
     const form = new FormData()
     form.append('file', file)
     const response = await fetch(`${baseUrl}/users/me/avatar`, { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : undefined, body: form })
@@ -145,7 +146,7 @@ export const api = {
   updateMessage: (id: number, content: string) => request<DirectMessage>(`/social/messages/${id}`, { method: 'PATCH', body: JSON.stringify({ content }) }),
   deleteMessage: (id: number) => request<void>(`/social/messages/${id}`, { method: 'DELETE' }),
   async downloadArtifact(id: number) {
-    const token = localStorage.getItem('mini-ctf-token')
+    const token = getAuthToken()
     const response = await fetch(`${baseUrl}/challenges/${id}/artifact`, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })

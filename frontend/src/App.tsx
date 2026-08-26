@@ -1,6 +1,7 @@
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
+import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
 import { subscribeToSocialUpdates } from './api/realtime'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
@@ -173,7 +174,7 @@ function AppShell() {
 
   useEffect(() => {
     const expireSession = () => {
-      localStorage.removeItem('mini-ctf-token')
+      clearAuthToken()
       setUser(null)
       setError(sessionExpiredMessage)
       routerNavigate('/login?sessionExpired=1', { replace: true })
@@ -185,11 +186,11 @@ function AppShell() {
   useEffect(() => {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('token')
     if (token) {
-      localStorage.setItem('mini-ctf-token', token)
+      setAuthToken(token)
       window.history.replaceState(null, '', window.location.pathname)
     }
-    if (localStorage.getItem('mini-ctf-token')) {
-      api.me().then(setUser).catch(() => localStorage.removeItem('mini-ctf-token'))
+    if (getAuthToken()) {
+      api.me().then(setUser).catch(() => clearAuthToken())
     }
     void Promise.all([api.stats(), api.challenges(), api.ranking(), api.attendanceRanking()])
       .then(([nextStats, nextChallenges, nextRanking, nextAttendanceRanking]) => {
@@ -206,7 +207,7 @@ function AppShell() {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      if (!localStorage.getItem('mini-ctf-token')) return
+      if (!getAuthToken()) return
       void api.me().then(setUser).catch(() => undefined)
     }, 15000)
     return () => window.clearInterval(interval)
@@ -252,7 +253,7 @@ function AppShell() {
     routerNavigate(path)
   }
   const completeAuth = (result: { token: string; user: User }) => {
-    localStorage.setItem('mini-ctf-token', result.token)
+    setAuthToken(result.token)
     setUser(result.user)
     go('/challenges')
     void refresh()
@@ -266,7 +267,7 @@ function AppShell() {
     }
   }
   const logout = () => {
-    localStorage.removeItem('mini-ctf-token')
+    clearAuthToken()
     setUser(null)
     go('/')
     void refresh()

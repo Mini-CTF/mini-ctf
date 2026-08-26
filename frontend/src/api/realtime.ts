@@ -1,9 +1,10 @@
 import type { DirectMessage, Friend } from '../types/api'
+import { getAuthToken } from './session'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 export function subscribeToSocialUpdates({ onMessage, onFriendship }: { onMessage: (message: DirectMessage) => void; onFriendship: (friendship: Friend) => void }): () => void {
-  const token = localStorage.getItem('mini-ctf-token')
+  const token = getAuthToken()
   if (!token) return () => undefined
   const controller = new AbortController()
 
