@@ -535,16 +535,22 @@ function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; on
 function CallbackRoute() {
   const routerNavigate = useNavigate()
   const location = useLocation()
-  const hasToken = new URLSearchParams(window.location.hash.slice(1)).has('token')
+  const token = new URLSearchParams(window.location.hash.slice(1)).get('token')
   useEffect(() => {
-    if (hasToken) {
-      routerNavigate('/', { replace: true })
+    if (token) {
+      setAuthToken(token)
+      void api.me()
+          .then(() => window.location.replace('/'))
+          .catch(() => {
+            clearAuthToken()
+            routerNavigate('/login?oauthError=oauth_token_validation_failed', { replace: true })
+          })
       return
     }
     const query = new URLSearchParams(location.search)
     if (!query.has('oauthError')) query.set('oauthError', 'oauth_callback_failed')
     routerNavigate(`/login?${query.toString()}`, { replace: true })
-  }, [hasToken, location.search, routerNavigate])
+  }, [location.search, routerNavigate, token])
   return null
 }
 
