@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, usePa
 import { api, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
 import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
 import { subscribeToSocialUpdates } from './api/realtime'
+import GettingStartedTutorial from './onboarding'
 import { challengeGuides } from './challengeGuides'
 import { articleBySlug, LEARN_FIELDS, learnArticles } from './learnContent'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
@@ -330,14 +331,13 @@ function AppShell() {
   const guarded = (node: ReactNode) => loading ? <div className="page"><LoadingState label="Loading live platform data..." /></div> : node
   return <div className="app-shell">
     {showIntro && <FlagBoxIntro onSkip={dismissIntro} filled={introFilled} />}
-    {showTutorial && <GettingStartedTutorial onClose={() => { setShowTutorial(false); sessionStorage.setItem('flagbox-tutorial-seen', 'true') }} onNavigate={go} />}
+      {showTutorial && <GettingStartedTutorial onClose={() => { setShowTutorial(false); sessionStorage.setItem('flagbox-tutorial-seen', 'true') }} onNavigate={go} firstChallengeId={challenges[0]?.id} lang={language} />}
     <header className="site-header">
       <button className="brand" type="button" onClick={() => go('/')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
       <nav id="primary-navigation" className={mobileNavOpen ? 'primary-nav is-open' : 'primary-nav'} aria-label="Primary navigation">
         <NavButton active={path === '/'} onClick={() => go('/')}>{text.home}</NavButton>
         <NavButton active={path.startsWith('/challenges')} onClick={() => go('/challenges')}>{text.wargame}</NavButton>
-        <NavButton active={path.startsWith('/learn')} onClick={() => go('/learn')}>학습</NavButton>
         <NavButton active={path.startsWith('/ranking')} onClick={() => go('/ranking')}>{text.ranking}</NavButton>
         <NavButton active={path.startsWith('/community')} onClick={() => go('/community')}>{text.community}</NavButton>
         <NavButton active={path.startsWith('/learn')} onClick={() => go('/learn')}>{text.learn}</NavButton>
@@ -356,13 +356,12 @@ function AppShell() {
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges" element={guarded(<ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={refresh} />)} />
-        <Route path="/learn" element={guarded(<LearningView onExplore={() => go('/challenges')} />)} />
+        <Route path="/learn" element={<LearnView />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
         <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
         <Route path="/friends" element={guarded(<FriendsView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community" element={guarded(<EnhancedCommunityView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community/:postId" element={guarded(<CommunityPostRoute user={user} />)} />
-        <Route path="/learn" element={<LearnView />} />
         <Route path="/learn/:slug" element={<LearnArticleRoute />} />
         <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole />) : <Navigate to="/" replace />} />
         <Route path="/login" element={<LoginView onBack={() => go('/')} onAuth={completeAuth} />} />
@@ -387,79 +386,6 @@ function FlagBoxIntro({ onSkip, filled }: { onSkip: () => void; filled: boolean 
   return <div className={`flagbox-intro flagbox-wordmark-intro${filled ? ' is-filled' : ''}`} role="status" aria-label="FlagBox를 준비하고 있습니다."><button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button><svg className="flagbox-intro-watermark" viewBox="0 0 1500 310" aria-hidden="true"><text x="750" y="232" textAnchor="middle">FlagBox</text><g className="flagbox-intro-flag"><path className="flagbox-intro-pole" d="M1148 226L1194 62L1207 22L1209 76L1163 232Z" /><path className="flagbox-intro-pennant" d="M1212 80C1248 63 1290 68 1321 96C1315 125 1308 153 1299 182C1265 166 1240 150 1211 151Z" /></g></svg></div>
 }
 
-function GettingStartedTutorial({ onClose, onNavigate }: { onClose: () => void; onNavigate: (path: string) => void }) {
-  const [step, setStep] = useState(0)
-  const [rect, setRect] = useState<{ top: number; left: number; width: number; height: number; bottom: number } | null>(null)
-  const steps: { title: string; body: string; action: string; path?: string; selector?: string }[] = [
-    { title: 'Welcome to security learning at FlagBox', body: 'No special gear or hacking background needed — this is a space to learn by solving wargames one step at a time.', action: 'Get started' },
-    { title: 'Wargames · five difficulty tiers', body: 'From 첫걸음 to 도전 — pick the tier that fits you today. The outlined level buttons are the filters.', action: 'Open wargames', path: '/challenges', selector: '.challenge-toolbar' },
-    { title: 'Learn, then solve right away', body: 'Short articles teach the core idea, and every challenge ships with a study guide you can expand while solving.', action: 'Browse learn', path: '/learn', selector: '.learn-list' },
-    { title: 'Consistency beats talent', body: 'Community, daily check-ins, and hint credits have your back. The logo always brings you home.', action: "I'm ready", selector: '.brand' },
-  ]
-  const current = steps[step]
-
-  useEffect(() => {
-    const measure = () => {
-      const selector = steps[step]?.selector
-      const el = selector ? document.querySelector(selector) : null
-      if (!el) {
-        setRect(null)
-        return
-      }
-      const r = el.getBoundingClientRect()
-      if (r.width < 8 || r.height < 8 || r.bottom < 60 || r.top > window.innerHeight - 80) {
-        setRect(null)
-        return
-      }
-      setRect({ top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom })
-    }
-    const first = window.requestAnimationFrame(() => window.requestAnimationFrame(measure))
-    window.addEventListener('resize', measure)
-    window.addEventListener('scroll', measure, true)
-    return () => {
-      window.cancelAnimationFrame(first)
-      window.removeEventListener('resize', measure)
-      window.removeEventListener('scroll', measure, true)
-    }
-  }, [step])
-
-  const next = () => {
-    if (current.path) onNavigate(current.path)
-    if (step === steps.length - 1) onClose()
-    else setStep((value) => value + 1)
-  }
-
-  let cardStyle: React.CSSProperties | undefined
-  if (rect) {
-    const below = rect.bottom + 16
-    const fitsBelow = below + 210 < window.innerHeight
-    cardStyle = {
-      position: 'fixed',
-      top: fitsBelow ? below : undefined,
-      bottom: fitsBelow ? undefined : Math.max(14, window.innerHeight - rect.top + 16),
-      left: Math.max(16, Math.min(rect.left, window.innerWidth - 506)),
-    }
-  }
-
-  return (
-    <div className="onboarding-layer" role="dialog" aria-modal="true" aria-label="FlagBox 사용법 안내">
-      <div className={rect ? 'onboarding-spotlight' : 'onboarding-spotlight fullscreen'} style={rect ? { top: rect.top - 8, left: rect.left - 8, width: rect.width + 16, height: rect.height + 16 } : undefined} />
-      <section className={rect ? 'onboarding-card anchored' : 'onboarding-card'} style={rect ? cardStyle : undefined}>
-        <span className="onboarding-count">{step + 1} / {steps.length}</span>
-        <h2>{current.title}</h2>
-        <p>{current.body}</p>
-        <div className="onboarding-actions">
-          <button className="text-link" type="button" onClick={onClose}>
-            건너뛰기
-          </button>
-          <button className="button primary" type="button" onClick={next}>
-            {current.action}
-          </button>
-        </div>
-      </section>
-    </div>
-  )
-}
 
 function LearnView() {
   const routerNavigate = useNavigate()
@@ -524,15 +450,6 @@ function LearnArticleRoute() {
       </article>
     </div>
   )
-}
-
-function LearningView({ onExplore }: { onExplore: () => void }) {
-  const tracks = [
-    { icon: '⌘', name: '웹 기초', intro: '웹사이트가 요청과 응답으로 대화하는 방식을 익혀요.', tools: '브라우저 개발자 도구, 주소창, 메모장', steps: ['URL과 HTTP 요청·응답의 역할 이해하기', '개발자 도구의 Elements·Network 탭 열어보기', '헤더, 쿠키, 페이지 소스에서 단서 찾기'], tone: 'web' },
-    { icon: '◫', name: '포렌식 기초', intro: '남아 있는 파일과 기록에서 의미 있는 흔적을 찾아요.', tools: '파일 탐색기, 텍스트 편집기, CyberChef', steps: ['파일 확장자와 크기, 생성 정보를 먼저 확인하기', '텍스트·16진수·Base64처럼 표현 방식을 구분하기', '한 번에 하나씩 변환하고 결과를 기록하기'], tone: 'forensic' },
-    { icon: '↺', name: '리버싱 기초', intro: '프로그램이 어떤 순서로 동작하는지 거꾸로 읽어봐요.', tools: '텍스트 편집기, Python, Ghidra(나중에)', steps: ['문제 파일의 README와 출력부터 읽기', '조건문·문자열·비교 구문을 찾아 흐름 표시하기', '작은 입력으로 가설을 검증하며 되돌리기'], tone: 'reversing' },
-  ]
-  return <div className="page learning-page"><PageIntro eyebrow="LEARNING PATH" title="풀기 전에, 이해부터 해요" description="개념을 짧게 익히고 안전한 문제에 바로 적용해 보세요. 어려운 도구는 천천히 만나면 됩니다." /><section className="learning-principles"><strong>처음이라면 이렇게 시작하세요</strong><span>문제 읽기 → 단서 표시하기 → 한 단계만 실행하기 → 결과 기록하기</span></section><div className="learning-track-grid">{tracks.map((track) => <article className={`learning-track ${track.tone}`} key={track.name}><span className="learning-icon">{track.icon}</span><h2>{track.name}</h2><p>{track.intro}</p><div><b>처음에 쓰는 도구</b><small>{track.tools}</small></div><ol>{track.steps.map((item) => <li key={item}>{item}</li>)}</ol><button className="button secondary" type="button" onClick={onExplore}>관련 문제 풀어보기</button></article>)}</div><section className="learning-safety"><h2>안전한 연습 약속</h2><p>FlagBox의 문제와 제공된 파일 안에서만 연습하세요. 허가받지 않은 서비스나 타인의 계정·정보를 대상으로 시도하지 않습니다.</p></section></div>
 }
 
 function Home({ language, challenges, onExplore, onRanking, onOpen }: { language: Language; challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void }) {

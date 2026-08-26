@@ -45,34 +45,37 @@ public class FlagboxChallengeInitializer {
         String flag = ensureFlag(flags, seed.key());
         var existing = challenges.findByTitle(seed.title()).orElse(null);
         if (existing != null) {
-          syncExisting(existing, seed);
+          Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
+          Files.write(file, seed.artifact().write(flag));
+          syncExisting(existing, seed, root.relativize(file).toString().replace('\\', '/'));
           challenges.save(existing);
           continue;
         }
-        String artifactPath = null;
-        if (seed.artifact() != null) {
-          Path file = artifactDir.resolve(seed.key() + "-" + artifactName(seed));
-          Files.write(file, seed.artifact().write(flag));
-          artifactPath = root.relativize(file).toString().replace('\\', '/');
-        }
+        Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
+        Files.write(file, seed.artifact().write(flag));
+        String artifactPath = root.relativize(file).toString().replace('\\', '/');
         service.create(
             new ChallengeDtos.AdminRequest(
                 seed.title(),
-                seed.description().apply(flag),
+                seed.description(),
                 seed.category(),
                 seed.difficulty(),
                 seed.score(),
                 flag,
                 artifactPath,
-                true));
+                true,
+                seed.hint(),
+                1));
       }
       saveFlags(root, flags);
     };
   }
 
-  /** 카탈로그 정의가 바뀐 경우(난이도·점수 조정 등) 기존 행을 최신 정의로 맞춘다. */
+  /** 카탈로그 정의가 바뀐 경우(난이도·점수·설명·힌트 조정) 기존 행을 최신 정의로 맞춘다. */
   private static void syncExisting(
-      com.minictf.challenge.Challenge existing, FlagboxChallengeCatalog.Seed seed) {
+      com.minictf.challenge.Challenge existing,
+      FlagboxChallengeCatalog.Seed seed,
+      String artifactPath) {
     boolean changed = false;
     if (!existing.getCategory().equals(seed.category())) {
       existing.setCategory(seed.category());
@@ -86,22 +89,18 @@ public class FlagboxChallengeInitializer {
       existing.setScore(seed.score());
       changed = true;
     }
-  }
-
-  private static String artifactName(FlagboxChallengeCatalog.Seed seed) {
-    return switch (seed.key()) {
-      case "w11" -> "access.log";
-      case "w12" -> "hidden.js";
-      case "f01" -> "mystery.bin";
-      case "f11" -> "capture.txt";
-      case "f14" -> "photo.bin";
-      case "f15" -> "memdump.txt";
-      case "f19" -> "hidden-note.txt";
-      case "r03" -> "check.py";
-      case "r12" -> "transform.py";
-      case "r17" -> "gate.py";
-      default -> "attachment.txt";
-    };
+    if (!seed.hint().equals(existing.getHintText())) {
+      existing.setHintText(seed.hint());
+      changed = true;
+    }
+    if (!seed.description().equals(existing.getDescription())) {
+      existing.setDescription(seed.description());
+      changed = true;
+    }
+    if (!artifactPath.equals(existing.getArtifactPath())) {
+      existing.setArtifactPath(artifactPath);
+      changed = true;
+    }
   }
 
   private static Properties loadFlags(Path root) throws IOException {

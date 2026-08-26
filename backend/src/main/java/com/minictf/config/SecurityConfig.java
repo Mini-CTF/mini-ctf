@@ -1,7 +1,7 @@
 package com.minictf.config;
 
-import com.minictf.auth.JwtAuthenticationFilter;
 import com.minictf.auth.DatabaseOAuth2AuthorizationRequestRepository;
+import com.minictf.auth.JwtAuthenticationFilter;
 import com.minictf.auth.OAuth2LoginFailureHandler;
 import com.minictf.auth.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletRequest;
@@ -166,7 +166,7 @@ public class SecurityConfig {
                     .accessDeniedHandler(
                         (request, response, exception) -> handlers.forbidden(response)))
         .oauth2Login(
-                o ->
+            o ->
                 o.authorizationEndpoint(
                         endpoint ->
                             endpoint

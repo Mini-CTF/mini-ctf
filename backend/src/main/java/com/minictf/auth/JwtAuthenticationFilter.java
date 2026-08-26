@@ -1,7 +1,7 @@
 package com.minictf.auth;
 
-import com.minictf.user.UserRepository;
 import com.minictf.config.RestSecurityHandlers;
+import com.minictf.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,7 +20,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final UserRepository users;
   private final RestSecurityHandlers handlers;
 
-  public JwtAuthenticationFilter(JwtService jwt, UserRepository users, RestSecurityHandlers handlers) {
+  public JwtAuthenticationFilter(
+      JwtService jwt, UserRepository users, RestSecurityHandlers handlers) {
     this.jwt = jwt;
     this.users = users;
     this.handlers = handlers;

@@ -73,13 +73,16 @@ public class AttendanceService {
                     rule.streak ? longestStreak >= rule.threshold : dates.size() >= rule.threshold)
             .map(rule -> new AttendanceDtos.Badge(rule.id, rule.name, rule.description))
             .toList();
-    List<AttendanceDtos.Title> earnedTitles = new ArrayList<>(
-        TITLES.stream()
-            .filter(
-                rule ->
-                    rule.streak ? longestStreak >= rule.threshold : dates.size() >= rule.threshold)
-            .map(rule -> new AttendanceDtos.Title(rule.id, rule.name, rule.requirement))
-            .toList());
+    List<AttendanceDtos.Title> earnedTitles =
+        new ArrayList<>(
+            TITLES.stream()
+                .filter(
+                    rule ->
+                        rule.streak
+                            ? longestStreak >= rule.threshold
+                            : dates.size() >= rule.threshold)
+                .map(rule -> new AttendanceDtos.Title(rule.id, rule.name, rule.requirement))
+                .toList());
     boolean admin = "ADMIN".equals(user.getRole());
     if (admin)
       earnedTitles.addAll(
@@ -87,9 +90,7 @@ public class AttendanceService {
               .map(
                   tier ->
                       new AttendanceDtos.Title(
-                          tier.id().toUpperCase(),
-                          tier.name(),
-                          tier.minimumScore() + " points"))
+                          tier.id().toUpperCase(), tier.name(), tier.minimumScore() + " points"))
               .toList());
     if (admin)
       earnedTitles.add(new AttendanceDtos.Title(SUPER_USER, "Super User", "Administrator title"));

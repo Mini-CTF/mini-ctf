@@ -68,8 +68,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     response.sendRedirect(
         callbackRedirect(request)
             + "#token="
-            + URLEncoder.encode(
-                authService.issueOAuthSession(user), StandardCharsets.UTF_8));
+            + URLEncoder.encode(authService.issueOAuthSession(user), StandardCharsets.UTF_8));
   }
 
   private String callbackRedirect(HttpServletRequest request) {

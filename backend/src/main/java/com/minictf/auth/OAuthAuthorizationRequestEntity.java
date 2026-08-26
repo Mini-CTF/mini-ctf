@@ -19,10 +19,27 @@ public class OAuthAuthorizationRequestEntity {
   @Column(name = "expires_at", nullable = false)
   private Instant expiresAt;
 
-  public String getState() { return state; }
-  public void setState(String value) { state = value; }
-  public String getPayload() { return payload; }
-  public void setPayload(String value) { payload = value; }
-  public Instant getExpiresAt() { return expiresAt; }
-  public void setExpiresAt(Instant value) { expiresAt = value; }
+  public String getState() {
+    return state;
+  }
+
+  public void setState(String value) {
+    state = value;
+  }
+
+  public String getPayload() {
+    return payload;
+  }
+
+  public void setPayload(String value) {
+    payload = value;
+  }
+
+  public Instant getExpiresAt() {
+    return expiresAt;
+  }
+
+  public void setExpiresAt(Instant value) {
+    expiresAt = value;
+  }
 }

@@ -31,14 +31,19 @@ public class DatabaseOAuth2AuthorizationRequestRepository
   public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
     String state = request.getParameter("state");
     if (state == null || state.isBlank()) return null;
-    return requests.findById(state).filter(item -> item.getExpiresAt().isAfter(Instant.now()))
-        .map(item -> deserialize(item.getPayload())).orElse(null);
+    return requests
+        .findById(state)
+        .filter(item -> item.getExpiresAt().isAfter(Instant.now()))
+        .map(item -> deserialize(item.getPayload()))
+        .orElse(null);
   }
 
   @Override
   @Transactional
-  public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest,
-      HttpServletRequest request, HttpServletResponse response) {
+  public void saveAuthorizationRequest(
+      OAuth2AuthorizationRequest authorizationRequest,
+      HttpServletRequest request,
+      HttpServletResponse response) {
     if (authorizationRequest == null) {
       removeAuthorizationRequest(request, response);
       return;
@@ -52,14 +57,20 @@ public class DatabaseOAuth2AuthorizationRequestRepository
 
   @Override
   @Transactional
-  public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request,
-      HttpServletResponse response) {
+  public OAuth2AuthorizationRequest removeAuthorizationRequest(
+      HttpServletRequest request, HttpServletResponse response) {
     String state = request.getParameter("state");
     if (state == null || state.isBlank()) return null;
-    return requests.findById(state).map(item -> {
-      requests.delete(item);
-      return item.getExpiresAt().isAfter(Instant.now()) ? deserialize(item.getPayload()) : null;
-    }).orElse(null);
+    return requests
+        .findById(state)
+        .map(
+            item -> {
+              requests.delete(item);
+              return item.getExpiresAt().isAfter(Instant.now())
+                  ? deserialize(item.getPayload())
+                  : null;
+            })
+        .orElse(null);
   }
 
   private static String serialize(OAuth2AuthorizationRequest request) {
@@ -73,8 +84,8 @@ public class DatabaseOAuth2AuthorizationRequestRepository
   }
 
   private static OAuth2AuthorizationRequest deserialize(String value) {
-    try (ObjectInputStream input = new ObjectInputStream(
-        new ByteArrayInputStream(Base64.getDecoder().decode(value)))) {
+    try (ObjectInputStream input =
+        new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(value)))) {
       Object item = input.readObject();
       if (item instanceof OAuth2AuthorizationRequest request) return request;
       throw new IllegalStateException("Unexpected OAuth authorization request payload");

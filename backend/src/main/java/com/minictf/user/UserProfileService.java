@@ -6,8 +6,8 @@ import jakarta.persistence.EntityNotFoundException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Locale;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import javax.imageio.ImageIO;
@@ -100,8 +100,20 @@ public class UserProfileService {
         user.getEquippedAccessory(),
         displayTitle(user),
         friendships.findAcceptedForUser(user.getId()).stream()
-            .map(friendship -> friendship.getRequester().getId().equals(user.getId()) ? friendship.getRecipient() : friendship.getRequester())
-            .map(friend -> new UserDtos.PublicFriend(friend.getUsername(), friend.getNickname(), avatarUrl(friend), friend.getEquippedFrame(), friend.getEquippedAccessory(), friend.getEquippedVaultTitle()))
+            .map(
+                friendship ->
+                    friendship.getRequester().getId().equals(user.getId())
+                        ? friendship.getRecipient()
+                        : friendship.getRequester())
+            .map(
+                friend ->
+                    new UserDtos.PublicFriend(
+                        friend.getUsername(),
+                        friend.getNickname(),
+                        avatarUrl(friend),
+                        friend.getEquippedFrame(),
+                        friend.getEquippedAccessory(),
+                        friend.getEquippedVaultTitle()))
             .toList(),
         UserTier.forScore(user.getScore()).id());
   }
@@ -136,11 +148,16 @@ public class UserProfileService {
 
   private User byUsername(String username) {
     String reference = username == null ? "" : username.trim();
-    User user = users.findByUsernameIgnoreCase(reference).orElseGet(() -> {
-      List<User> matches = users.findTop2ByNicknameIgnoreCaseAndStatusNot(reference, "DELETED");
-      if (matches.size() == 1) return matches.get(0);
-      throw new EntityNotFoundException("User not found");
-    });
+    User user =
+        users
+            .findByUsernameIgnoreCase(reference)
+            .orElseGet(
+                () -> {
+                  List<User> matches =
+                      users.findTop2ByNicknameIgnoreCaseAndStatusNot(reference, "DELETED");
+                  if (matches.size() == 1) return matches.get(0);
+                  throw new EntityNotFoundException("User not found");
+                });
     if ("DELETED".equals(user.getStatus())) throw new EntityNotFoundException("User not found");
     return user;
   }
