@@ -5,7 +5,7 @@ import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
 import { subscribeToSocialUpdates } from './api/realtime'
 import GettingStartedTutorial from './onboarding'
 import { challengeGuides } from './challengeGuides'
-import { articleBySlug, LEARN_FIELDS, learnArticles } from './learnContent'
+import { articleBySlug, LEARN_FIELDS, learnArticles, learnEn } from './learnContent'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
@@ -162,6 +162,7 @@ function AppShell() {
   const [showIntro, setShowIntro] = useState(() => sessionStorage.getItem('flagbox-intro-seen') !== 'true')
   const [introFilled, setIntroFilled] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [showMemberTutorial, setShowMemberTutorial] = useState(false)
 
   useEffect(() => {
     if (!showIntro) return
@@ -172,11 +173,16 @@ function AppShell() {
     return () => window.clearTimeout(timer)
   }, [showIntro])
   useEffect(() => {
-    if (showIntro || sessionStorage.getItem('flagbox-tutorial-seen') === 'true') return
+    if (showIntro || user || sessionStorage.getItem('flagbox-tutorial-seen') === 'true') return
     if (sessionStorage.getItem('flagbox-intro-seen') !== 'true') return
     const timer = window.setTimeout(() => setShowTutorial(true), 240)
     return () => window.clearTimeout(timer)
-  }, [showIntro])
+  }, [showIntro, user])
+  useEffect(() => {
+    if (!user || showIntro || showTutorial || sessionStorage.getItem('flagbox-member-tutorial-seen') === 'true') return
+    const timer = window.setTimeout(() => setShowMemberTutorial(true), 380)
+    return () => window.clearTimeout(timer)
+  }, [user, showIntro, showTutorial])
   useEffect(() => {
     if (!showIntro) return
     const timer = window.setTimeout(() => setIntroFilled(true), 140)
@@ -332,6 +338,7 @@ function AppShell() {
   return <div className="app-shell">
     {showIntro && <FlagBoxIntro onSkip={dismissIntro} filled={introFilled} />}
       {showTutorial && <GettingStartedTutorial onClose={() => { setShowTutorial(false); sessionStorage.setItem('flagbox-tutorial-seen', 'true') }} onNavigate={go} firstChallengeId={challenges[0]?.id} lang={language} />}
+      {showMemberTutorial && <GettingStartedTutorial scope="member" onClose={() => { setShowMemberTutorial(false); sessionStorage.setItem('flagbox-member-tutorial-seen', 'true') }} onNavigate={go} lang={language} />}
     <header className="site-header">
       <button className="brand" type="button" onClick={() => go('/')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
@@ -356,13 +363,13 @@ function AppShell() {
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges" element={guarded(<ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={refresh} />)} />
-        <Route path="/learn" element={<LearnView />} />
+        <Route path="/learn" element={<LearnView lang={language} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
         <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
         <Route path="/friends" element={guarded(<FriendsView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community" element={guarded(<EnhancedCommunityView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community/:postId" element={guarded(<CommunityPostRoute user={user} />)} />
-        <Route path="/learn/:slug" element={<LearnArticleRoute />} />
+        <Route path="/learn/:slug" element={<LearnArticleRoute lang={language} />} />
         <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole />) : <Navigate to="/" replace />} />
         <Route path="/login" element={<LoginView onBack={() => go('/')} onAuth={completeAuth} />} />
         <Route path="/auth/callback" element={<CallbackRoute />} />
@@ -387,17 +394,17 @@ function FlagBoxIntro({ onSkip, filled }: { onSkip: () => void; filled: boolean 
 }
 
 
-function LearnView() {
+function LearnView({ lang }: { lang: 'ko' | 'en' }) {
   const routerNavigate = useNavigate()
   const [field, setField] = useState<'ALL' | 'WEB' | 'FORENSIC' | 'REVERSING'>('ALL')
   const list = learnArticles.filter((article) => field === 'ALL' || article.field === field)
   return (
     <div className="page">
-      <PageIntro eyebrow="LEARN" title="Concepts first." description="Read before you solve — each article is a 5–9 minute read." />
+      <PageIntro eyebrow="LEARN" title={lang === 'ko' ? '개념부터 차근차근' : 'Concepts first.'} description={lang === 'ko' ? '문제를 풀기 전에 읽으면 이해가 달라져요. 각 글은 5~9분이면 읽혀요.' : 'Read before you solve — each article is a 5–9 minute read.'} />
       <div className="filter-tabs" aria-label="학습 분야">
         {LEARN_FIELDS.map((item) => (
           <button key={item.key} type="button" className={field === item.key ? 'filter-tab active' : 'filter-tab'} onClick={() => setField(item.key)}>
-            {item.key === 'ALL' ? 'All' : item.key}
+            {lang === 'ko' ? (item.key === 'ALL' ? '전체' : item.label) : item.key === 'ALL' ? 'All' : item.key}
           </button>
         ))}
       </div>
@@ -405,9 +412,9 @@ function LearnView() {
         {list.map((article) => (
           <button key={article.slug} type="button" className="learn-card" onClick={() => routerNavigate(`/learn/${article.slug}`)}>
             <span className={`badge ${article.field.toLowerCase()}`}>{article.field}</span>
-            <strong>{article.title}</strong>
-            <small>{article.summary}</small>
-            <span className="learn-minutes">⏱ {article.minutes} <span>min read</span></span>
+            <strong>{lang === 'ko' ? article.title : learnEn[article.slug]?.title ?? article.title}</strong>
+            <small>{lang === 'ko' ? article.summary : learnEn[article.slug]?.summary ?? article.summary}</small>
+            <span className="learn-minutes">⏱ {article.minutes}{lang === 'ko' ? '분 소요' : ' min read'}</span>
           </button>
         ))}
       </div>
@@ -415,7 +422,7 @@ function LearnView() {
   )
 }
 
-function LearnArticleRoute() {
+function LearnArticleRoute({ lang }: { lang: 'ko' | 'en' }) {
   const { slug } = useParams()
   const routerNavigate = useNavigate()
   const article = slug ? articleBySlug(slug) : undefined
@@ -426,9 +433,9 @@ function LearnArticleRoute() {
         ← Back to learn
       </button>
       <article className="learn-article">
-        <p className="eyebrow">{article.field} · {article.minutes} <span>min read</span></p>
-        <h1>{article.title}</h1>
-        <p className="learn-summary">{article.summary}</p>
+        <p className="eyebrow">{article.field} · {article.minutes}{lang === 'ko' ? '분' : ' min read'}</p>
+        <h1>{lang === 'ko' ? article.title : learnEn[article.slug]?.title ?? article.title}</h1>
+        <p className="learn-summary">{lang === 'ko' ? article.summary : learnEn[article.slug]?.summary ?? article.summary}</p>{lang === 'en' && <p className="learn-notice">Article bodies are currently provided in Korean.</p>}
         {article.sections.map((section) => (
           <section key={section.heading}>
             <h2>{section.heading}</h2>
@@ -439,7 +446,7 @@ function LearnArticleRoute() {
         ))}
         <section className="learn-check">
           <h2>✅ Quick self-check</h2>
-          <ul>{article.check.map((item, index) => <li key={index}>{item}</li>)}</ul>
+          <ul>{(lang === 'ko' ? article.check : learnEn[article.slug]?.check ?? article.check).map((item, index) => <li key={index}>{item}</li>)}</ul>
         </section>
         <div className="learn-cta">
           <p>Concepts ready? Time to solve!</p>
@@ -486,7 +493,7 @@ function Home({ language, challenges, onExplore, onRanking, onOpen }: { language
   const moveBanner = (direction: -1 | 1) => setActiveBanner((current) => (current + direction + localizedBanners.length) % localizedBanners.length)
   return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox banner"><button className="hero-banner-arrow previous" type="button" aria-label="Previous banner" onClick={() => moveBanner(-1)} /><div className="hero-banner-content banner-slide" ref={bannerContentRef}><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><span className="hero-banner-wordmark" aria-hidden="true">FlagBox</span><button className="hero-banner-arrow next" type="button" aria-label="Next banner" onClick={() => moveBanner(1)} /><div className="hero-banner-dots" role="tablist" aria-label="Banner selection">{localizedBanners.map((item, index) => <button key={item.label} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`Banner ${index + 1}`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>{language === 'en' ? 'Challenges to try now' : '지금 도전할 문제'}</h2></div><button type="button" className="text-link" onClick={onExplore}>{language === 'en' ? 'View all wargames' : '워게임 전체 보기'}</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   /*
-  return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox 안내 배너"><div className="hero-banner-content"><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><div className="hero-banner-dots" role="tablist" aria-label="배너 선택">{banners.map((item, index) => <button key={item.key === 'ALL' ? 'All' : item.key} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`${index + 1}번 배너`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="stat-strip" aria-label="플랫폼 현황"><Stat value={stats.challenges} label="워게임 문제" detail="천천히 도전해 보세요" /><Stat value={stats.solves} label="문제 해결" detail="함께 쌓은 기록" /><Stat value={stats.users} label="학습 중인 사람" detail="FlagBox 동료" /><div className="live-badge">함께 배우는 중</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
+  return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox 안내 배너"><div className="hero-banner-content"><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><div className="hero-banner-dots" role="tablist" aria-label="배너 선택">{banners.map((item, index) => <button key={lang === 'ko' ? (item.key === 'ALL' ? '전체' : item.label) : item.key === 'ALL' ? 'All' : item.key} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`${index + 1}번 배너`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="stat-strip" aria-label="플랫폼 현황"><Stat value={stats.challenges} label="워게임 문제" detail="천천히 도전해 보세요" /><Stat value={stats.solves} label="문제 해결" detail="함께 쌓은 기록" /><Stat value={stats.users} label="학습 중인 사람" detail="FlagBox 동료" /><div className="live-badge">함께 배우는 중</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   /*
   return <div className="page home-page"><section className="hero-section"><div className="hero-copy"><p className="eyebrow">SECURITY LEARNING, MADE FRIENDLY</p><h1>처음이어도 괜찮아요.<br /><span>한 문제씩 풀어봐요.</span></h1><p className="hero-description">FlagBox는 보안을 처음 배우는 사람을 위한 쉽고 안전한 워게임 학습 공간입니다.</p><div className="hero-actions"><button className="button primary" type="button" onClick={onExplore}>첫 문제 풀어보기</button><button className="button ghost" type="button" onClick={onRanking}>랭킹 둘러보기</button></div></div><button className="hero-visual hero-vault-trigger" type="button" onClick={onVault} aria-label="FlagBox 로고"><ThemeLogo className="hero-hero-logo" alt="FlagBox 로고" /></button></section><section className="stat-strip" aria-label="플랫폼 현황"><Stat value={stats.challenges} label="워게임 문제" detail="천천히 도전해 보세요" /><Stat value={stats.solves} label="문제 해결" detail="함께 쌓은 기록" /><Stat value={stats.users} label="학습 중인 사람" detail="FlagBox 동료" /><div className="live-badge">함께 배우는 중</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   */

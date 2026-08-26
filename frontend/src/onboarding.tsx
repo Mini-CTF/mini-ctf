@@ -5,7 +5,17 @@ type Lang = 'ko' | 'en'
 type LocalizedText = { title: string; body: string; action: string }
 type Step = { path?: string; selector?: string; ko: LocalizedText; en: LocalizedText }
 
-export function buildTutorialSteps(firstChallengeId?: number): Step[] {
+export function buildTutorialSteps(firstChallengeId?: number, scope: 'public' | 'member' = 'public'): Step[] {
+  if (scope === 'member') {
+    return [
+      { path: '/profile', selector: '.profile-stats', ko: { title: '내 학습 기록', body: '점수, 해결한 문제 수, 현재 순위를 여기서 바로 확인해요.', action: '다음' }, en: { title: 'Your learning record', body: 'See your score, solved challenges, and current rank at a glance.', action: 'Next' } },
+      { selector: '.attendance-panel', ko: { title: '매일 출석하기', body: '하루 한 번 출석하면 연속 기록과 보상을 쌓을 수 있어요. 부담 없이 꾸준히 이어가 보세요.', action: '다음' }, en: { title: 'Daily check-in', body: 'Check in once a day to build a streak and earn rewards.', action: 'Next' } },
+      { selector: '.profile-editor', ko: { title: '프로필 꾸미기', body: '표시 이름과 상태 메시지를 바꿀 수 있어요. 저장하면 랭킹과 커뮤니티에도 바로 반영됩니다.', action: '다음' }, en: { title: 'Customize your profile', body: 'Change your display name and status. Your updates appear in rankings and community too.', action: 'Next' } },
+      { selector: '.profile-vault-button', ko: { title: 'Cipher Vault', body: '출석과 미션으로 얻은 루비로 프로필 테두리, 칭호, 힌트 크레딧을 관리해요.', action: '다음' }, en: { title: 'Cipher Vault', body: 'Use rubies earned from check-ins and missions for frames, titles, and hint credits.', action: 'Next' } },
+      { path: '/friends', selector: '.friend-request', ko: { title: '친구 추가하기', body: '상대방의 계정 아이디를 입력해 친구 요청을 보낼 수 있어요.', action: '다음' }, en: { title: 'Add friends', body: 'Enter a learner’s account username to send a friend request.', action: 'Next' } },
+      { selector: '.friend-list', ko: { title: '친구와 DM', body: '요청을 수락하면 이 목록에서 친구 프로필을 보고 개인 메시지를 보낼 수 있어요.', action: '마치기' }, en: { title: 'Friends & DMs', body: 'After a request is accepted, use this list to view profiles and send private messages.', action: 'Finish' } },
+    ]
+  }
   const detailSteps: Step[] = firstChallengeId
     ? [
         {
@@ -90,9 +100,7 @@ export function buildTutorialSteps(firstChallengeId?: number): Step[] {
     { selector: '.ranking-panel', ko: { title: '티어와 배지', body: '상위 러너들의 프로필 테두리·칭호가 보이죠? 나중에 내 것도 만들 수 있어요.', action: '다음' }, en: { title: 'Tiers & badges', body: 'See those profile frames and titles? Yours will show up here too.', action: 'Next' } },
     { path: '/community', selector: '.community-toolbar', ko: { title: '커뮤니티에서 질문하기', body: '막혔다면 질문 탭에 남겨보세요. 함께 배우면 빨라집니다.', action: '다음' }, en: { title: 'Ask the community', body: 'Stuck? Post in the question tab. Learning together is faster.', action: 'Next' } },
     { selector: '.community-list', ko: { title: '글·반응·댓글', body: '다른 러너의 기록에 좋아요와 답글로 응원해요. 플래그 직접 공유는 금지!', action: '다음' }, en: { title: 'Posts · reactions · replies', body: 'Cheer others with likes and replies. Never post raw flags!', action: 'Next' } },
-    { path: '/profile', selector: '.profile-stats', ko: { title: '마이 페이지 — 나의 기록', body: '점수·해결 수·출석 현황이 한눈에 모여 있어요.', action: '다음' }, en: { title: 'My page — your record', body: 'Score, solves and attendance at a glance.', action: 'Next' } },
-    { selector: '.profile-layout', ko: { title: '출석 · 칭호 · 꾸미기', body: '매일 출석 체크로 보상을 받고, 칭호와 테두리로 프로필을 꾸며요.', action: '다음' }, en: { title: 'Attendance · titles · cosmetics', body: 'Check in daily for rewards, then style your profile with titles and frames.', action: 'Next' } },
-    { selector: '.brand', ko: { title: '준비 완료! 🎉', body: '학습으로 개념을 쌓고, 워게임에서 실전 연습, 커뮤니티에서 함께 성장! 즐거운 해킹 여행 되세요.', action: 'FlagBox 시작!' }, en: { title: 'All set! 🎉', body: 'Learn concepts, practice in wargames, grow together in the community. Happy hacking!', action: "Let's go!" } },
+    { selector: '.header-login', ko: { title: '이제 로그인해 볼까요?', body: '로그인하면 출석, 프로필 꾸미기, 친구와 메시지 같은 개인 기능도 사용할 수 있어요.', action: 'FlagBox 시작!' }, en: { title: 'Ready for your account?', body: 'Sign in to unlock check-ins, profile customization, friends, and private messages.', action: "Let's go!" } },
   ]
 }
 
@@ -101,13 +109,15 @@ export function GettingStartedTutorial({
   onNavigate,
   firstChallengeId,
   lang,
+  scope = 'public',
 }: {
   onClose: () => void
   onNavigate: (path: string) => void
   firstChallengeId?: number
   lang: Lang
+  scope?: 'public' | 'member'
 }) {
-  const steps = buildTutorialSteps(firstChallengeId)
+  const steps = buildTutorialSteps(firstChallengeId, scope)
   const [step, setStep] = useState(0)
   const [rect, setRect] = useState<{ top: number; left: number; width: number; height: number; bottom: number } | null>(null)
   const location = useLocation()

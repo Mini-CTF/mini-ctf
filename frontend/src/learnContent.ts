@@ -13,6 +13,10 @@ export type LearnArticle = {
   check: string[]
 }
 
+// English copy can be added per article without breaking the Korean-first curriculum.
+// The UI falls back to the original article while a translation is being prepared.
+export const learnEn: Partial<Record<string, Pick<LearnArticle, 'title' | 'summary' | 'check'>>> = {}
+
 export const LEARN_FIELDS = [
   { key: 'ALL', label: '전체' },
   { key: 'WEB', label: '웹' },
