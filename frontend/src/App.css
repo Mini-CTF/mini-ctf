@@ -2724,18 +2724,30 @@ html[data-theme="light"] .primary-nav.is-open {
   background: rgba(232, 121, 249, 0.08);
 }
 
-/* ── 난이도 필터 탭 강조 ── */
+/* ── 난이도 필터 탭: 글자·테두리·배경을 난이도 색으로 통일 ── */
+.difficulty-tabs .diff-easy:hover,
 .difficulty-tabs .diff-easy.active {
   color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.08);
 }
+.difficulty-tabs .diff-medium:hover,
 .difficulty-tabs .diff-medium.active {
   color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
 }
+.difficulty-tabs .diff-hard:hover,
 .difficulty-tabs .diff-hard.active {
   color: #fb7185;
+  border-color: rgba(251, 113, 133, 0.35);
+  background: rgba(251, 113, 133, 0.08);
 }
+.difficulty-tabs .diff-insane:hover,
 .difficulty-tabs .diff-insane.active {
   color: #e879f9;
+  border-color: rgba(232, 121, 249, 0.35);
+  background: rgba(232, 121, 249, 0.08);
 }
 
 /* ── 라이트 테마 대응 ── */
@@ -2769,12 +2781,21 @@ html[data-theme="light"] .badge.reversing {
   border-color: rgba(109, 40, 217, 0.35);
   background: rgba(109, 40, 217, 0.08);
 }
+html[data-theme="light"] .difficulty-tabs .diff-easy:hover,
 html[data-theme="light"] .difficulty-tabs .diff-easy.active {
   color: #15803d;
+  border-color: rgba(21, 128, 61, 0.35);
+  background: rgba(21, 128, 61, 0.07);
 }
+html[data-theme="light"] .difficulty-tabs .diff-medium:hover,
 html[data-theme="light"] .difficulty-tabs .diff-medium.active {
   color: #b45309;
+  border-color: rgba(180, 83, 9, 0.35);
+  background: rgba(180, 83, 9, 0.07);
 }
+html[data-theme="light"] .difficulty-tabs .diff-hard:hover,
 html[data-theme="light"] .difficulty-tabs .diff-hard.active {
   color: #be123c;
+  border-color: rgba(190, 18, 60, 0.35);
+  background: rgba(190, 18, 60, 0.07);
 }
