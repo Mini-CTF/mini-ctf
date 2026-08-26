@@ -525,15 +525,15 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 
 .friends-page { max-width: 1360px; padding-top: 72px; padding-bottom: 132px; }
 .friends-page .page-intro { margin-bottom: 34px; }
-.friends-page .social-panel { width: min(1080px, 100%); margin: 0 auto; padding: 0; border: 0; background: transparent; display: grid; grid-template-columns: minmax(280px, .76fr) minmax(0, 1.24fr); gap: 22px; }
+.friends-page .social-panel { width: min(1080px, 100%); margin: 0 auto; padding: 0; border: 0; background: transparent; display: grid; grid-template-columns: minmax(280px, .76fr) minmax(0, 1.24fr); align-items: start; gap: 22px; }
 .friends-page .friend-request,
 .friends-page .friend-list,
 .friends-page .message-panel { border: 1px solid var(--line); border-radius: 22px; background: var(--surface); }
-.friends-page .friend-request { position: relative; display: grid; align-content: end; min-height: 132px; margin: 0; padding: 24px; gap: 10px; }
+.friends-page .friend-request { position: relative; display: grid; margin: 0; padding: 24px; gap: 10px; }
 .friends-page .friend-request::before,
 .friends-page .friend-list::before { display: block; margin-bottom: 13px; color: var(--text); font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
 .friends-page .friend-request::before { content: '친구 추가'; grid-column: 1 / -1; }
-.friends-page .friend-list { min-height: 132px; padding: 15px 24px; }
+.friends-page .friend-list { padding: 15px 24px; }
 .friends-page .friend-list::before { content: '내 친구'; padding-top: 5px; }
 .friends-page .friend-list .muted { padding: 12px 0 8px; }
 .friends-page .message-panel { grid-column: 1 / -1; margin: 0; padding: 24px; }
@@ -681,7 +681,7 @@ html[data-theme='light'] .hero-copy h1, html[data-theme='light'] .section-headin
   .friends-page { padding-top: 42px; padding-bottom: 86px; }
   .friends-page .social-panel { grid-template-columns: 1fr; gap: 16px; }
   .friends-page .message-panel { grid-column: auto; padding: 19px; }
-  .friends-page .friend-request { min-height: auto; padding: 20px; }
+  .friends-page .friend-request { padding: 20px; }
   .friends-page .friend-list { padding: 13px 20px; }
   .challenge-card h3 { font-size: 21px; }
   .site-footer,
