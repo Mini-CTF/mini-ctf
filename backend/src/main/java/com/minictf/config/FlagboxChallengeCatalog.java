@@ -49,8 +49,8 @@ final class FlagboxChallengeCatalog {
               "w01",
               "첫 발견의 기쁨",
               "WEB",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               동료가 만든 홈페이지 소스를 열어보다 이상한 주석을 발견했어요.
@@ -69,8 +69,8 @@ final class FlagboxChallengeCatalog {
               "w02",
               "보이지 않는 입력칸",
               "WEB",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               회원가입 폼을 살펴보던 중 화면에는 보이지 않는 입력칸을 찾았어요.
@@ -91,8 +91,8 @@ final class FlagboxChallengeCatalog {
               "w03",
               "로봇에게만 알려준 길",
               "WEB",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               웹사이트는 검색 로봇에게 보여줄 위치를 /robots.txt에 적어두곤 해요.
@@ -118,7 +118,7 @@ final class FlagboxChallengeCatalog {
               "쿠키 속 암호",
               "WEB",
               "EASY",
-              100,
+              150,
               flag ->
                   """
               개발자 도구(F12)의 Application 탭에서 이런 쿠키를 발견했어요.
@@ -135,8 +135,8 @@ final class FlagboxChallengeCatalog {
               "w05",
               "페이지의 명함",
               "WEB",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               사이트 head를 살펴보던 중 낯선 meta 태그를 찾았어요.
@@ -157,8 +157,8 @@ final class FlagboxChallengeCatalog {
               "w06",
               "스크립트 속 변수",
               "WEB",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               페이지를 불러오는 스크립트 파일에서 흥미로운 줄을 발견했어요.
@@ -177,7 +177,7 @@ final class FlagboxChallengeCatalog {
               "주소창의 암호",
               "WEB",
               "EASY",
-              100,
+              150,
               flag -> {
                 String encoded = b64(flag);
                 return """
@@ -197,7 +197,7 @@ final class FlagboxChallengeCatalog {
               "응답 헤더의 쪽지",
               "WEB",
               "EASY",
-              100,
+              150,
               flag ->
                   """
               개발자 도구 Network 탭에서 응답 헤더를 들여다봤어요.
@@ -218,7 +218,7 @@ final class FlagboxChallengeCatalog {
               "16진수로 쓰인 편지",
               "WEB",
               "EASY",
-              100,
+              150,
               flag -> {
                 String encoded = hex(flag);
                 return """
@@ -238,7 +238,7 @@ final class FlagboxChallengeCatalog {
               "엔터티의 옷을 벗기면",
               "WEB",
               "EASY",
-              100,
+              150,
               flag ->
                   """
               웹페이지 소스에 이렇게 생긴 문자열이 숨어 있었어요.
@@ -264,8 +264,8 @@ final class FlagboxChallengeCatalog {
               "w11",
               "지워지지 않은 발자국",
               "WEB",
-              "MEDIUM",
-              250,
+              "EASY",
+              150,
               flag ->
                   """
               웹 서버 접속 기록(access.log)이 첨부돼 있어요. 대부분 평범하지만, 누군가
@@ -276,8 +276,8 @@ final class FlagboxChallengeCatalog {
               "w12",
               "난독화 입문",
               "WEB",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag ->
                   """
               사이트에서 이상하게 생긴 스크립트 파일 하나가 다운로드됐어요. 겉보기엔 알 수 없지만
@@ -289,8 +289,8 @@ final class FlagboxChallengeCatalog {
               "w13",
               "열어본 JWT",
               "WEB",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag -> {
                 String payload =
                     "{\"sub\":\"guest\",\"role\":\"viewer\",\"memo\":\"" + flag + "\"}";
@@ -316,8 +316,8 @@ final class FlagboxChallengeCatalog {
               "w14",
               "두 겹의 포장",
               "WEB",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag -> {
                 String outer = hex(b64(flag));
                 return """
@@ -336,8 +336,8 @@ final class FlagboxChallengeCatalog {
               "w15",
               "꺼져 있는 문은 잠긴 걸까",
               "WEB",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag ->
                   """
               쿠폰 입력 폼이 비활성화(disabled)돼 있었어요.
@@ -364,8 +364,8 @@ final class FlagboxChallengeCatalog {
               "w16",
               "리다이렉트 미로",
               "WEB",
-              "MEDIUM",
-              250,
+              "ADVANCED",
+              600,
               flag -> {
                 String part1 = flag.substring(0, flag.length() / 3);
                 String part2 = flag.substring(flag.length() / 3, flag.length() * 2 / 3);
@@ -390,8 +390,8 @@ final class FlagboxChallengeCatalog {
               "w17",
               "블랙박스 검증기",
               "WEB",
-              "HARD",
-              500,
+              "EXPERT",
+              1000,
               flag -> {
                 int[] target = shiftedCodes(flag, 3);
                 return """
@@ -415,8 +415,8 @@ final class FlagboxChallengeCatalog {
               "w18",
               "세 겹의 포장",
               "WEB",
-              "HARD",
-              500,
+              "ADVANCED",
+              600,
               flag -> {
                 String wrapped = reverse(rot13(b64(flag)));
                 return """
@@ -441,8 +441,8 @@ final class FlagboxChallengeCatalog {
               "w19",
               "흩어진 조각",
               "WEB",
-              "HARD",
-              500,
+              "ADVANCED",
+              600,
               flag -> {
                 String[] pieces = slice(flag, 3);
                 return """
@@ -459,8 +459,8 @@ final class FlagboxChallengeCatalog {
               "w20",
               "관리자의 실수",
               "WEB",
-              "HARD",
-              500,
+              "EXPERT",
+              1000,
               flag ->
                   """
               백업 설정 파일이 그대로 노출됐어요. 가짜가 여러 개 섞여 있지만 진짜만 골라내세요.
@@ -490,7 +490,7 @@ final class FlagboxChallengeCatalog {
               "정체불명의 파일",
               "FORENSIC",
               "EASY",
-              100,
+              150,
               flag ->
                   """
               다운로드 폴더에서 확장자 없는 파일을 발견했어요. 파일 시그니처(매직 넘버) 규칙상
@@ -509,7 +509,7 @@ final class FlagboxChallengeCatalog {
               "반복된 실패",
               "FORENSIC",
               "EASY",
-              100,
+              150,
               flag ->
                   """
               로그인 기록이에요. 계정 하나가 유난히 여러 번 실패하고 있네요.
@@ -530,8 +530,8 @@ final class FlagboxChallengeCatalog {
               "f03",
               "사진이 말해주는 것",
               "FORENSIC",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               사진 파일에는 촬영 정보(EXIF)가 함께 저장돼요. 발췌한 메타데이터를 볼까요?
@@ -552,7 +552,7 @@ final class FlagboxChallengeCatalog {
               "휴지통의 흔적",
               "FORENSIC",
               "EASY",
-              100,
+              150,
               flag ->
                   """
               윈도우 휴지통에는 삭제 기록이 남아요. 조사 도구 출력을 발췌했어요.
@@ -572,7 +572,7 @@ final class FlagboxChallengeCatalog {
               "목록에 없는 파일",
               "FORENSIC",
               "EASY",
-              100,
+              150,
               flag ->
                   """
               백업 압축파일의 목록(tar -tvf)이에요. 분위기가 다른 녀석이 하나 섞여 있어요.
@@ -591,8 +591,8 @@ final class FlagboxChallengeCatalog {
               "f06",
               "USB 연결 기록",
               "FORENSIC",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               USB가 꽂힌 기록은 윈도우 설정 로그에 남아요. 발췌 내용이에요.
@@ -614,7 +614,7 @@ final class FlagboxChallengeCatalog {
               "덤프의 오른쪽 열",
               "FORENSIC",
               "EASY",
-              100,
+              150,
               flag -> {
                 String dump = hexDump(flag);
                 return """
@@ -633,8 +633,8 @@ final class FlagboxChallengeCatalog {
               "f08",
               "편지의 겉봉",
               "FORENSIC",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               이메일 헤더를 발췌했어요. 본문보다 헤더에 흥미로운 게 숨어 있기도 해요.
@@ -655,8 +655,8 @@ final class FlagboxChallengeCatalog {
               "f09",
               "방문 기록의 이상한 항목",
               "FORENSIC",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               브라우저 방문 기록이에요. 한 줄이 분위기가 달라요.
@@ -676,8 +676,8 @@ final class FlagboxChallengeCatalog {
               "f10",
               "압축파일의 여백",
               "FORENSIC",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
               ZIP 파일은 끝에 짧은 코멘트를 달 수 있어요. zipinfo 출력을 발췌했어요.
@@ -701,8 +701,8 @@ final class FlagboxChallengeCatalog {
               "f11",
               "와이어 위의 신호",
               "FORENSIC",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag ->
                   """
               패킷 캡처를 텍스트로 정리한 파일이 첨부돼 있어요. HTTP GET 한 줄이 유독 길어요.
@@ -713,8 +713,8 @@ final class FlagboxChallengeCatalog {
               "f12",
               "새벽의 방문자",
               "FORENSIC",
-              "MEDIUM",
-              250,
+              "EASY",
+              150,
               flag -> {
                 String encoded = b64(flag);
                 return """
@@ -738,8 +738,8 @@ final class FlagboxChallengeCatalog {
               "f13",
               "자동 시작의 그림자",
               "FORENSIC",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag -> {
                 String encoded = b64Url("echo " + flag);
                 return """
@@ -761,8 +761,8 @@ final class FlagboxChallengeCatalog {
               "f14",
               "사진 뒤에 붙은 것",
               "FORENSIC",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag ->
                   """
               사진 파일 뒤에는 아무 데이터나 붙일 수 있어요. 첨부 bin 파일에서 `PK` 시그니처를
@@ -773,8 +773,8 @@ final class FlagboxChallengeCatalog {
               "f15",
               "메모리 속 문자열",
               "FORENSIC",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag ->
                   """
               메모리 덤프에서 뽑아낸 문자열 목록이 첨부돼 있어요. `CTF{`로 검색하면 여러 개가
@@ -785,8 +785,8 @@ final class FlagboxChallengeCatalog {
               "f16",
               "시간을 거슬러 간 문서",
               "FORENSIC",
-              "MEDIUM",
-              250,
+              "ADVANCED",
+              600,
               flag ->
                   """
               문서 관리 시스템의 버전 기록이 이상해요. 수정일이 생성일보다 빠르다니?
@@ -814,8 +814,8 @@ final class FlagboxChallengeCatalog {
               "f17",
               "두 로그의 교차",
               "FORENSIC",
-              "HARD",
-              500,
+              "ADVANCED",
+              600,
               flag -> {
                 String[] parts = slice(flag, 3);
                 return """
@@ -839,8 +839,8 @@ final class FlagboxChallengeCatalog {
               "f18",
               "찢어진 편지",
               "FORENSIC",
-              "HARD",
-              500,
+              "EXPERT",
+              1000,
               flag -> {
                 String whole = b64(flag);
                 int cut = whole.length() / 3;
@@ -866,8 +866,8 @@ final class FlagboxChallengeCatalog {
               "f19",
               "보이지 않는 백색소음",
               "FORENSIC",
-              "HARD",
-              500,
+              "EXPERT",
+              1000,
               flag ->
                   """
               메모장 파일이 첨부돼 있어요. 겉보기엔 평범한 짧은 문장들이지만,
@@ -881,8 +881,8 @@ final class FlagboxChallengeCatalog {
               "f20",
               "덮어쓴 일기장",
               "FORENSIC",
-              "HARD",
-              500,
+              "ADVANCED",
+              600,
               flag ->
                   """
               USB가 포맷됐지만 복구 도구가 옛 조각을 찾아냈어요. 같은 자리에 새 파일이 덮어썼는데,
@@ -908,8 +908,8 @@ final class FlagboxChallengeCatalog {
               "r01",
               "거꾸로 세계",
               "REVERSING",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag -> {
                 String stored = reverse(flag);
                 return """
@@ -929,8 +929,8 @@ final class FlagboxChallengeCatalog {
               "r02",
               "열세 뒤집기",
               "REVERSING",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag ->
                   """
                 인터넷 초창기부터 쓰인 ROT13 암호예요. 알파벳을 13글자씩 밀면 됩니다.
@@ -948,7 +948,7 @@ final class FlagboxChallengeCatalog {
               "작은 검문소",
               "REVERSING",
               "EASY",
-              100,
+              150,
               flag ->
                   """
               첨부된 check.py는 입력을 받아 검사만 해요. 코드를 읽어볼까요?
@@ -961,7 +961,7 @@ final class FlagboxChallengeCatalog {
               "열쇠 하나짜리 잠금",
               "REVERSING",
               "EASY",
-              100,
+              150,
               flag -> {
                 String locked = xorHex(flag, "K");
                 return """
@@ -981,8 +981,8 @@ final class FlagboxChallengeCatalog {
               "r05",
               "숫자의 나열",
               "REVERSING",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag -> {
                 String codes = joinInts(charCodes(flag));
                 return """
@@ -1001,8 +1001,8 @@ final class FlagboxChallengeCatalog {
               "r06",
               "두 번 포장된 상자",
               "REVERSING",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag -> {
                 String boxed = b64(b64(flag));
                 return """
@@ -1021,8 +1021,8 @@ final class FlagboxChallengeCatalog {
               "r07",
               "시저의 서신",
               "REVERSING",
-              "EASY",
-              100,
+              "BEGINNER",
+              50,
               flag -> {
                 String shifted = caesar(flag, 3);
                 return """
@@ -1043,7 +1043,7 @@ final class FlagboxChallengeCatalog {
               "조건문 수업",
               "REVERSING",
               "EASY",
-              100,
+              150,
               flag -> {
                 String printed = reverse(flag);
                 return """
@@ -1069,7 +1069,7 @@ final class FlagboxChallengeCatalog {
               "앞뒤가 바뀐 니블",
               "REVERSING",
               "EASY",
-              100,
+              150,
               flag -> {
                 String encoded = swapNibbles(flag);
                 return """
@@ -1089,7 +1089,7 @@ final class FlagboxChallengeCatalog {
               "한 줄 마법",
               "REVERSING",
               "EASY",
-              100,
+              150,
               flag -> {
                 String encoded = shiftPrintable(flag, 1);
                 return """
@@ -1115,8 +1115,8 @@ final class FlagboxChallengeCatalog {
               "r11",
               "세 단계 우체부",
               "REVERSING",
-              "MEDIUM",
-              250,
+              "EASY",
+              150,
               flag -> {
                 String parcel = hex(reverse(b64(flag)));
                 return """
@@ -1135,8 +1135,8 @@ final class FlagboxChallengeCatalog {
               "r12",
               "변환 함수의 심장",
               "REVERSING",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag -> {
                 int[] expected = rotateSwap(flag, 5);
                 return """
@@ -1150,8 +1150,8 @@ final class FlagboxChallengeCatalog {
               "r13",
               "규칙을 찾아서",
               "REVERSING",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag -> {
                 String encoded = alternateShift(flag);
                 return """
@@ -1173,8 +1173,8 @@ final class FlagboxChallengeCatalog {
               "r14",
               "어셈블리 맛보기",
               "REVERSING",
-              "MEDIUM",
-              250,
+              "ADVANCED",
+              600,
               flag -> {
                 String outHex = indexAddHex(flag);
                 return """
@@ -1206,8 +1206,8 @@ final class FlagboxChallengeCatalog {
               "r15",
               "반복 열쇠의 문",
               "REVERSING",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag -> {
                 String locked = xorHex(flag, "key");
                 return """
@@ -1227,8 +1227,8 @@ final class FlagboxChallengeCatalog {
               "r16",
               "길이가 힌트",
               "REVERSING",
-              "MEDIUM",
-              250,
+              "NORMAL",
+              300,
               flag -> {
                 String encoded = positionalShift(flag, new int[] {3, 1, 4, 1, 5});
                 return """
@@ -1250,8 +1250,8 @@ final class FlagboxChallengeCatalog {
               "r17",
               "두 라운드의 관문",
               "REVERSING",
-              "HARD",
-              500,
+              "ADVANCED",
+              600,
               flag ->
                   """
               첨부된 gate.py는 두 라운드에 걸쳐 XOR과 덧셈을 섞어 검증해요.
@@ -1263,8 +1263,8 @@ final class FlagboxChallengeCatalog {
               "r18",
               "예측 가능한 무작위",
               "REVERSING",
-              "HARD",
-              500,
+              "EXPERT",
+              1000,
               flag -> {
                 String cipherHex = xorBytesHex(flag, lcgStream(20260826L, flag.length()));
                 return """
@@ -1287,8 +1287,8 @@ final class FlagboxChallengeCatalog {
               "r19",
               "나만의 베이스64",
               "REVERSING",
-              "HARD",
-              500,
+              "ADVANCED",
+              600,
               flag -> {
                 String mapped = mapAlphabet(b64(flag));
                 return """
@@ -1310,8 +1310,8 @@ final class FlagboxChallengeCatalog {
               "r20",
               "최소 가상 머신",
               "REVERSING",
-              "HARD",
-              500,
+              "EXPERT",
+              1000,
               flag -> {
                 int[] program = {3, 1, 5, 2, 42};
                 String outHex = vmRun(flag, program);

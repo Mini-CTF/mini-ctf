@@ -40,7 +40,7 @@ public final class ChallengeDtos {
       @NotBlank @Size(max = 160) String title,
       @NotBlank @Size(max = 20_000) String description,
       @NotBlank @Pattern(regexp = "(?i)WEB|FORENSIC|REVERSING") String category,
-      @NotBlank @Pattern(regexp = "(?i)EASY|MEDIUM|HARD|INSANE") String difficulty,
+      @NotBlank @Pattern(regexp = "(?i)BEGINNER|EASY|NORMAL|ADVANCED|EXPERT") String difficulty,
       @Min(1) @Max(1_000_000) int score,
       @Size(max = 200) String flag,
       @Size(max = 500) String artifactPath,

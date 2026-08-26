@@ -45,9 +45,11 @@ public class AntiCheatService {
         Duration.between(firstActivity.get().getOccurredAt(), java.time.Instant.now()).toSeconds();
     long minimumSeconds =
         switch (challenge.getDifficulty()) {
+          case "BEGINNER" -> 10;
           case "EASY" -> 20;
-          case "MEDIUM" -> 60;
-          default -> 120;
+          case "NORMAL" -> 60;
+          case "ADVANCED" -> 120;
+          default -> 180;
         };
     if (elapsedSeconds < minimumSeconds) {
       recordOnce(

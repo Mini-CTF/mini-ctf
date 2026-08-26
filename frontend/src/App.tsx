@@ -3,6 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, usePa
 import { api, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
 import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
 import { subscribeToSocialUpdates } from './api/realtime'
+import { challengeGuides } from './challengeGuides'
+import { articleBySlug, LEARN_FIELDS, learnArticles } from './learnContent'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
@@ -10,8 +12,8 @@ import './App.css'
 import './typography.css'
 
 type Filter = 'ALL' | 'WEB' | 'FORENSIC' | 'REVERSING'
-type DifficultyFilter = 'ALL' | 'EASY' | 'MEDIUM' | 'HARD'
-const difficultyOrder: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2, INSANE: 3 }
+type DifficultyFilter = 'ALL' | 'BEGINNER' | 'EASY' | 'NORMAL' | 'ADVANCED' | 'EXPERT'
+const difficultyOrder: Record<string, number> = { BEGINNER: 0, EASY: 1, NORMAL: 2, ADVANCED: 3, EXPERT: 4 }
 const byDifficulty = (a: ChallengeSummary, b: ChallengeSummary) => (difficultyOrder[a.difficulty] ?? 9) - (difficultyOrder[b.difficulty] ?? 9) || a.score - b.score
 
 const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
@@ -33,8 +35,8 @@ const publicProfileEvent = 'flagbox:open-public-profile'
 function openPublicProfile(username: string) { window.dispatchEvent(new CustomEvent<string>(publicProfileEvent, { detail: username })) }
 
 const uiCopy = {
-  ko: { home: '홈', wargame: '워게임', ranking: '랭킹', community: '커뮤니티', profile: '마이 페이지', shop: '상점', admin: '관리', login: '로그인', logout: '로그아웃', language: '영어로 변경', footer: '안전하게 배우고, 직접 풀어보세요.', status: '학습 플랫폼 정상 운영 중' },
-  en: { home: 'Home', wargame: 'Wargames', ranking: 'Rankings', community: 'Community', profile: 'My Page', shop: 'Shop', admin: 'Admin', login: 'Sign in', logout: 'Sign out', language: '한국어로 변경', footer: 'Learn safely. Solve it yourself.', status: 'Learning platform online' },
+  ko: { home: '홈', learn: '학습', wargame: '워게임', ranking: '랭킹', community: '커뮤니티', profile: '마이 페이지', shop: '상점', admin: '관리', login: '로그인', logout: '로그아웃', language: '영어로 변경', footer: '안전하게 배우고, 직접 풀어보세요.', status: '학습 플랫폼 정상 운영 중' },
+  en: { home: 'Home', learn: 'Learn', wargame: 'Wargames', ranking: 'Rankings', community: 'Community', profile: 'My Page', shop: 'Shop', admin: 'Admin', login: 'Sign in', logout: 'Sign out', language: '한국어로 변경', footer: 'Learn safely. Solve it yourself.', status: 'Learning platform online' },
 } as const
 
 const englishToKorean: Record<string, string> = {
@@ -138,6 +140,7 @@ function AppShell() {
   const [vaultOpen, setVaultOpen] = useState(false)
   const [showIntro, setShowIntro] = useState(() => sessionStorage.getItem('flagbox-intro-seen') !== 'true')
   const [introFilled, setIntroFilled] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
 
   useEffect(() => {
     if (!showIntro) return
@@ -145,6 +148,12 @@ function AppShell() {
       setShowIntro(false)
       sessionStorage.setItem('flagbox-intro-seen', 'true')
     }, 3850)
+    return () => window.clearTimeout(timer)
+  }, [showIntro])
+  useEffect(() => {
+    if (showIntro || sessionStorage.getItem('flagbox-tutorial-seen') === 'true') return
+    if (sessionStorage.getItem('flagbox-intro-seen') !== 'true') return
+    const timer = window.setTimeout(() => setShowTutorial(true), 240)
     return () => window.clearTimeout(timer)
   }, [showIntro])
   useEffect(() => {
@@ -301,14 +310,17 @@ function AppShell() {
   const guarded = (node: ReactNode) => loading ? <div className="page"><LoadingState label="Loading live platform data..." /></div> : node
   return <div className="app-shell">
     {showIntro && <FlagBoxIntro onSkip={dismissIntro} filled={introFilled} />}
+    {showTutorial && <GettingStartedTutorial onClose={() => { setShowTutorial(false); sessionStorage.setItem('flagbox-tutorial-seen', 'true') }} onNavigate={go} />}
     <header className="site-header">
       <button className="brand" type="button" onClick={() => go('/')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
       <nav id="primary-navigation" className={mobileNavOpen ? 'primary-nav is-open' : 'primary-nav'} aria-label="Primary navigation">
         <NavButton active={path === '/'} onClick={() => go('/')}>{text.home}</NavButton>
         <NavButton active={path.startsWith('/challenges')} onClick={() => go('/challenges')}>{text.wargame}</NavButton>
+        <NavButton active={path.startsWith('/learn')} onClick={() => go('/learn')}>학습</NavButton>
         <NavButton active={path.startsWith('/ranking')} onClick={() => go('/ranking')}>{text.ranking}</NavButton>
         <NavButton active={path.startsWith('/community')} onClick={() => go('/community')}>{text.community}</NavButton>
+        <NavButton active={path.startsWith('/learn')} onClick={() => go('/learn')}>{text.learn}</NavButton>
         <NavButton active={path.startsWith('/profile')} onClick={() => go('/profile')}>{text.profile}</NavButton>
         {user && <NavButton active={path.startsWith('/friends')} onClick={() => go('/friends')}>Friends</NavButton>}
         {user && <NavButton active={false} onClick={() => { setMobileNavOpen(false); setVaultOpen(true) }}>{text.shop}</NavButton>}
@@ -324,11 +336,14 @@ function AppShell() {
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges" element={guarded(<ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={refresh} />)} />
+        <Route path="/learn" element={guarded(<LearningView onExplore={() => go('/challenges')} />)} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
         <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
         <Route path="/friends" element={guarded(<FriendsView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community" element={guarded(<EnhancedCommunityView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community/:postId" element={guarded(<CommunityPostRoute user={user} />)} />
+        <Route path="/learn" element={<LearnView />} />
+        <Route path="/learn/:slug" element={<LearnArticleRoute />} />
         <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole />) : <Navigate to="/" replace />} />
         <Route path="/login" element={<LoginView onBack={() => go('/')} onAuth={completeAuth} />} />
         <Route path="/auth/callback" element={<CallbackRoute />} />
@@ -350,6 +365,97 @@ function LoadingState({ label }: { label: string }) {
 
 function FlagBoxIntro({ onSkip, filled }: { onSkip: () => void; filled: boolean }) {
   return <div className={`flagbox-intro flagbox-wordmark-intro${filled ? ' is-filled' : ''}`} role="status" aria-label="FlagBox를 준비하고 있습니다."><button type="button" className="flagbox-intro-skip" onClick={onSkip}>건너뛰기</button><svg className="flagbox-intro-watermark" viewBox="0 0 1500 310" aria-hidden="true"><text x="750" y="232" textAnchor="middle">FlagBox</text><g className="flagbox-intro-flag"><path className="flagbox-intro-pole" d="M1148 226L1194 62L1207 22L1209 76L1163 232Z" /><path className="flagbox-intro-pennant" d="M1212 80C1248 63 1290 68 1321 96C1315 125 1308 153 1299 182C1265 166 1240 150 1211 151Z" /></g></svg></div>
+}
+
+function GettingStartedTutorial({ onClose, onNavigate }: { onClose: () => void; onNavigate: (path: string) => void }) {
+  const [step, setStep] = useState(0)
+  const steps: { title: string; body: string; action: string; path?: string }[] = [
+    { title: 'FlagBox에 오신 것을 환영해요', body: '보안은 특별한 사람만 배우는 기술이 아니에요. 안전한 연습 문제를 한 단계씩 풀며 시작해 보세요.', action: '시작하기' },
+    { title: '문제는 난이도별로 골라요', body: '첫걸음부터 도전까지, 지금의 나에게 맞는 난이도를 선택할 수 있어요. 막히면 힌트도 괜찮습니다.', action: '워게임 보기', path: '/challenges' },
+    { title: '학습하고 바로 풀어봐요', body: '웹·포렌식·리버싱의 기본 개념과 도구, 풀이 순서를 먼저 읽고 문제에 적용해 보세요.', action: '학습 둘러보기', path: '/learn' },
+    { title: '기록이 실력이 됩니다', body: '해결한 문제와 출석 기록은 랭킹과 마이페이지에 쌓여요. 천천히, 꾸준히 해보세요.', action: '준비 완료' },
+  ]
+  const current = steps[step]
+  const next = () => {
+    if (current.path) onNavigate(current.path)
+    if (step === steps.length - 1) onClose()
+    else setStep((value) => value + 1)
+  }
+  return <div className="onboarding-layer" role="dialog" aria-modal="true" aria-label="FlagBox 시작 안내"><div className="onboarding-spotlight" /><section className="onboarding-card"><span className="onboarding-count">{step + 1} / {steps.length}</span><h2>{current.title}</h2><p>{current.body}</p><div className="onboarding-actions"><button className="text-link" type="button" onClick={onClose}>건너뛰기</button><button className="button primary" type="button" onClick={next}>{current.action}</button></div></section></div>
+}
+
+function LearnView() {
+  const routerNavigate = useNavigate()
+  const [field, setField] = useState<'ALL' | 'WEB' | 'FORENSIC' | 'REVERSING'>('ALL')
+  const list = learnArticles.filter((article) => field === 'ALL' || article.field === field)
+  return (
+    <div className="page">
+      <PageIntro eyebrow="LEARN" title="개념부터 차근차근" description="문제를 풀기 전에 읽으면 이해가 달라져요. 각 글은 5~9분이면 읽혀요." />
+      <div className="filter-tabs" aria-label="학습 분야">
+        {LEARN_FIELDS.map((item) => (
+          <button key={item.key} type="button" className={field === item.key ? 'filter-tab active' : 'filter-tab'} onClick={() => setField(item.key)}>
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <div className="learn-list">
+        {list.map((article) => (
+          <button key={article.slug} type="button" className="learn-card" onClick={() => routerNavigate(`/learn/${article.slug}`)}>
+            <span className={`badge ${article.field.toLowerCase()}`}>{article.field === 'WEB' ? '웹' : article.field === 'FORENSIC' ? '포렌식' : '리버싱'}</span>
+            <strong>{article.title}</strong>
+            <small>{article.summary}</small>
+            <span className="learn-minutes">⏱ {article.minutes}분</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function LearnArticleRoute() {
+  const { slug } = useParams()
+  const routerNavigate = useNavigate()
+  const article = slug ? articleBySlug(slug) : undefined
+  if (!article) return <Navigate to="/learn" replace />
+  return (
+    <div className="page article-page">
+      <button className="back-link" type="button" onClick={() => routerNavigate('/learn')}>
+        ← 학습 목록으로
+      </button>
+      <article className="learn-article">
+        <p className="eyebrow">{article.field} · {article.minutes}분</p>
+        <h1>{article.title}</h1>
+        <p className="learn-summary">{article.summary}</p>
+        {article.sections.map((section) => (
+          <section key={section.heading}>
+            <h2>{section.heading}</h2>
+            {section.body.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+          </section>
+        ))}
+        <section className="learn-check">
+          <h2>✅ 스스로 확인하기</h2>
+          <ul>{article.check.map((item, index) => <li key={index}>{item}</li>)}</ul>
+        </section>
+        <div className="learn-cta">
+          <p>개념이 준비됐다면, 이제 직접 풀어볼 시간!</p>
+          <button type="button" className="button primary" onClick={() => routerNavigate('/challenges')}>
+            워게임으로 이동
+          </button>
+        </div>
+      </article>
+    </div>
+  )
+}
+
+function LearningView({ onExplore }: { onExplore: () => void }) {
+  const tracks = [
+    { icon: '⌘', name: '웹 기초', intro: '웹사이트가 요청과 응답으로 대화하는 방식을 익혀요.', tools: '브라우저 개발자 도구, 주소창, 메모장', steps: ['URL과 HTTP 요청·응답의 역할 이해하기', '개발자 도구의 Elements·Network 탭 열어보기', '헤더, 쿠키, 페이지 소스에서 단서 찾기'], tone: 'web' },
+    { icon: '◫', name: '포렌식 기초', intro: '남아 있는 파일과 기록에서 의미 있는 흔적을 찾아요.', tools: '파일 탐색기, 텍스트 편집기, CyberChef', steps: ['파일 확장자와 크기, 생성 정보를 먼저 확인하기', '텍스트·16진수·Base64처럼 표현 방식을 구분하기', '한 번에 하나씩 변환하고 결과를 기록하기'], tone: 'forensic' },
+    { icon: '↺', name: '리버싱 기초', intro: '프로그램이 어떤 순서로 동작하는지 거꾸로 읽어봐요.', tools: '텍스트 편집기, Python, Ghidra(나중에)', steps: ['문제 파일의 README와 출력부터 읽기', '조건문·문자열·비교 구문을 찾아 흐름 표시하기', '작은 입력으로 가설을 검증하며 되돌리기'], tone: 'reversing' },
+  ]
+  return <div className="page learning-page"><PageIntro eyebrow="LEARNING PATH" title="풀기 전에, 이해부터 해요" description="개념을 짧게 익히고 안전한 문제에 바로 적용해 보세요. 어려운 도구는 천천히 만나면 됩니다." /><section className="learning-principles"><strong>처음이라면 이렇게 시작하세요</strong><span>문제 읽기 → 단서 표시하기 → 한 단계만 실행하기 → 결과 기록하기</span></section><div className="learning-track-grid">{tracks.map((track) => <article className={`learning-track ${track.tone}`} key={track.name}><span className="learning-icon">{track.icon}</span><h2>{track.name}</h2><p>{track.intro}</p><div><b>처음에 쓰는 도구</b><small>{track.tools}</small></div><ol>{track.steps.map((item) => <li key={item}>{item}</li>)}</ol><button className="button secondary" type="button" onClick={onExplore}>관련 문제 풀어보기</button></article>)}</div><section className="learning-safety"><h2>안전한 연습 약속</h2><p>FlagBox의 문제와 제공된 파일 안에서만 연습하세요. 허가받지 않은 서비스나 타인의 계정·정보를 대상으로 시도하지 않습니다.</p></section></div>
 }
 
 function Home({ language, challenges, onExplore, onRanking, onOpen }: { language: Language; challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void }) {
@@ -479,14 +585,15 @@ function VaultItems({ items, gems = 0, fragments = 0, busy, action, actionLabel 
 
 function Stat({ value, label, detail }: { value: number; label: string; detail: string }) { return <div className="stat"><strong>{value}</strong><div><span>{label}</span><small>{detail}</small></div></div> }
 function cosmeticLabel(id: string) { return id.split('_').map((word) => word[0].toUpperCase() + word.slice(1)).join(' ') }
+function difficultyLabel(difficulty: string) { return ({ BEGINNER: '첫걸음', EASY: '쉬움', NORMAL: '보통', ADVANCED: '어려움', EXPERT: '도전' } as Record<string, string>)[difficulty] ?? difficulty }
 function titleTone(id: string) { return ['beginner', 'rookie', 'junior', 'senior', 'veteran', 'master', 'root'].includes(id.toLowerCase()) ? `tier-title-${id.toLowerCase()}` : '' }
 function ChallengeRow({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <button className="challenge-row" type="button" onClick={() => onOpen(item)}><span className={`category-mark ${item.category.toLowerCase()}`} /><span className="row-main"><strong>{item.title}</strong><small>{item.category} · {item.difficulty}</small></span><span className="row-meta"><b>{item.score} pts</b>{item.solved && <span className="solved">SOLVED</span>}</span></button> }
 
 function ChallengesView({ items, total, category, onCategory, difficulty, onDifficulty, onOpen }: { items: ChallengeSummary[]; total: number; category: Filter; onCategory: (value: Filter) => void; difficulty: DifficultyFilter; onDifficulty: (value: DifficultyFilter) => void; onOpen: (item: ChallengeSummary) => void }) {
-  return <div className="page"><PageIntro eyebrow="WARGAME" title="어떤 문제부터 풀어볼까요?" description="부담 없이 골라보고, 막히면 힌트를 사용해 보세요." /><section className="challenge-toolbar"><div className="filter-tabs" aria-label="카테고리">{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? '전체' : item}</button>)}</div><div className="filter-tabs difficulty-tabs" aria-label="난이도">{(['ALL', 'EASY', 'MEDIUM', 'HARD'] as DifficultyFilter[]).map((item) => <button key={item} className={difficulty === item ? 'filter-tab active diff-' + item.toLowerCase() : 'filter-tab diff-' + item.toLowerCase()} type="button" onClick={() => onDifficulty(item)}>{item === 'ALL' ? '모든 난이도' : item}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{items.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{items.length === 0 && <EmptyState />}</div>
+  return <div className="page"><PageIntro eyebrow="WARGAME" title="어떤 문제부터 풀어볼까요?" description="문제를 읽고, 풀이 가이드를 따라 한 단계씩 시도해 보세요." /><section className="challenge-toolbar"><div className="filter-tabs" aria-label="카테고리">{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? '전체' : item}</button>)}</div><div className="filter-tabs difficulty-tabs" aria-label="난이도">{(['ALL', 'BEGINNER', 'EASY', 'NORMAL', 'ADVANCED', 'EXPERT'] as DifficultyFilter[]).map((item) => <button key={item} className={difficulty === item ? 'filter-tab active diff-' + item.toLowerCase() : 'filter-tab diff-' + item.toLowerCase()} type="button" onClick={() => onDifficulty(item)}>{item === 'ALL' ? '모든 난이도' : difficultyLabel(item)}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{items.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{items.length === 0 && <EmptyState />}</div>
 }
 
-function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h3>{item.title}</h3><p>문제를 읽고, 차근차근 단서를 찾아 FLAG를 제출해 보세요.</p><div className="card-bottom"><strong>{item.score}<small>점</small></strong>{item.solved && <span className="solved">해결 완료</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? '다시 보기' : '문제 열기'}</button></div></article> }
+function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h3>{item.title}</h3><p>문제를 읽고, 차근차근 단서를 찾아 FLAG를 제출해 보세요.</p><div className="card-bottom"><strong>{item.score}<small>점</small></strong>{item.solved && <span className="solved">해결 완료</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? '다시 보기' : '문제 열기'}</button></div></article> }
 
 function LegacyChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: { item: ChallengeDetail; loggedIn: boolean; onBack: () => void; onLogin: () => void; onSubmitted: () => void }) {
   const [flag, setFlag] = useState('')
@@ -504,7 +611,7 @@ function LegacyChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitte
     try { const result = await api.submitFlag(item.id, flag); setMessage(result.result === 'correct' ? `Correct flag — ${result.awardedScore} points awarded.` : result.result === 'already_solved' ? 'You have already solved this challenge.' : result.result); setFlag(''); onSubmitted() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Submission failed.') }
   }
   const download = async () => { try { await api.downloadArtifact(item.id) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Download failed.') } }
-  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p></section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
+  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p></section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
 }
 
 function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitted }: { challengeId: string; loggedIn: boolean; onBack: () => void; onLogin: () => void; onSubmitted: () => void }) {
@@ -518,6 +625,7 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
   const [hintBusy, setHintBusy] = useState(false)
   const [awarded, setAwarded] = useState<number | null>(null)
   const [hintCredits, setHintCredits] = useState<number | null>(null)
+  const [guideOpen, setGuideOpen] = useState(false)
   useEffect(() => {
     let active = true
     api.challenge(id).then((next) => { if (active) setItem(next) }).catch((cause) => { if (active) setLoadError(cause instanceof Error ? cause.message : 'Could not load this challenge.') })
@@ -535,6 +643,7 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
   }, [loggedIn, item?.hintAvailable])
   if (loadError) return <div className="page"><p className="alert error">{loadError}</p><button type="button" className="button secondary" onClick={onBack}>← Back to challenges</button></div>
   if (!item) return <div className="page"><LoadingState label="Opening challenge..." /></div>
+  const guide = challengeGuides[item.title]
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setAwarded(null)
@@ -544,7 +653,7 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
     try { setHintBusy(true); setError(''); const result = await api.challengeHint(item.id); setHint(result.hint); setHintCredits(result.remainingCredits) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reveal the hint.') } finally { setHintBusy(false) }
   }
   const download = async () => { try { await api.downloadArtifact(item.id) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Download failed.') } }
-  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{item.difficulty}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small>{hintCredits !== null && (hintCredits < item.hintCost ? <small>Not enough hint credits.</small> : <small> · {hintCredits} <span>credits</span></small>)}</div><button type="button" className="button secondary" disabled={hintBusy || hint !== null || (hintCredits !== null && hintCredits < item.hintCost)} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
+  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>📚 학습 가이드 — 개념·도구·풀이 순서 {guideOpen ? '접기 ▲' : '펼치기 ▼'}</button>{guideOpen && <><div className="guide-block"><strong>이 문제의 콘셉트</strong><p>{guide.concept}</p></div><div className="guide-block"><strong>준비물 · 도구</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>이렇게 순서대로 풀어 보세요</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small>{hintCredits !== null && (hintCredits < item.hintCost ? <small>Not enough hint credits.</small> : <small> · {hintCredits} <span>credits</span></small>)}</div><button type="button" className="button secondary" disabled={hintBusy || hint !== null || (hintCredits !== null && hintCredits < item.hintCost)} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
 }
 
 function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; onSubmitted: () => void }) {

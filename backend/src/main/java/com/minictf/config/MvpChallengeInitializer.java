@@ -39,9 +39,9 @@ public class MvpChallengeInitializer {
           challenges,
           service,
           "Signal in Plain Sight",
-          "CRYPTO",
-          "EASY",
-          100,
+          "REVERSING",
+          "BEGINNER",
+          50,
           "A captured status message looks ordinary, but its alphabet only uses Base64 characters. Decode the payload and submit the recovered FLAG.",
           flags.getProperty("easy"),
           "mvp/signal.txt");
@@ -49,9 +49,9 @@ public class MvpChallengeInitializer {
           challenges,
           service,
           "Proxy Afterimage",
-          "FORENSICS",
-          "MEDIUM",
-          250,
+          "FORENSIC",
+          "EASY",
+          150,
           "Review the supplied proxy trace. The analyst preserved one suspicious request in hex. Follow the transformation hints in the artifact to recover the FLAG.",
           flags.getProperty("medium"),
           "mvp/proxy-afterimage.log");
@@ -60,11 +60,31 @@ public class MvpChallengeInitializer {
           service,
           "Orbit Gatekeeper",
           "REVERSING",
-          "HARD",
-          500,
+          "NORMAL",
+          300,
           "A small offline verifier checks a passphrase before opening a maintenance gate. Reverse its deterministic transform and recover the accepted FLAG. No network target is involved.",
           flags.getProperty("hard"),
           "mvp/orbit-gatekeeper.zip");
+      seed(
+          challenges,
+          service,
+          "Header Hunt",
+          "WEB",
+          "ADVANCED",
+          600,
+          "Inspect a safe practice response and identify the one header value that contains the encoded FLAG. No live target is involved.",
+          flags.getProperty("advanced"),
+          "mvp/header-hunt.txt");
+      seed(
+          challenges,
+          service,
+          "Layered Evidence",
+          "FORENSIC",
+          "EXPERT",
+          1000,
+          "A training evidence note has been encoded in several familiar layers. Record each transformation and recover the final FLAG.",
+          flags.getProperty("expert"),
+          "mvp/layered-evidence.txt");
 
       Files.writeString(
           mvpRoot.resolve("signal.txt"),
@@ -86,6 +106,21 @@ public class MvpChallengeInitializer {
               + "Analyst note: decode the trace from hexadecimal first; the resulting text has one more familiar layer.\n",
           StandardCharsets.UTF_8);
       writeVerifier(mvpRoot.resolve("orbit-gatekeeper.zip"), flags.getProperty("hard"));
+      Files.writeString(
+          mvpRoot.resolve("header-hunt.txt"),
+          "HTTP/1.1 200 OK\nServer: FlagBox Practice\nX-Training-Note: Read headers carefully\nX-Flag-Fragment: "
+              + Base64.getEncoder()
+                  .encodeToString(flags.getProperty("advanced").getBytes(StandardCharsets.UTF_8))
+              + "\n\nThis is a static training capture, not a live service.\n",
+          StandardCharsets.UTF_8);
+      Files.writeString(
+          mvpRoot.resolve("layered-evidence.txt"),
+          Base64.getEncoder()
+              .encodeToString(
+                  HexFormat.of()
+                      .formatHex(flags.getProperty("expert").getBytes(StandardCharsets.UTF_8))
+                      .getBytes(StandardCharsets.UTF_8)),
+          StandardCharsets.UTF_8);
     };
   }
 
@@ -114,7 +149,7 @@ public class MvpChallengeInitializer {
         flags.load(input);
       }
     }
-    for (String level : List.of("easy", "medium", "hard")) {
+    for (String level : List.of("easy", "medium", "hard", "advanced", "expert")) {
       flags.putIfAbsent(level, "CTF{" + level + "_" + randomToken() + "}");
     }
     try (var output = Files.newOutputStream(file)) {
