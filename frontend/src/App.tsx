@@ -49,7 +49,7 @@ const englishToKorean: Record<string, string> = {
   'New to security?': '처음 배우는 보안은', 'Start with FlagBox.': 'FlagBox로 가볍게.', 'One challenge a day.': '하루 한 문제로', 'A great place to start.': '가볍게 시작해요.',
   'Do not get stuck alone.': '혼자 고민하지 말고', 'Learn together.': '함께 배워요.', 'Security gets easier': '보안은, 직접 풀어보면', 'when you solve it.': '더 쉬워집니다.',
   'Take your time.': '막힐 땐 괜찮아요.', 'Hints are here.': '힌트가 함께해요.', 'Small challenges today.': '오늘의 작은 도전이', 'Stronger skills tomorrow.': '내일의 실력이 돼요.',
-  'Challenge': '문제', 'Challenges': '문제', 'All': '전체', 'Open': '열기', 'Back': '뒤로', 'Submit': '제출', 'Correct': '정답', 'Incorrect': '오답', 'Solved': '해결함', 'Locked': '잠김',
+  'Challenge': '문제', 'Challenges': '문제', 'Submit': '제출', 'Correct': '정답', 'Incorrect': '오답', 'Locked': '잠김',
   'WARGAME': '워게임', 'RANKING': '랭킹', 'Which challenge would you like to solve first?': '어떤 문제부터 풀어볼까요?', 'Pick one at your own pace, and use a hint whenever you get stuck.': '부담 없이 골라보고, 막히면 힌트를 사용해 보세요.',
   'Read the challenge, follow the clues step by step, and submit the FLAG.': '문제를 읽고, 차근차근 단서를 찾아 FLAG를 제출해 보세요.', 'points': '점', 'Review': '다시 보기', 'Open challenge': '문제 열기',
   'Back to challenges': '문제 목록으로', 'REWARD': '보상', 'THE BRIEF': '문제 설명', 'Analyze carefully.': '천천히 살펴보세요.', 'ARTIFACT': '첨부 파일', 'Challenge artifact': '문제 파일', 'Protected download from the API': '안전하게 제공되는 문제 파일입니다.', 'Download': '다운로드', 'SUBMIT FLAG': 'FLAG 제출', 'What did you find?': '찾아낸 FLAG를 제출해 보세요.', 'Flag value': 'FLAG 입력', 'Submit flag': 'FLAG 제출', 'Sign in to submit': '로그인 후 제출할 수 있어요.',
@@ -80,8 +80,28 @@ const englishToKorean: Record<string, string> = {
   'Delete account': '계정 삭제', 'Restore account': '계정 복구', 'Restore': '복구', 'Suspend': '정지', 'Loading administrator dashboard…': '관리자 대시보드를 불러오는 중…',
   'Learn safely. Solve it yourself.': '안전하게 배우고, 직접 풀어보세요.', 'Learning platform online': '학습 플랫폼 정상 운영 중', 'Skip': '건너뛰기',
   'Nothing here yet.': '아직 준비된 게 없어요.', 'New content is on the way. Check back soon.': '새로운 콘텐츠가 곧 채워질 거예요.', 'Not the correct flag. Double-check the format and try again.': '정답이 아니에요. FLAG 형식을 다시 확인해 보세요.', 'Too many attempts. Please wait a moment and try again.': '너무 많이 시도했어요. 잠시 후에 다시 시도해 주세요.', 'You have already solved this challenge.': '이미 해결한 문제예요.', 'Correct!': '정답이에요!',
-  'EASY': '쉬움', 'MEDIUM': '보통', 'HARD': '어려움', 'INSANE': '도전', 'WEB': '웹', 'FORENSIC': '포렌식', 'REVERSING': '리버싱', 'credits': '크레딧',
+  'BEGINNER': '첫걸음', 'EASY': '쉬움', 'NORMAL': '보통', 'ADVANCED': '어려움', 'EXPERT': '도전', 'WEB': '웹', 'FORENSIC': '포렌식', 'REVERSING': '리버싱', 'credits': '크레딧',
   'You have credits left.': '남은 크레딧을 확인하세요.', 'Opening challenge...': '문제를 여는 중...', 'Could not load this challenge.': '문제를 불러오지 못했어요.', 'Not enough hint credits.': '힌트 크레딧이 부족해요.',
+  'All levels': '모든 난이도', 'Solved': '해결 완료', 'SOLVED': '해결 완료', 'Open': '문제 열기', 'pts': '점',
+  'Pick your next challenge.': '어떤 문제부터 풀어볼까요?', 'Read the brief, then follow the guide one step at a time.': '문제를 읽고, 풀이 가이드를 따라 한 단계씩 시도해 보세요.',
+  '📚 Study guide — concept · tools · steps ': '📚 학습 가이드 — 개념·도구·풀이 순서 ', 'Collapse ▲': '접기 ▲', 'Expand ▼': '펼치기 ▼',
+  'The concept': '이 문제의 콘셉트', 'Tools you need': '준비물 · 도구', 'Step-by-step approach': '이렇게 순서대로 풀어 보세요',
+  'Concepts first.': '개념부터 차근차근.', 'Read before you solve — each article is a 5–9 minute read.': '문제를 풀기 전에 읽으면 이해가 달라져요. 각 글은 5~9분이면 읽혀요.',
+  'min read': '분 소요', '← Back to learn': '← 학습 목록으로', '✅ Quick self-check': '✅ 스스로 확인하기',
+  'Concepts ready? Time to solve!': '개념이 준비됐다면, 이제 직접 풀어볼 시간!', 'Go to wargames': '워게임으로 이동',
+  'Welcome to security learning at FlagBox': 'FlagBox의 보안 학습에 오신 걸 환영해요',
+  'No special gear or hacking background needed — this is a space to learn by solving wargames one step at a time.': '여기는 특별한 장비나 해킹 지식이 필요하지 않아요. 워게임 문제를 한 단계씩 풀어 나가는 학습 공간입니다.',
+  'Get started': '시작하기',
+  'Wargames · five difficulty tiers': '워게임 · 다섯 단계 난이도',
+  'From 첫걸음 to 도전 — pick the tier that fits you today. The outlined level buttons are the filters.': '첫걸음부터 도전까지, 오늘 컨디션에 맞는 난이도를 고르면 돼요. 색상 테두리 버튼이 바로 그 필터예요.',
+  'Open wargames': '워게임 열기',
+  'Learn, then solve right away': '학습하고 바로 풀어보세요',
+  'Short articles teach the core idea, and every challenge ships with a study guide you can expand while solving.': '학습 탭의 짧은 아티클로 기본 개념을 읽고, 문제 안의 풀이 가이드를 펼치며 차근차근 따라 해 보세요.',
+  'Browse learn': '학습 둘러보기',
+  'Consistency beats talent': '꾸준함이 실력이 됩니다',
+  'Community, daily check-ins, and hint credits have your back. The logo always brings you home.': '막히면 커뮤니티와 출석 체크, 힌트 크레딧이 함께해요. 로고를 누르면 언제든 홈으로 돌아와요.',
+  "I'm ready": '준비 완료',
+  'Next step': '다음 단계', 'Prev step': '이전 단계',
 }
 const koreanToEnglish = Object.fromEntries(Object.entries(englishToKorean).map(([english, korean]) => [korean, english])) as Record<string, string>
 
@@ -364,24 +384,81 @@ function LoadingState({ label }: { label: string }) {
 }
 
 function FlagBoxIntro({ onSkip, filled }: { onSkip: () => void; filled: boolean }) {
-  return <div className={`flagbox-intro flagbox-wordmark-intro${filled ? ' is-filled' : ''}`} role="status" aria-label="FlagBox를 준비하고 있습니다."><button type="button" className="flagbox-intro-skip" onClick={onSkip}>건너뛰기</button><svg className="flagbox-intro-watermark" viewBox="0 0 1500 310" aria-hidden="true"><text x="750" y="232" textAnchor="middle">FlagBox</text><g className="flagbox-intro-flag"><path className="flagbox-intro-pole" d="M1148 226L1194 62L1207 22L1209 76L1163 232Z" /><path className="flagbox-intro-pennant" d="M1212 80C1248 63 1290 68 1321 96C1315 125 1308 153 1299 182C1265 166 1240 150 1211 151Z" /></g></svg></div>
+  return <div className={`flagbox-intro flagbox-wordmark-intro${filled ? ' is-filled' : ''}`} role="status" aria-label="FlagBox를 준비하고 있습니다."><button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button><svg className="flagbox-intro-watermark" viewBox="0 0 1500 310" aria-hidden="true"><text x="750" y="232" textAnchor="middle">FlagBox</text><g className="flagbox-intro-flag"><path className="flagbox-intro-pole" d="M1148 226L1194 62L1207 22L1209 76L1163 232Z" /><path className="flagbox-intro-pennant" d="M1212 80C1248 63 1290 68 1321 96C1315 125 1308 153 1299 182C1265 166 1240 150 1211 151Z" /></g></svg></div>
 }
 
 function GettingStartedTutorial({ onClose, onNavigate }: { onClose: () => void; onNavigate: (path: string) => void }) {
   const [step, setStep] = useState(0)
-  const steps: { title: string; body: string; action: string; path?: string }[] = [
-    { title: 'FlagBox에 오신 것을 환영해요', body: '보안은 특별한 사람만 배우는 기술이 아니에요. 안전한 연습 문제를 한 단계씩 풀며 시작해 보세요.', action: '시작하기' },
-    { title: '문제는 난이도별로 골라요', body: '첫걸음부터 도전까지, 지금의 나에게 맞는 난이도를 선택할 수 있어요. 막히면 힌트도 괜찮습니다.', action: '워게임 보기', path: '/challenges' },
-    { title: '학습하고 바로 풀어봐요', body: '웹·포렌식·리버싱의 기본 개념과 도구, 풀이 순서를 먼저 읽고 문제에 적용해 보세요.', action: '학습 둘러보기', path: '/learn' },
-    { title: '기록이 실력이 됩니다', body: '해결한 문제와 출석 기록은 랭킹과 마이페이지에 쌓여요. 천천히, 꾸준히 해보세요.', action: '준비 완료' },
+  const [rect, setRect] = useState<{ top: number; left: number; width: number; height: number; bottom: number } | null>(null)
+  const steps: { title: string; body: string; action: string; path?: string; selector?: string }[] = [
+    { title: 'Welcome to security learning at FlagBox', body: 'No special gear or hacking background needed — this is a space to learn by solving wargames one step at a time.', action: 'Get started' },
+    { title: 'Wargames · five difficulty tiers', body: 'From 첫걸음 to 도전 — pick the tier that fits you today. The outlined level buttons are the filters.', action: 'Open wargames', path: '/challenges', selector: '.challenge-toolbar' },
+    { title: 'Learn, then solve right away', body: 'Short articles teach the core idea, and every challenge ships with a study guide you can expand while solving.', action: 'Browse learn', path: '/learn', selector: '.learn-list' },
+    { title: 'Consistency beats talent', body: 'Community, daily check-ins, and hint credits have your back. The logo always brings you home.', action: "I'm ready", selector: '.brand' },
   ]
   const current = steps[step]
+
+  useEffect(() => {
+    const measure = () => {
+      const selector = steps[step]?.selector
+      const el = selector ? document.querySelector(selector) : null
+      if (!el) {
+        setRect(null)
+        return
+      }
+      const r = el.getBoundingClientRect()
+      if (r.width < 8 || r.height < 8 || r.bottom < 60 || r.top > window.innerHeight - 80) {
+        setRect(null)
+        return
+      }
+      setRect({ top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom })
+    }
+    const first = window.requestAnimationFrame(() => window.requestAnimationFrame(measure))
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.cancelAnimationFrame(first)
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
+  }, [step])
+
   const next = () => {
     if (current.path) onNavigate(current.path)
     if (step === steps.length - 1) onClose()
     else setStep((value) => value + 1)
   }
-  return <div className="onboarding-layer" role="dialog" aria-modal="true" aria-label="FlagBox 시작 안내"><div className="onboarding-spotlight" /><section className="onboarding-card"><span className="onboarding-count">{step + 1} / {steps.length}</span><h2>{current.title}</h2><p>{current.body}</p><div className="onboarding-actions"><button className="text-link" type="button" onClick={onClose}>건너뛰기</button><button className="button primary" type="button" onClick={next}>{current.action}</button></div></section></div>
+
+  let cardStyle: React.CSSProperties | undefined
+  if (rect) {
+    const below = rect.bottom + 16
+    const fitsBelow = below + 210 < window.innerHeight
+    cardStyle = {
+      position: 'fixed',
+      top: fitsBelow ? below : undefined,
+      bottom: fitsBelow ? undefined : Math.max(14, window.innerHeight - rect.top + 16),
+      left: Math.max(16, Math.min(rect.left, window.innerWidth - 506)),
+    }
+  }
+
+  return (
+    <div className="onboarding-layer" role="dialog" aria-modal="true" aria-label="FlagBox 사용법 안내">
+      <div className={rect ? 'onboarding-spotlight' : 'onboarding-spotlight fullscreen'} style={rect ? { top: rect.top - 8, left: rect.left - 8, width: rect.width + 16, height: rect.height + 16 } : undefined} />
+      <section className={rect ? 'onboarding-card anchored' : 'onboarding-card'} style={rect ? cardStyle : undefined}>
+        <span className="onboarding-count">{step + 1} / {steps.length}</span>
+        <h2>{current.title}</h2>
+        <p>{current.body}</p>
+        <div className="onboarding-actions">
+          <button className="text-link" type="button" onClick={onClose}>
+            건너뛰기
+          </button>
+          <button className="button primary" type="button" onClick={next}>
+            {current.action}
+          </button>
+        </div>
+      </section>
+    </div>
+  )
 }
 
 function LearnView() {
@@ -390,21 +467,21 @@ function LearnView() {
   const list = learnArticles.filter((article) => field === 'ALL' || article.field === field)
   return (
     <div className="page">
-      <PageIntro eyebrow="LEARN" title="개념부터 차근차근" description="문제를 풀기 전에 읽으면 이해가 달라져요. 각 글은 5~9분이면 읽혀요." />
+      <PageIntro eyebrow="LEARN" title="Concepts first." description="Read before you solve — each article is a 5–9 minute read." />
       <div className="filter-tabs" aria-label="학습 분야">
         {LEARN_FIELDS.map((item) => (
           <button key={item.key} type="button" className={field === item.key ? 'filter-tab active' : 'filter-tab'} onClick={() => setField(item.key)}>
-            {item.label}
+            {item.key === 'ALL' ? 'All' : item.key}
           </button>
         ))}
       </div>
       <div className="learn-list">
         {list.map((article) => (
           <button key={article.slug} type="button" className="learn-card" onClick={() => routerNavigate(`/learn/${article.slug}`)}>
-            <span className={`badge ${article.field.toLowerCase()}`}>{article.field === 'WEB' ? '웹' : article.field === 'FORENSIC' ? '포렌식' : '리버싱'}</span>
+            <span className={`badge ${article.field.toLowerCase()}`}>{article.field}</span>
             <strong>{article.title}</strong>
             <small>{article.summary}</small>
-            <span className="learn-minutes">⏱ {article.minutes}분</span>
+            <span className="learn-minutes">⏱ {article.minutes} <span>min read</span></span>
           </button>
         ))}
       </div>
@@ -420,10 +497,10 @@ function LearnArticleRoute() {
   return (
     <div className="page article-page">
       <button className="back-link" type="button" onClick={() => routerNavigate('/learn')}>
-        ← 학습 목록으로
+        ← Back to learn
       </button>
       <article className="learn-article">
-        <p className="eyebrow">{article.field} · {article.minutes}분</p>
+        <p className="eyebrow">{article.field} · {article.minutes} <span>min read</span></p>
         <h1>{article.title}</h1>
         <p className="learn-summary">{article.summary}</p>
         {article.sections.map((section) => (
@@ -435,13 +512,13 @@ function LearnArticleRoute() {
           </section>
         ))}
         <section className="learn-check">
-          <h2>✅ 스스로 확인하기</h2>
+          <h2>✅ Quick self-check</h2>
           <ul>{article.check.map((item, index) => <li key={index}>{item}</li>)}</ul>
         </section>
         <div className="learn-cta">
-          <p>개념이 준비됐다면, 이제 직접 풀어볼 시간!</p>
+          <p>Concepts ready? Time to solve!</p>
           <button type="button" className="button primary" onClick={() => routerNavigate('/challenges')}>
-            워게임으로 이동
+            Go to wargames
           </button>
         </div>
       </article>
@@ -492,7 +569,7 @@ function Home({ language, challenges, onExplore, onRanking, onOpen }: { language
   const moveBanner = (direction: -1 | 1) => setActiveBanner((current) => (current + direction + localizedBanners.length) % localizedBanners.length)
   return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox banner"><button className="hero-banner-arrow previous" type="button" aria-label="Previous banner" onClick={() => moveBanner(-1)} /><div className="hero-banner-content banner-slide" ref={bannerContentRef}><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><span className="hero-banner-wordmark" aria-hidden="true">FlagBox</span><button className="hero-banner-arrow next" type="button" aria-label="Next banner" onClick={() => moveBanner(1)} /><div className="hero-banner-dots" role="tablist" aria-label="Banner selection">{localizedBanners.map((item, index) => <button key={item.label} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`Banner ${index + 1}`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>{language === 'en' ? 'Challenges to try now' : '지금 도전할 문제'}</h2></div><button type="button" className="text-link" onClick={onExplore}>{language === 'en' ? 'View all wargames' : '워게임 전체 보기'}</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   /*
-  return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox 안내 배너"><div className="hero-banner-content"><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><div className="hero-banner-dots" role="tablist" aria-label="배너 선택">{banners.map((item, index) => <button key={item.label} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`${index + 1}번 배너`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="stat-strip" aria-label="플랫폼 현황"><Stat value={stats.challenges} label="워게임 문제" detail="천천히 도전해 보세요" /><Stat value={stats.solves} label="문제 해결" detail="함께 쌓은 기록" /><Stat value={stats.users} label="학습 중인 사람" detail="FlagBox 동료" /><div className="live-badge">함께 배우는 중</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
+  return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox 안내 배너"><div className="hero-banner-content"><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><div className="hero-banner-dots" role="tablist" aria-label="배너 선택">{banners.map((item, index) => <button key={item.key === 'ALL' ? 'All' : item.key} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`${index + 1}번 배너`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="stat-strip" aria-label="플랫폼 현황"><Stat value={stats.challenges} label="워게임 문제" detail="천천히 도전해 보세요" /><Stat value={stats.solves} label="문제 해결" detail="함께 쌓은 기록" /><Stat value={stats.users} label="학습 중인 사람" detail="FlagBox 동료" /><div className="live-badge">함께 배우는 중</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   /*
   return <div className="page home-page"><section className="hero-section"><div className="hero-copy"><p className="eyebrow">SECURITY LEARNING, MADE FRIENDLY</p><h1>처음이어도 괜찮아요.<br /><span>한 문제씩 풀어봐요.</span></h1><p className="hero-description">FlagBox는 보안을 처음 배우는 사람을 위한 쉽고 안전한 워게임 학습 공간입니다.</p><div className="hero-actions"><button className="button primary" type="button" onClick={onExplore}>첫 문제 풀어보기</button><button className="button ghost" type="button" onClick={onRanking}>랭킹 둘러보기</button></div></div><button className="hero-visual hero-vault-trigger" type="button" onClick={onVault} aria-label="FlagBox 로고"><ThemeLogo className="hero-hero-logo" alt="FlagBox 로고" /></button></section><section className="stat-strip" aria-label="플랫폼 현황"><Stat value={stats.challenges} label="워게임 문제" detail="천천히 도전해 보세요" /><Stat value={stats.solves} label="문제 해결" detail="함께 쌓은 기록" /><Stat value={stats.users} label="학습 중인 사람" detail="FlagBox 동료" /><div className="live-badge">함께 배우는 중</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   */
@@ -590,10 +667,10 @@ function titleTone(id: string) { return ['beginner', 'rookie', 'junior', 'senior
 function ChallengeRow({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <button className="challenge-row" type="button" onClick={() => onOpen(item)}><span className={`category-mark ${item.category.toLowerCase()}`} /><span className="row-main"><strong>{item.title}</strong><small>{item.category} · {item.difficulty}</small></span><span className="row-meta"><b>{item.score} pts</b>{item.solved && <span className="solved">SOLVED</span>}</span></button> }
 
 function ChallengesView({ items, total, category, onCategory, difficulty, onDifficulty, onOpen }: { items: ChallengeSummary[]; total: number; category: Filter; onCategory: (value: Filter) => void; difficulty: DifficultyFilter; onDifficulty: (value: DifficultyFilter) => void; onOpen: (item: ChallengeSummary) => void }) {
-  return <div className="page"><PageIntro eyebrow="WARGAME" title="어떤 문제부터 풀어볼까요?" description="문제를 읽고, 풀이 가이드를 따라 한 단계씩 시도해 보세요." /><section className="challenge-toolbar"><div className="filter-tabs" aria-label="카테고리">{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? '전체' : item}</button>)}</div><div className="filter-tabs difficulty-tabs" aria-label="난이도">{(['ALL', 'BEGINNER', 'EASY', 'NORMAL', 'ADVANCED', 'EXPERT'] as DifficultyFilter[]).map((item) => <button key={item} className={difficulty === item ? 'filter-tab active diff-' + item.toLowerCase() : 'filter-tab diff-' + item.toLowerCase()} type="button" onClick={() => onDifficulty(item)}>{item === 'ALL' ? '모든 난이도' : difficultyLabel(item)}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{items.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{items.length === 0 && <EmptyState />}</div>
+  return <div className="page"><PageIntro eyebrow="WARGAME" title="Pick your next challenge." description="Read the brief, then follow the guide one step at a time." /><section className="challenge-toolbar"><div className="filter-tabs" aria-label="카테고리">{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? 'All' : item}</button>)}</div><div className="filter-tabs difficulty-tabs" aria-label="난이도">{(['ALL', 'BEGINNER', 'EASY', 'NORMAL', 'ADVANCED', 'EXPERT'] as DifficultyFilter[]).map((item) => <button key={item} className={difficulty === item ? 'filter-tab active diff-' + item.toLowerCase() : 'filter-tab diff-' + item.toLowerCase()} type="button" onClick={() => onDifficulty(item)}>{item === 'ALL' ? 'All levels' : difficultyLabel(item)}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{items.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{items.length === 0 && <EmptyState />}</div>
 }
 
-function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h3>{item.title}</h3><p>문제를 읽고, 차근차근 단서를 찾아 FLAG를 제출해 보세요.</p><div className="card-bottom"><strong>{item.score}<small>점</small></strong>{item.solved && <span className="solved">해결 완료</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? '다시 보기' : '문제 열기'}</button></div></article> }
+function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h3>{item.title}</h3><p>Read each brief and hunt for clues step by step. Submit the FLAG when you find it.</p><div className="card-bottom"><strong>{item.score}<small>pts</small></strong>{item.solved && <span className="solved">Solved</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? 'Review' : 'Open'}</button></div></article> }
 
 function LegacyChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: { item: ChallengeDetail; loggedIn: boolean; onBack: () => void; onLogin: () => void; onSubmitted: () => void }) {
   const [flag, setFlag] = useState('')
@@ -653,7 +730,7 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
     try { setHintBusy(true); setError(''); const result = await api.challengeHint(item.id); setHint(result.hint); setHintCredits(result.remainingCredits) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reveal the hint.') } finally { setHintBusy(false) }
   }
   const download = async () => { try { await api.downloadArtifact(item.id) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Download failed.') } }
-  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>📚 학습 가이드 — 개념·도구·풀이 순서 {guideOpen ? '접기 ▲' : '펼치기 ▼'}</button>{guideOpen && <><div className="guide-block"><strong>이 문제의 콘셉트</strong><p>{guide.concept}</p></div><div className="guide-block"><strong>준비물 · 도구</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>이렇게 순서대로 풀어 보세요</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small>{hintCredits !== null && (hintCredits < item.hintCost ? <small>Not enough hint credits.</small> : <small> · {hintCredits} <span>credits</span></small>)}</div><button type="button" className="button secondary" disabled={hintBusy || hint !== null || (hintCredits !== null && hintCredits < item.hintCost)} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
+  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>📚 Study guide — concept · tools · steps {guideOpen ? 'Collapse ▲' : 'Expand ▼'}</button>{guideOpen && <><div className="guide-block"><strong>The concept</strong><p>{guide.concept}</p></div><div className="guide-block"><strong>Tools you need</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>Step-by-step approach</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small>{hintCredits !== null && (hintCredits < item.hintCost ? <small>Not enough hint credits.</small> : <small> · {hintCredits} <span>credits</span></small>)}</div><button type="button" className="button secondary" disabled={hintBusy || hint !== null || (hintCredits !== null && hintCredits < item.hintCost)} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
 }
 
 function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; onSubmitted: () => void }) {
