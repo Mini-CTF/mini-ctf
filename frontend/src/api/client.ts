@@ -25,6 +25,7 @@ import type {
 import { clearAuthToken, getAuthToken } from './session'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
+export const rankingChangedEvent = 'flagbox:ranking-changed'
 export const sessionExpiredEvent = 'flagbox:session-expired'
 export const sessionExpiredMessage = '다른 기기에서 로그인되어 세션이 만료되었습니다.'
 
@@ -104,8 +105,15 @@ export const api = {
     request(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ nickname }) }),
   suspendUser: (id: number, reason: string) =>
     request(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) }),
-  reinstateUser: (id: number) => request(`/admin/users/${id}/reinstate`, { method: 'POST' }),
-  deactivateUser: (id: number) => request<void>(`/admin/users/${id}`, { method: 'DELETE' }),
+  reinstateUser: async (id: number) => {
+    const result = await request(`/admin/users/${id}/reinstate`, { method: 'POST' })
+    window.dispatchEvent(new Event(rankingChangedEvent))
+    return result
+  },
+  deactivateUser: async (id: number) => {
+    await request<void>(`/admin/users/${id}`, { method: 'DELETE' })
+    window.dispatchEvent(new Event(rankingChangedEvent))
+  },
   redactAuditLog: (id: number, reason: string) =>
     request<void>(`/admin/audit-logs/${id}/redact`, { method: 'PATCH', body: JSON.stringify({ reason }) }),
   hideAuditLog: (id: number, reason: string) =>

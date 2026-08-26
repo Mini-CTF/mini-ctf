@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { api, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
+import { api, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
 import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
 import { subscribeToSocialUpdates } from './api/realtime'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
@@ -211,6 +211,20 @@ function AppShell() {
       void api.me().then(setUser).catch(() => undefined)
     }, 15000)
     return () => window.clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    const refreshRankings = () => {
+      void Promise.all([api.stats(), api.ranking(), api.attendanceRanking()])
+        .then(([nextStats, nextRanking, nextAttendanceRanking]) => {
+          setStats(nextStats)
+          setRanking(nextRanking)
+          setAttendanceRanking(nextAttendanceRanking)
+        })
+        .catch(() => undefined)
+    }
+    window.addEventListener(rankingChangedEvent, refreshRankings)
+    return () => window.removeEventListener(rankingChangedEvent, refreshRankings)
   }, [])
 
   useEffect(() => {
