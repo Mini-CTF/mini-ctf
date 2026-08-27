@@ -173,7 +173,7 @@ function AppShell() {
     const timer = window.setTimeout(() => {
       setShowIntro(false)
       sessionStorage.setItem('flagbox-intro-seen', 'true')
-    }, 3400)
+    }, 5100)
     return () => window.clearTimeout(timer)
   }, [showIntro])
   useEffect(() => {
