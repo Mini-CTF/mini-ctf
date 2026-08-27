@@ -391,7 +391,7 @@ function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
     <Beams className="flagbox-stroke-intro__beams" beamWidth={2} beamHeight={42} beamNumber={18} rotation={90} />
     <button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button>
     <div className="flagbox-stroke-intro__glow" aria-hidden="true" />
-    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeColor="#533aed" fillColor="#f8fafc" strokeWidth={1.5} drawDuration={1} fillDelay={0.4} />
+    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeColor="#f8fafc" fillColor="#f8fafc" strokeWidth={1.5} drawDuration={1} fillDelay={0.4} />
     <p className="flagbox-stroke-intro__copy">LEARN · ANALYZE · CAPTURE</p>
   </div>
 }
