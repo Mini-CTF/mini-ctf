@@ -52,7 +52,6 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
       respawnQueue += beforeCount - particles.length
       if (particles.length + respawnQueue < targetCount) respawnQueue = targetCount - particles.length
       if (respawnQueue > 0 && tick % 4 === 0) { particles.push(createParticle()); respawnQueue -= 1 }
-      }
       for (let a = 0; a < particles.length; a += 1) {
         const first = particles[a]
         for (let b = a + 1; b < particles.length; b += 1) {
