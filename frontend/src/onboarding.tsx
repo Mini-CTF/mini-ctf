@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
 type Lang = 'ko' | 'en'
@@ -117,7 +117,7 @@ export function GettingStartedTutorial({
   lang: Lang
   scope?: 'public' | 'member'
 }) {
-  const steps = buildTutorialSteps(firstChallengeId, scope)
+  const steps = useMemo(() => buildTutorialSteps(firstChallengeId, scope), [firstChallengeId, scope])
   const [step, setStep] = useState(0)
   const [rect, setRect] = useState<{ top: number; left: number; width: number; height: number; bottom: number } | null>(null)
   const location = useLocation()
@@ -125,7 +125,7 @@ export function GettingStartedTutorial({
   useEffect(() => {
     const target = steps[step]?.path
     if (target && location.pathname !== target) onNavigate(target)
-  }, [step])
+  }, [location.pathname, onNavigate, step, steps])
 
   useEffect(() => {
     let tries = 0
@@ -160,7 +160,7 @@ export function GettingStartedTutorial({
       window.removeEventListener('resize', attempt)
       window.removeEventListener('scroll', attempt, true)
     }
-  }, [step, location.pathname])
+  }, [location.pathname, step, steps])
 
   const current = steps[Math.min(step, steps.length - 1)]
   const text = current[lang]

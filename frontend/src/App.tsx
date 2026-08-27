@@ -299,12 +299,12 @@ function AppShell() {
         .sort(byDifficulty),
     [category, difficulty, challenges],
   )
-  const go = (path: string) => {
+  const go = useCallback((path: string) => {
     setMobileNavOpen(false)
     setError('')
     window.scrollTo({ top: 0, behavior: 'auto' })
     routerNavigate(path)
-  }
+  }, [routerNavigate])
   const completeAuth = (result: { token: string; user: User }) => {
     setAuthToken(result.token)
     setUser(result.user)
