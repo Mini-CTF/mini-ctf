@@ -369,7 +369,7 @@ function AppShell() {
         <Route path="/community/:postId" element={guarded(<CommunityPostRoute user={user} />)} />
         <Route path="/learn/:slug" element={<LearnArticleRoute lang={language} />} />
         <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole />) : <Navigate to="/" replace />} />
-        <Route path="/login" element={<LoginView onBack={() => go('/')} onAuth={completeAuth} />} />
+        <Route path="/login" element={<LoginView onBack={() => go('/')} onAuth={completeAuth} language={language} />} />
         <Route path="/auth/callback" element={<CallbackRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -1186,7 +1186,7 @@ function LogList({ items, onControl }: { items: { id: number; title: string; det
   return <div className="admin-table">{items.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.title}</strong><small>{item.detail} · {new Date(item.date).toLocaleString()}</small></div><div className="inline-actions"><button className="button secondary" type="button" onClick={() => onControl(item.id, false)}>Redact</button><button className="button ghost danger-button" type="button" onClick={() => onControl(item.id, true)}>Hide</button></div></div>)}</div>
 }
 
-function LegacyLoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void }) {
+function LegacyLoginView({ onBack, onAuth, language }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {
   const location = useLocation()
   const [registering, setRegistering] = useState(false)
   const oauthError = oauthErrorMessage(new URLSearchParams(location.search).get('oauthError'))
@@ -1201,6 +1201,14 @@ function LegacyLoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (resu
   useEffect(() => {
     api.oauthProviders().then(setProviders).catch(() => setProviders(['google', 'github', 'discord']))
   }, [])
+  useLayoutEffect(() => {
+    const examples = language === 'ko'
+      ? { username: '예: 영문·숫자·밑줄 3자 이상', nickname: '예: FlagBox 학습자', password: '예: 8자 이상 비밀번호', passwordConfirmation: '예: 비밀번호를 다시 입력하세요' }
+      : { username: 'Ex: flagbox_user', nickname: 'Ex: FlagBox Learner', password: 'Ex: 8 or more characters', passwordConfirmation: 'Ex: Enter the same password again' }
+    Object.entries(examples).forEach(([name, placeholder]) => {
+      document.querySelector<HTMLInputElement>(`.auth-page input[name="${name}"]`)?.setAttribute('placeholder', placeholder)
+    })
+  }, [language, registering])
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setError(''); const form = new FormData(event.currentTarget)
     const username = String(form.get('username')).trim(); const password = String(form.get('password')); const passwordConfirmation = String(form.get('passwordConfirmation')); if (registering && password !== passwordConfirmation) { setError('Passwords do not match.'); return } try { const result = registering ? await api.register({ username, nickname: String(form.get('nickname')).trim(), password, passwordConfirmation }) : await api.login({ username, password }); onAuth(result) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Authentication failed.') }
@@ -1208,8 +1216,8 @@ function LegacyLoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (resu
   return <div className="auth-page"><button className="back-link" type="button" onClick={onBack}>← Back home</button><div className="auth-card"><p className="eyebrow">SECURE ACCESS</p><h1>{registering ? 'Create your account.' : 'Sign in to continue.'}</h1><form className="auth-form" onSubmit={submit}><label>Username<input name="username" placeholder="Ex: flagbox_user" required minLength={3} maxLength={50} pattern="[A-Za-z0-9_]+" title="Use only letters, numbers, and underscores." autoComplete="username" /></label>{registering && <label>Display name (optional)<input name="nickname" placeholder="Ex: FlagBox Learner" maxLength={80} /></label>}<label>Password<input name="password" type="password" placeholder="Ex: 8 or more characters" required minLength={registering ? 8 : undefined} maxLength={100} autoComplete={registering ? 'new-password' : 'current-password'} /></label>{registering && <label>Confirm password<input name="passwordConfirmation" type="password" placeholder="Ex: Enter the same password again" required minLength={8} maxLength={100} autoComplete="new-password" /></label>}<button className="button primary" type="submit">{registering ? 'Create account' : 'Sign in'}</button></form>{error && <p className="alert error">{error}</p>}{providers.length > 0 && <><div className="auth-divider"><span>or continue with</span></div><div className="social-buttons">{providers.map((provider) => <button className={`social-button oauth-${provider}`} type="button" key={provider} onClick={() => { window.location.href = `${oauthBaseUrl}/api/auth/oauth/${provider}/authorize` }}><ProviderIcon provider={provider} /><span>Continue with {provider[0].toUpperCase() + provider.slice(1)}</span></button>)}</div></>}<p className="auth-footnote">{registering ? 'Already have an account?' : 'New to Mini CTF?'} <button type="button" onClick={() => setRegistering(!registering)}>{registering ? 'Sign in' : 'Create an account'}</button></p></div></div>
 }
 
-function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void }) {
-  return <div className="auth-login-shell"><section className="auth-showcase" aria-label="Interactive constellation background"><AetherFlowHero className="auth-showcase__aether" showContent={false} /><span className="auth-showcase__wordmark" aria-hidden="true">FlagBox</span></section><LegacyLoginView onBack={onBack} onAuth={onAuth} /></div>
+function LoginView({ onBack, onAuth, language }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {
+  return <div className="auth-login-shell"><section className="auth-showcase" aria-label="Interactive constellation background"><AetherFlowHero className="auth-showcase__aether" showContent={false} /><span className="auth-showcase__wordmark" aria-hidden="true">FlagBox</span></section><LegacyLoginView onBack={onBack} onAuth={onAuth} language={language} /></div>
 }
 
 function ProviderIcon({ provider }: { provider: string }) {
