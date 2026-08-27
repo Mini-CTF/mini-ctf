@@ -243,7 +243,7 @@ html[data-theme='light'] .admin-card { background: rgba(255, 255, 255, .78); }
 .ranking-title { flex-basis: 100%; width: fit-content; margin: 0 !important; }
 .ranking-identity .ranking-title { flex: 0 0 auto; width: auto; max-width: 100%; }
 
-.flagbox-intro { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; overflow: hidden; background: #080b10; color: #fff; animation: flagbox-intro-out .36s ease 2.34s forwards; }
+.flagbox-intro { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; overflow: hidden; background: #080b10; color: #fff; }
 .flagbox-intro::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 47%, rgba(40, 110, 234, .2), transparent 28rem); opacity: 0; animation: flagbox-intro-glow 1.8s ease .55s forwards; }
 .flagbox-intro-skip { position: absolute; right: clamp(20px, 4vw, 56px); top: clamp(20px, 4vw, 42px); z-index: 2; border: 0; background: transparent; color: rgba(255,255,255,.72); font: 600 12px/1 var(--sans); letter-spacing: .08em; }
 .flagbox-intro-skip:hover { color: #fff; }
@@ -292,6 +292,18 @@ html.flagbox-intro-active::-webkit-scrollbar, html.flagbox-intro-active body::-w
 @keyframes flagbox-intro-flag-rise { to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes flagbox-intro-flag-wave { 0%, 100% { transform: skewY(0deg) scaleY(1); } 50% { transform: skewY(-6deg) scaleY(.92); } }
 @keyframes flagbox-wordmark-out { to { opacity: 0; visibility: hidden; } }
+
+/* Full-screen FlagBox stroke-text intro, adapted from React Bits. */
+.flagbox-stroke-intro { isolation: isolate; background: #030507; }
+.flagbox-stroke-intro::before { display: none; }
+.flagbox-stroke-intro .flagbox-intro-skip { z-index: 3; color: rgba(255,255,255,.55); }
+.flagbox-stroke-intro__glow { position: absolute; width: min(76vw, 940px); height: min(42vw, 460px); border-radius: 50%; background: radial-gradient(ellipse, rgba(41, 126, 255, .22), rgba(24, 77, 178, .06) 48%, transparent 72%); filter: blur(8px); animation: flagbox-stroke-glow 2.9s ease-out both; }
+.flagbox-stroke-intro__wordmark { position: relative; z-index: 2; width: min(92vw, 1500px); }
+.flagbox-stroke-intro__wordmark .stroke-text__stroke, .flagbox-stroke-intro__wordmark .stroke-text__fill { font-family: var(--sans); }
+.flagbox-stroke-intro__copy { position: absolute; z-index: 2; bottom: clamp(56px, 10vh, 110px); margin: 0; color: rgba(208, 225, 255, .68); font: 700 clamp(10px, 1vw, 13px)/1 var(--sans); letter-spacing: .34em; opacity: 0; animation: flagbox-stroke-copy .5s ease 2.38s forwards; }
+@keyframes flagbox-stroke-glow { 0% { opacity: 0; transform: scale(.72); } 35% { opacity: 1; } 100% { opacity: .68; transform: scale(1.08); } }
+@keyframes flagbox-stroke-copy { to { opacity: 1; transform: translateY(-2px); } }
+@media (max-width: 620px) { .flagbox-stroke-intro__wordmark { width: 96vw; } .flagbox-stroke-intro__wordmark .stroke-text__svg { height: 160px; } .flagbox-stroke-intro__copy { letter-spacing: .2em; } }
 .avatar-picker { position: relative; flex: 0 0 auto; border: 0; padding: 0; cursor: pointer; }
 .avatar-picker:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .avatar-picker-label { position: absolute; inset: 0; display: grid; place-items: center; padding: 8px; border-radius: inherit; background: rgba(7, 10, 16, .72); color: #fff; font-family: var(--mono); font-size: 9px; letter-spacing: .04em; line-height: 1.25; opacity: 0; transition: opacity .18s ease; }

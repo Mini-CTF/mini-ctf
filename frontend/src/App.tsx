@@ -6,6 +6,7 @@ import { subscribeToSocialUpdates } from './api/realtime'
 import GettingStartedTutorial from './onboarding'
 import { challengeGuides } from './challengeGuides'
 import { articleBySlug, LEARN_FIELDS, learnArticles, learnEn } from './learnContent'
+import StrokeText from './components/StrokeText'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
@@ -160,7 +161,6 @@ function AppShell() {
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const [vaultOpen, setVaultOpen] = useState(false)
   const [showIntro, setShowIntro] = useState(() => sessionStorage.getItem('flagbox-intro-seen') !== 'true')
-  const [introFilled, setIntroFilled] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
   const [showMemberTutorial, setShowMemberTutorial] = useState(false)
 
@@ -169,7 +169,7 @@ function AppShell() {
     const timer = window.setTimeout(() => {
       setShowIntro(false)
       sessionStorage.setItem('flagbox-intro-seen', 'true')
-    }, 3850)
+    }, 3400)
     return () => window.clearTimeout(timer)
   }, [showIntro])
   useEffect(() => {
@@ -183,12 +183,6 @@ function AppShell() {
     const timer = window.setTimeout(() => setShowMemberTutorial(true), 380)
     return () => window.clearTimeout(timer)
   }, [user, showIntro, showTutorial])
-  useEffect(() => {
-    if (!showIntro) return
-    const timer = window.setTimeout(() => setIntroFilled(true), 140)
-    return () => window.clearTimeout(timer)
-  }, [showIntro])
-
   useEffect(() => {
     document.documentElement.classList.toggle('flagbox-intro-active', showIntro)
     return () => document.documentElement.classList.remove('flagbox-intro-active')
@@ -336,7 +330,7 @@ function AppShell() {
   const path = location.pathname
   const guarded = (node: ReactNode) => loading ? <div className="page"><LoadingState label="Loading live platform data..." /></div> : node
   return <div className="app-shell">
-    {showIntro && <FlagBoxIntro onSkip={dismissIntro} filled={introFilled} />}
+    {showIntro && <FlagBoxIntro onSkip={dismissIntro} />}
       {showTutorial && <GettingStartedTutorial onClose={() => { setShowTutorial(false); sessionStorage.setItem('flagbox-tutorial-seen', 'true') }} onNavigate={go} firstChallengeId={challenges[0]?.id} lang={language} />}
       {showMemberTutorial && <GettingStartedTutorial scope="member" onClose={() => { setShowMemberTutorial(false); sessionStorage.setItem('flagbox-member-tutorial-seen', 'true') }} onNavigate={go} lang={language} />}
     <header className="site-header">
@@ -389,8 +383,13 @@ function LoadingState({ label }: { label: string }) {
   return <div className="loading-state" role="status"><span className="loading-mark" aria-hidden="true" /><p>{label}</p></div>
 }
 
-function FlagBoxIntro({ onSkip, filled }: { onSkip: () => void; filled: boolean }) {
-  return <div className={`flagbox-intro flagbox-wordmark-intro${filled ? ' is-filled' : ''}`} role="status" aria-label="FlagBox를 준비하고 있습니다."><button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button><svg className="flagbox-intro-watermark" viewBox="0 0 1500 310" aria-hidden="true"><text x="750" y="232" textAnchor="middle">FlagBox</text><g className="flagbox-intro-flag"><path className="flagbox-intro-pole" d="M1148 226L1194 62L1207 22L1209 76L1163 232Z" /><path className="flagbox-intro-pennant" d="M1212 80C1248 63 1290 68 1321 96C1315 125 1308 153 1299 182C1265 166 1240 150 1211 151Z" /></g></svg></div>
+function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
+  return <div className="flagbox-intro flagbox-stroke-intro" role="status" aria-label="FlagBox is loading.">
+    <button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button>
+    <div className="flagbox-stroke-intro__glow" aria-hidden="true" />
+    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeWidth={1.35} drawDuration={1.55} fillDelay={0.14} />
+    <p className="flagbox-stroke-intro__copy">LEARN · ANALYZE · CAPTURE</p>
+  </div>
 }
 
 
