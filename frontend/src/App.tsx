@@ -9,6 +9,7 @@ import { articleBySlug, LEARN_FIELDS, learnArticles, learnEn } from './learnCont
 import StrokeText from './components/StrokeText'
 import Beams from './components/Beams'
 import ClickSpark from './components/ClickSpark'
+import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
@@ -142,7 +143,7 @@ function localizeSystemInterface(language: Language) {
 }
 
 function App() {
-  return <ClickSpark sparkColor="#533aed"><BrowserRouter><AppShell /></BrowserRouter></ClickSpark>
+  return <ClickSpark sparkColor="#533aed"><GlobalSpecularButtons /><BrowserRouter><AppShell /></BrowserRouter></ClickSpark>
 }
 
 function AppShell() {
