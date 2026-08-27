@@ -19,6 +19,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @Profile("!test")
@@ -27,6 +28,7 @@ public class MvpChallengeInitializer {
   CommandLineRunner seedMvpChallenges(
       ChallengeRepository challenges,
       ChallengeService service,
+      PasswordEncoder encoder,
       @Value("${app.artifact.storage-root}") String storageRoot) {
     return args -> {
       Path root = Path.of(storageRoot).toAbsolutePath().normalize();
@@ -44,7 +46,8 @@ public class MvpChallengeInitializer {
           50,
           "A captured status message looks ordinary, but its alphabet only uses Base64 characters. Decode the payload and submit the recovered FLAG.",
           flags.getProperty("easy"),
-          "mvp/signal.txt");
+          "mvp/signal.txt",
+          encoder);
       seed(
           challenges,
           service,
@@ -54,7 +57,8 @@ public class MvpChallengeInitializer {
           150,
           "Review the supplied proxy trace. The analyst preserved one suspicious request in hex. Follow the transformation hints in the artifact to recover the FLAG.",
           flags.getProperty("medium"),
-          "mvp/proxy-afterimage.log");
+          "mvp/proxy-afterimage.log",
+          encoder);
       seed(
           challenges,
           service,
@@ -64,7 +68,8 @@ public class MvpChallengeInitializer {
           300,
           "A small offline verifier checks a passphrase before opening a maintenance gate. Reverse its deterministic transform and recover the accepted FLAG. No network target is involved.",
           flags.getProperty("hard"),
-          "mvp/orbit-gatekeeper.zip");
+          "mvp/orbit-gatekeeper.zip",
+          encoder);
       seed(
           challenges,
           service,
@@ -74,7 +79,8 @@ public class MvpChallengeInitializer {
           600,
           "Inspect a safe practice response and identify the one header value that contains the encoded FLAG. No live target is involved.",
           flags.getProperty("advanced"),
-          "mvp/header-hunt.txt");
+          "mvp/header-hunt.txt",
+          encoder);
       seed(
           challenges,
           service,
@@ -84,7 +90,8 @@ public class MvpChallengeInitializer {
           1000,
           "A training evidence note has been encoded in several familiar layers. Record each transformation and recover the final FLAG.",
           flags.getProperty("expert"),
-          "mvp/layered-evidence.txt");
+          "mvp/layered-evidence.txt",
+          encoder);
 
       Files.writeString(
           mvpRoot.resolve("signal.txt"),
@@ -133,8 +140,16 @@ public class MvpChallengeInitializer {
       int score,
       String description,
       String flag,
-      String artifactPath) {
-    if (challenges.existsByTitle(title)) return;
+      String artifactPath,
+      PasswordEncoder encoder) {
+    var existing = challenges.findByTitle(title).orElse(null);
+    if (existing != null) {
+      if (!encoder.matches(flag, existing.getFlagHash())) {
+        existing.setFlagHash(encoder.encode(flag));
+        challenges.save(existing);
+      }
+      return;
+    }
     service.create(
         new ChallengeDtos.AdminRequest(
             title, description, category, difficulty, score, flag, artifactPath, true));

@@ -16,6 +16,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * FlagBox 워게임 60문제 시더.
@@ -31,6 +32,7 @@ public class FlagboxChallengeInitializer {
   CommandLineRunner seedFlagboxChallenges(
       ChallengeRepository challenges,
       ChallengeService service,
+      PasswordEncoder encoder,
       @Value("${app.artifact.storage-root}") String storageRoot) {
     return args -> {
       Path root = Path.of(storageRoot).toAbsolutePath().normalize();
@@ -47,7 +49,8 @@ public class FlagboxChallengeInitializer {
         if (existing != null) {
           Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
           Files.write(file, seed.artifact().write(flag));
-          syncExisting(existing, seed, root.relativize(file).toString().replace('\\', '/'));
+          syncExisting(
+              existing, seed, root.relativize(file).toString().replace('\\', '/'), flag, encoder);
           challenges.save(existing);
           continue;
         }
@@ -75,7 +78,9 @@ public class FlagboxChallengeInitializer {
   private static void syncExisting(
       com.minictf.challenge.Challenge existing,
       FlagboxChallengeCatalog.Seed seed,
-      String artifactPath) {
+      String artifactPath,
+      String flag,
+      PasswordEncoder encoder) {
     boolean changed = false;
     if (!existing.getCategory().equals(seed.category())) {
       existing.setCategory(seed.category());
@@ -99,6 +104,12 @@ public class FlagboxChallengeInitializer {
     }
     if (!artifactPath.equals(existing.getArtifactPath())) {
       existing.setArtifactPath(artifactPath);
+      changed = true;
+    }
+    // Artifacts are regenerated from the local flag store on every startup. Keep the persisted
+    // verifier in lockstep when that store is restored, replaced, or newly generated.
+    if (!encoder.matches(flag, existing.getFlagHash())) {
+      existing.setFlagHash(encoder.encode(flag));
       changed = true;
     }
   }

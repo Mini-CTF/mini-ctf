@@ -722,7 +722,7 @@ final class FlagboxChallengeCatalog {
                           + shiftPrintable(flag, 1)
                           + "\"\n")),
 
-          // ───────────────────────────── REVERSING · NORMAL (4)
+          // ───────────────────────────── REVERSING · NORMAL (5)
 
           new Seed(
               "r11",
@@ -744,6 +744,16 @@ final class FlagboxChallengeCatalog {
               "transform.py 검증기와 기대 출력(expected 리스트)이 담긴 파일이에요. 역함수를 만들어 통과시켜 보세요!",
               "transform.py",
               flag -> pyTransformScript(rotateSwap(flag, 5))),
+          new Seed(
+              "r13",
+              "Reverse Layer",
+              "REVERSING",
+              "NORMAL",
+              300,
+              "Base64 and hexadecimal are separated by one reversal step. Undo each layer in the reverse order.",
+              "layers.hex contains the hexadecimal form of the Base64 encoding of the reversed FLAG.",
+              "layers.hex",
+              flag -> txt(hex(b64(reverse(flag))) + "\n")),
           new Seed(
               "r15",
               "반복 열쇠의 문",
