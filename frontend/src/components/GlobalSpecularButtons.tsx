@@ -54,22 +54,34 @@ export default function GlobalSpecularButtons() {
 
     let active: HTMLButtonElement | null = null
     let pointerX = 0, pointerY = 0, angle = 2.4, last = performance.now(), width = 0, height = 0
+    const deactivate = () => {
+      active = null
+      fx.hidden = true
+      gl.clear(gl.COLOR_BUFFER_BIT)
+    }
     const onPointerMove = (event: PointerEvent) => {
       pointerX = event.clientX; pointerY = event.clientY
       const target = event.target instanceof Element ? event.target.closest('button') : null
-      active = target instanceof HTMLButtonElement && !target.disabled && !excluded(target) ? target : null
-      fx.hidden = !active
+      if (target instanceof HTMLButtonElement && !target.disabled && !excluded(target)) {
+        active = target
+        fx.hidden = false
+      } else deactivate()
     }
+    const onPointerOut = (event: PointerEvent) => { if (!event.relatedTarget) deactivate() }
     window.addEventListener('pointermove', onPointerMove, { passive: true })
+    document.addEventListener('pointerout', onPointerOut)
+    window.addEventListener('blur', deactivate)
 
     let raf = 0
     const render = (now: number) => {
       raf = requestAnimationFrame(render)
       const dt = Math.min((now - last) / 1000, .05)
       last = now
-      if (!active || !active.isConnected) { fx.hidden = true; return }
+      if (!active || !active.isConnected) { deactivate(); return }
+      const hovered = document.elementFromPoint(pointerX, pointerY)?.closest('button')
+      if (hovered !== active) { deactivate(); return }
       const rect = active.getBoundingClientRect()
-      if (rect.width < 1 || rect.height < 1) { fx.hidden = true; return }
+      if (rect.width < 1 || rect.height < 1) { deactivate(); return }
       const dpr = window.devicePixelRatio || 1
       fx.style.left = `${rect.left - PAD}px`; fx.style.top = `${rect.top - PAD}px`
       if (width !== rect.width || height !== rect.height) {
@@ -94,7 +106,7 @@ export default function GlobalSpecularButtons() {
       renderer.render({ scene: mesh })
     }
     raf = requestAnimationFrame(render)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('pointermove', onPointerMove); fx.remove(); gl.getExtension('WEBGL_lose_context')?.loseContext() }
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerout', onPointerOut); window.removeEventListener('blur', deactivate); fx.remove(); gl.getExtension('WEBGL_lose_context')?.loseContext() }
   }, [])
   return null
 }
