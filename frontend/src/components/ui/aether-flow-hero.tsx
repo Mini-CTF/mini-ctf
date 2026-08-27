@@ -38,9 +38,6 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
     const animate = () => {
       frame = requestAnimationFrame(animate)
       context.fillStyle = '#02030a'; context.fillRect(0, 0, width, height)
-      const glow = context.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 280)
-      glow.addColorStop(0, 'rgba(151, 100, 255, .13)'); glow.addColorStop(1, 'rgba(31, 19, 72, 0)')
-      context.fillStyle = glow; context.fillRect(0, 0, width, height)
       for (const particle of particles) {
         if (particle.x > width || particle.x < 0) particle.directionX = -particle.directionX
         if (particle.y > height || particle.y < 0) particle.directionY = -particle.directionY
