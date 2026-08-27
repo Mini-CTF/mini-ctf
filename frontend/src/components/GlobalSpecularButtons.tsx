@@ -2,57 +2,16 @@ import { useEffect } from 'react'
 import { Mesh, Program, Renderer, Triangle } from 'ogl'
 
 const PAD = 20
-
 const VERT = `#version 300 es
 in vec2 position;
-void main() { gl_Position = vec4(position, 0.0, 1.0); }
-`
-
+void main() { gl_Position = vec4(position, 0.0, 1.0); }`
 const FRAG = `#version 300 es
 precision highp float;
-uniform vec2 uCenter;
-uniform vec2 uHalfSize;
-uniform float uRadius;
-uniform float uAngle;
-uniform float uPx;
-uniform vec3 uLineColor;
-uniform vec3 uBaseColor;
-uniform float uIntensity;
-uniform float uShineSize;
-uniform float uShineFade;
-uniform float uThickness;
-uniform float uBaseWidth;
-out vec4 fragColor;
+uniform vec2 uCenter, uHalfSize; uniform float uRadius, uAngle, uPx, uIntensity, uShineSize, uShineFade, uThickness, uBaseWidth;
+uniform vec3 uLineColor, uBaseColor; out vec4 fragColor;
 float sdRoundedRect(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
 float gaussianLine(float d, float sigma) { float x = d / (sigma + 1e-6); float k = mix(1.0, 1.6, smoothstep(0.0, 1.5, x)); return exp(-k * x * x); }
-void main() {
-  vec2 p = gl_FragCoord.xy - uCenter;
-  float d = sdRoundedRect(p, uHalfSize, uRadius);
-  vec2 L = vec2(cos(uAngle), sin(uAngle));
-  float base = (1.0 - smoothstep(0.0, uBaseWidth, abs(d))) * 0.45;
-  vec2 nEll = normalize(p / (uHalfSize * uHalfSize) + 1e-6);
-  float phi = acos(clamp(abs(dot(nEll, L)), 0.0, 1.0));
-  float rim = 1.0 - smoothstep(uShineSize - uShineFade, uShineSize + uShineFade + 1e-4, phi);
-  float line = gaussianLine(d, uThickness);
-  float edgeClamp = 1.0 - smoothstep(0.5 * uPx, 3.0 * uPx, abs(d));
-  float hi = line * rim * edgeClamp * uIntensity;
-  vec3 col = uBaseColor * base + uLineColor * hi;
-  fragColor = vec4(col, clamp(base + hi, 0.0, 1.0));
-}`
-
-type Effect = {
-  button: HTMLButtonElement
-  fx: HTMLSpanElement
-  renderer: Renderer
-  gl: Renderer['gl']
-  program: Program
-  mesh: Mesh
-  observer: ResizeObserver
-  width: number
-  height: number
-  angle: number
-  idleAngle: number
-}
+void main() { vec2 p = gl_FragCoord.xy - uCenter; float d = sdRoundedRect(p, uHalfSize, uRadius); vec2 L = vec2(cos(uAngle), sin(uAngle)); float base = (1.0 - smoothstep(0.0, uBaseWidth, abs(d))) * .45; vec2 nEll = normalize(p / (uHalfSize * uHalfSize) + 1e-6); float phi = acos(clamp(abs(dot(nEll, L)), 0.0, 1.0)); float rim = 1.0 - smoothstep(uShineSize - uShineFade, uShineSize + uShineFade + 1e-4, phi); float line = gaussianLine(d, uThickness); float edgeClamp = 1.0 - smoothstep(.5 * uPx, 3.0 * uPx, abs(d)); float hi = line * rim * edgeClamp * uIntensity; fragColor = vec4(uBaseColor * base + uLineColor * hi, clamp(base + hi, 0.0, 1.0)); }`
 
 function rgb(value: string, fallback: [number, number, number]) {
   const match = value.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
@@ -60,116 +19,82 @@ function rgb(value: string, fallback: [number, number, number]) {
   return [Number(match[1]) / 255, Number(match[2]) / 255, Number(match[3]) / 255] as [number, number, number]
 }
 
-function buttonColors(button: HTMLButtonElement) {
+function colors(button: HTMLButtonElement) {
   const style = getComputedStyle(button)
   const text = rgb(style.color, [0.96, 0.96, 0.98])
-  const edge = rgb(style.borderTopColor, text)
-  return { edge, base: rgb(style.backgroundColor, edge) }
+  return { edge: rgb(style.borderTopColor, text), base: rgb(style.backgroundColor, text) }
 }
 
-/** Adds the supplied OGL specular rim without replacing existing button styling. */
+function excluded(button: HTMLButtonElement) {
+  return Boolean(button.closest('header, [data-no-specular], .ranking-tabs, .friends-page, .pinned-notices'))
+}
+
+/** A single shared WebGL rim follows the hovered button, preserving every button's own layout. */
 export default function GlobalSpecularButtons() {
   useEffect(() => {
-    const effects = new Map<HTMLButtonElement, Effect>()
-    let pointerX = -10000
-    let pointerY = -10000
-    let last = performance.now()
-    let raf = 0
+    const fx = document.createElement('span')
+    fx.className = 'global-specular-button__fx'
+    fx.setAttribute('aria-hidden', 'true')
+    fx.hidden = true
+    document.body.append(fx)
 
-    const remove = (effect: Effect) => {
-      effect.observer.disconnect()
-      effect.fx.remove()
-      effect.gl.getExtension('WEBGL_lose_context')?.loseContext()
-      delete effect.button.dataset.specularFx
-      effects.delete(effect.button)
+    const renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr: window.devicePixelRatio || 1 })
+    const gl = renderer.gl
+    gl.clearColor(0, 0, 0, 0)
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+    const geometry = new Triangle(gl)
+    delete geometry.attributes.uv
+    const program = new Program(gl, { vertex: VERT, fragment: FRAG, uniforms: {
+      uCenter: { value: [0, 0] }, uHalfSize: { value: [1, 1] }, uRadius: { value: 0 }, uAngle: { value: 2.4 }, uPx: { value: 1 },
+      uLineColor: { value: [1, 1, 1] }, uBaseColor: { value: [.3, .3, .3] }, uIntensity: { value: 1 }, uShineSize: { value: .17 }, uShineFade: { value: .7 }, uThickness: { value: 1 }, uBaseWidth: { value: 1 }
+    } })
+    const mesh = new Mesh(gl, { geometry, program })
+    fx.append(gl.canvas)
+
+    let active: HTMLButtonElement | null = null
+    let pointerX = 0, pointerY = 0, angle = 2.4, last = performance.now(), width = 0, height = 0
+    const onPointerMove = (event: PointerEvent) => {
+      pointerX = event.clientX; pointerY = event.clientY
+      const target = event.target instanceof Element ? event.target.closest('button') : null
+      active = target instanceof HTMLButtonElement && !target.disabled && !excluded(target) ? target : null
+      fx.hidden = !active
     }
-
-    const add = (button: HTMLButtonElement) => {
-      if (button.dataset.specularFx || button.closest('[data-no-specular]')) return
-      button.dataset.specularFx = 'true'
-
-      const fx = document.createElement('span')
-      fx.className = 'global-specular-button__fx'
-      fx.setAttribute('aria-hidden', 'true')
-      document.body.append(fx)
-
-      const renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr: window.devicePixelRatio || 1 })
-      const gl = renderer.gl
-      gl.clearColor(0, 0, 0, 0)
-      gl.enable(gl.BLEND)
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
-      const geometry = new Triangle(gl)
-      delete geometry.attributes.uv
-      const colors = buttonColors(button)
-      const program = new Program(gl, { vertex: VERT, fragment: FRAG, uniforms: {
-        uCenter: { value: [0, 0] }, uHalfSize: { value: [1, 1] }, uRadius: { value: 0 }, uAngle: { value: 2.4 }, uPx: { value: window.devicePixelRatio || 1 },
-        uLineColor: { value: colors.edge }, uBaseColor: { value: colors.base }, uIntensity: { value: 0 }, uShineSize: { value: 0.17 }, uShineFade: { value: 0.7 }, uThickness: { value: window.devicePixelRatio || 1 }, uBaseWidth: { value: window.devicePixelRatio || 1 }
-      } })
-      const mesh = new Mesh(gl, { geometry, program })
-      fx.append(renderer.gl.canvas)
-      const effect: Effect = { button, fx, renderer, gl, program, mesh, observer: new ResizeObserver(() => resize(effect)), width: 1, height: 1, angle: 2.4, idleAngle: 2.4 }
-      const resize = (item: Effect) => {
-        const rect = item.button.getBoundingClientRect()
-        const dpr = window.devicePixelRatio || 1
-        item.width = rect.width; item.height = rect.height
-        item.fx.style.left = `${rect.left - PAD}px`
-        item.fx.style.top = `${rect.top - PAD}px`
-        item.fx.style.width = `${rect.width + PAD * 2}px`
-        item.fx.style.height = `${rect.height + PAD * 2}px`
-        item.renderer.setSize(rect.width + PAD * 2, rect.height + PAD * 2)
-        item.program.uniforms.uCenter.value = [(PAD + rect.width / 2) * dpr, (PAD + rect.height / 2) * dpr]
-        item.program.uniforms.uHalfSize.value = [(rect.width / 2) * dpr, (rect.height / 2) * dpr]
-        item.program.uniforms.uPx.value = dpr
-      }
-      effect.observer.observe(button)
-      resize(effect)
-      effects.set(button, effect)
-    }
-
-    const scan = (root: ParentNode) => {
-      if (root instanceof HTMLButtonElement) add(root)
-      root.querySelectorAll?.('button').forEach(add)
-    }
-    scan(document)
-    const mutationObserver = new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => { if (node instanceof HTMLElement) scan(node) })))
-    mutationObserver.observe(document.body, { childList: true, subtree: true })
-    const onPointerMove = (event: PointerEvent) => { pointerX = event.clientX; pointerY = event.clientY }
     window.addEventListener('pointermove', onPointerMove, { passive: true })
 
+    let raf = 0
     const render = (now: number) => {
       raf = requestAnimationFrame(render)
-      const dt = Math.min((now - last) / 1000, 0.05)
+      const dt = Math.min((now - last) / 1000, .05)
       last = now
-      effects.forEach(effect => {
-        if (!effect.button.isConnected) return remove(effect)
-        const rect = effect.button.getBoundingClientRect()
-        effect.fx.style.left = `${rect.left - PAD}px`
-        effect.fx.style.top = `${rect.top - PAD}px`
-        const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2
-        const dx = Math.max(rect.left - pointerX, 0, pointerX - rect.right)
-        const dy = Math.max(rect.top - pointerY, 0, pointerY - rect.bottom)
-        const distance = Math.hypot(dx, dy)
-        const proximity = Math.max(0, 1 - distance / 250)
-        const brightness = proximity * proximity * (3 - 2 * proximity)
-        let target = effect.idleAngle += 0.35 * dt
-        if (distance === 0) {
-          const nx = (pointerX - cx) / Math.max(rect.width / 2, 1), ny = (cy - pointerY) / Math.max(rect.height / 2, 1)
-          target = Math.atan2(2 / Math.max(rect.height, 1), -2 / Math.max(rect.width, 1)) + nx * 0.3 + ny * 0.15
-        } else if (brightness > 0) target = Math.atan2(cy - pointerY, pointerX - cx)
-        const diff = ((target - effect.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI
-        effect.angle += diff * (1 - Math.exp(-dt * 7))
-        const colors = buttonColors(effect.button)
-        const radius = Math.min(Number.parseFloat(getComputedStyle(effect.button).borderRadius) || 12, Math.min(effect.width, effect.height) / 2)
-        effect.program.uniforms.uAngle.value = effect.angle
-        effect.program.uniforms.uRadius.value = radius * (window.devicePixelRatio || 1)
-        effect.program.uniforms.uLineColor.value = colors.edge
-        effect.program.uniforms.uBaseColor.value = colors.base
-        effect.program.uniforms.uIntensity.value = effect.button.disabled ? 0 : brightness
-        effect.renderer.render({ scene: effect.mesh })
-      })
+      if (!active || !active.isConnected) { fx.hidden = true; return }
+      const rect = active.getBoundingClientRect()
+      if (rect.width < 1 || rect.height < 1) { fx.hidden = true; return }
+      const dpr = window.devicePixelRatio || 1
+      fx.style.left = `${rect.left - PAD}px`; fx.style.top = `${rect.top - PAD}px`
+      if (width !== rect.width || height !== rect.height) {
+        width = rect.width; height = rect.height
+        fx.style.width = `${width + PAD * 2}px`; fx.style.height = `${height + PAD * 2}px`
+        renderer.setSize(width + PAD * 2, height + PAD * 2)
+        program.uniforms.uCenter.value = [(PAD + width / 2) * dpr, (PAD + height / 2) * dpr]
+        program.uniforms.uHalfSize.value = [(width / 2) * dpr, (height / 2) * dpr]
+        program.uniforms.uPx.value = dpr
+      }
+      const centerX = rect.left + width / 2, centerY = rect.top + height / 2
+      const target = Math.atan2(centerY - pointerY, pointerX - centerX)
+      const diff = ((target - angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI
+      angle += diff * (1 - Math.exp(-dt * 8))
+      const current = colors(active)
+      const radius = Math.min(Number.parseFloat(getComputedStyle(active).borderRadius) || 12, Math.min(width, height) / 2)
+      program.uniforms.uAngle.value = angle
+      program.uniforms.uRadius.value = radius * dpr
+      program.uniforms.uLineColor.value = current.edge
+      program.uniforms.uBaseColor.value = current.base
+      program.uniforms.uThickness.value = dpr
+      renderer.render({ scene: mesh })
     }
     raf = requestAnimationFrame(render)
-    return () => { cancelAnimationFrame(raf); mutationObserver.disconnect(); window.removeEventListener('pointermove', onPointerMove); [...effects.values()].forEach(remove) }
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('pointermove', onPointerMove); fx.remove(); gl.getExtension('WEBGL_lose_context')?.loseContext() }
   }, [])
   return null
 }
