@@ -15,9 +15,9 @@ type BeamsProps = {
   rotation?: number
 }
 
-type BeamProps = { index: number; x: number; width: number; height: number; color: string; speed: number }
+type BeamProps = { index: number; x: number; width: number; height: number; speed: number }
 
-function Beam({ index, x, width, height, color, speed }: BeamProps) {
+function Beam({ index, x, width, height, speed }: BeamProps) {
   const mesh = useRef<Mesh>(null)
   useFrame(({ clock }, delta) => {
     if (!mesh.current) return
@@ -29,7 +29,7 @@ function Beam({ index, x, width, height, color, speed }: BeamProps) {
   })
   return <mesh ref={mesh} position={[x, 0, 0]}>
     <planeGeometry args={[width, height, 1, 1]} />
-    <meshPhysicalMaterial color="#07111c" emissive={color} emissiveIntensity={1.7} roughness={0.26} metalness={0.45} transparent opacity={0.7} side={2} />
+    <meshStandardMaterial color="#000000" roughness={0.3} metalness={0.3} side={2} />
   </mesh>
 }
 
@@ -41,14 +41,14 @@ function BeamField({ beamWidth, beamHeight, beamNumber, lightColor, speed, rotat
     group.current.rotation.z = rotation * Math.PI / 180 + Math.sin(clock.getElapsedTime() * speed * 0.16) * 0.035
   })
   return <group ref={group}>
-    {positions.map((x, index) => <Beam key={index} index={index} x={x} width={beamWidth * 0.72} height={beamHeight} color={lightColor} speed={speed} />)}
+    {positions.map((x, index) => <Beam key={index} index={index} x={x} width={beamWidth * 0.72} height={beamHeight} speed={speed} />)}
     <ambientLight intensity={0.22} />
     <directionalLight color={lightColor} intensity={3.4} position={[0, 3, 10]} />
   </group>
 }
 
 /** Adapted from React Bits' Three.js Beams background. */
-export default function Beams({ className = '', beamWidth = 1.7, beamHeight = 16, beamNumber = 12, lightColor = '#5dbaff', speed = 0.75, rotation = -8 }: BeamsProps) {
+export default function Beams({ className = '', beamWidth = 2, beamHeight = 15, beamNumber = 12, lightColor = '#ffffff', speed = 2, rotation = 0 }: BeamsProps) {
   return <div className={`beams ${className}`.trim()} aria-hidden="true">
     <Canvas dpr={[1, 1.5]} frameloop="always" gl={{ antialias: true, alpha: true }}>
       <color attach="background" args={['#030507']} />

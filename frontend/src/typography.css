@@ -295,6 +295,8 @@ html.flagbox-intro-active::-webkit-scrollbar, html.flagbox-intro-active body::-w
 
 /* Full-screen FlagBox stroke-text intro, adapted from React Bits. */
 .flagbox-stroke-intro { isolation: isolate; background: #030507; }
+.click-spark { position: relative; min-height: 100vh; }
+.click-spark__canvas { position: absolute; inset: 0; z-index: 9999; display: block; pointer-events: none; }
 .flagbox-stroke-intro::before { display: none; }
 .flagbox-stroke-intro__beams { position: absolute; inset: 0; z-index: 0; opacity: .68; }
 .flagbox-stroke-intro__beams::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle, rgba(3,5,7,.08) 20%, rgba(3,5,7,.88) 100%); }

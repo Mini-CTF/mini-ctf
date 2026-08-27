@@ -8,6 +8,7 @@ import { challengeGuides } from './challengeGuides'
 import { articleBySlug, LEARN_FIELDS, learnArticles, learnEn } from './learnContent'
 import StrokeText from './components/StrokeText'
 import Beams from './components/Beams'
+import ClickSpark from './components/ClickSpark'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
@@ -141,7 +142,7 @@ function localizeSystemInterface(language: Language) {
 }
 
 function App() {
-  return <BrowserRouter><AppShell /></BrowserRouter>
+  return <ClickSpark sparkColor="#533aed"><BrowserRouter><AppShell /></BrowserRouter></ClickSpark>
 }
 
 function AppShell() {
@@ -389,7 +390,7 @@ function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
     <Beams className="flagbox-stroke-intro__beams" />
     <button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button>
     <div className="flagbox-stroke-intro__glow" aria-hidden="true" />
-    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeColor="#c69af2" fillColor="#f8fafc" strokeWidth={1.5} drawDuration={1} fillDelay={0.4} />
+    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeColor="#533aed" fillColor="#f8fafc" strokeWidth={1.5} drawDuration={1} fillDelay={0.4} />
     <p className="flagbox-stroke-intro__copy">LEARN · ANALYZE · CAPTURE</p>
   </div>
 }
