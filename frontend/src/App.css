@@ -3211,7 +3211,7 @@ html[data-theme="light"] .learn-check li {
 .auth-login-shell {
   min-height: calc(100vh - 82px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
   background: #06080c;
 }
 .auth-showcase {
@@ -3230,12 +3230,9 @@ html[data-theme="light"] .learn-check li {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, rgba(3, 5, 7, .08), rgba(3, 5, 7, .86) 88%);
+  background: radial-gradient(circle at 50% 50%, rgba(5, 8, 18, .02), rgba(3, 5, 12, .78) 92%);
 }
-.auth-showcase__beams { position: absolute; inset: 0; z-index: 0; opacity: .68; }
-.auth-showcase__content { position: relative; z-index: 2; display: grid; width: min(78%, 520px); gap: clamp(12px, 2vw, 22px); text-align: center; color: #f8fafc; }
-.auth-showcase__mark { font-size: clamp(58px, 8vw, 126px); font-weight: 800; line-height: .9; letter-spacing: -.085em; }
-.auth-showcase__content p { margin: 0; color: rgba(232, 215, 249, .72); font-size: clamp(8px, .8vw, 11px); font-weight: 700; letter-spacing: clamp(.16em, .8vw, .3em); }
+.auth-showcase__aether { position: absolute; inset: 0; z-index: 0; display: block; width: 100%; height: 100%; }
 .auth-login-shell > .auth-page { position: relative; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: clamp(84px, 10vh, 120px) clamp(36px, 8vw, 132px) clamp(38px, 7vh, 78px); background: radial-gradient(circle at 78% 18%, rgba(83, 58, 237, .10), transparent 34%), #0a0d13; }
 .auth-login-shell .auth-card { width: min(100%, 450px); max-width: none; border: 0; border-radius: 0; background: transparent; padding: 0; box-shadow: none; }
 .auth-login-shell .auth-card .eyebrow { margin: 0 0 14px; font-size: 12px; }

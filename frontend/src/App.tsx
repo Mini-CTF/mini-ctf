@@ -8,6 +8,7 @@ import { challengeGuides } from './challengeGuides'
 import { articleBySlug, LEARN_FIELDS, learnArticles, learnEn } from './learnContent'
 import StrokeText from './components/StrokeText'
 import Beams from './components/Beams'
+import AetherFlow from './components/AetherFlow'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
@@ -1208,7 +1209,7 @@ function LegacyLoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (resu
 }
 
 function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void }) {
-  return <div className="auth-login-shell"><section className="auth-showcase" aria-hidden="true"><Beams className="auth-showcase__beams" beamWidth={2} beamHeight={42} beamNumber={18} rotation={90} /><div className="auth-showcase__content"><span className="auth-showcase__mark">FlagBox</span><p>LEARN · ANALYZE · CAPTURE</p></div></section><LegacyLoginView onBack={onBack} onAuth={onAuth} /></div>
+  return <div className="auth-login-shell"><section className="auth-showcase" aria-label="Interactive constellation background"><AetherFlow className="auth-showcase__aether" /></section><LegacyLoginView onBack={onBack} onAuth={onAuth} /></div>
 }
 
 function ProviderIcon({ provider }: { provider: string }) {
