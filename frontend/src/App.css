@@ -3234,6 +3234,20 @@ html[data-theme="light"] .learn-check li {
 }
 .auth-showcase__aether { position: absolute; inset: 0; z-index: 0; display: block; width: 100%; height: 100%; }
 .auth-showcase__logo { position: absolute; top: 50%; left: 50%; z-index: 2; width: min(42%, 245px); height: auto; transform: translate(-50%, -50%); opacity: .48; filter: grayscale(1) brightness(2.4); mix-blend-mode: screen; pointer-events: none; user-select: none; }
+html[data-theme='light'] .auth-showcase { background: #f8fafc; border-right-color: rgba(24, 38, 58, .14); }
+html[data-theme='light'] .auth-showcase::after { background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0), rgba(226, 232, 240, .32) 92%); }
+html[data-theme='light'] .auth-showcase__logo { opacity: .26; filter: grayscale(1) brightness(.18); mix-blend-mode: multiply; }
+html[data-theme='light'] .auth-login-shell > .auth-page { background: radial-gradient(circle at 78% 18%, rgba(83, 58, 237, .08), transparent 34%), #f8fafc; }
+html[data-theme='light'] .auth-login-shell .auth-card h1 { color: #162234; }
+html[data-theme='light'] .auth-login-shell .auth-card .eyebrow { color: #533aed; }
+html[data-theme='light'] .auth-login-shell .auth-form label { color: #3d4b60; }
+html[data-theme='light'] .auth-login-shell .auth-form input { border-color: #cbd5e1; background: #fff; color: #162234; }
+html[data-theme='light'] .auth-login-shell .auth-form input::placeholder { color: #64748b; }
+html[data-theme='light'] .auth-login-shell .auth-divider { color: #64748b; }
+html[data-theme='light'] .auth-login-shell .auth-divider::before, html[data-theme='light'] .auth-login-shell .auth-divider::after { background: #d8e0eb; }
+html[data-theme='light'] .auth-login-shell .auth-footnote { color: #64748b; }
+html[data-theme='light'] .auth-login-shell .back-link { color: #40516a; }
+html[data-theme='light'] .auth-login-shell .back-link:hover { color: #162234; }
 .auth-login-shell > .auth-page { position: relative; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: clamp(84px, 10vh, 120px) clamp(36px, 8vw, 132px) clamp(38px, 7vh, 78px); background: radial-gradient(circle at 78% 18%, rgba(83, 58, 237, .10), transparent 34%), #0a0d13; }
 .auth-login-shell .auth-card { width: min(100%, 450px); max-width: none; border: 0; border-radius: 0; background: transparent; padding: 0; box-shadow: none; }
 .auth-login-shell .auth-card .eyebrow { margin: 0 0 14px; font-size: 12px; }

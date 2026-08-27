@@ -40,7 +40,8 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
     const animate = () => {
       frame = requestAnimationFrame(animate)
       tick += 1
-      context.fillStyle = '#02030a'; context.fillRect(0, 0, width, height)
+      const lightMode = document.documentElement.dataset.theme === 'light'
+      context.fillStyle = lightMode ? '#f8fafc' : '#02030a'; context.fillRect(0, 0, width, height)
       const beforeCount = particles.length
       particles = particles.filter((particle) => {
         const dx = mouse.x - particle.x, dy = mouse.y - particle.y, distance = Math.hypot(dx, dy)
@@ -59,11 +60,12 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
           if (distanceSquared > 20000) continue
           const opacity = Math.max(0, 1 - distanceSquared / 20000)
           const nearMouse = Math.hypot(first.x - mouse.x, first.y - mouse.y) < mouse.radius
-          context.strokeStyle = nearMouse ? `rgba(255, 255, 255, ${opacity * .8 * Math.min(first.opacity, second.opacity)})` : `rgba(207, 160, 255, ${opacity * .62 * Math.min(first.opacity, second.opacity)})`
-          context.lineWidth = 1.15; context.beginPath(); context.moveTo(first.x, first.y); context.lineTo(second.x, second.y); context.stroke()
+          const alpha = opacity * Math.min(first.opacity, second.opacity)
+          context.strokeStyle = lightMode ? `rgba(20, 31, 49, ${alpha * .64})` : nearMouse ? `rgba(255, 255, 255, ${alpha * .8})` : `rgba(207, 160, 255, ${alpha * .62})`
+          context.lineWidth = lightMode ? 1.05 : 1.15; context.beginPath(); context.moveTo(first.x, first.y); context.lineTo(second.x, second.y); context.stroke()
         }
       }
-      for (const particle of particles) { context.fillStyle = `rgba(223, 198, 255, ${.96 * particle.opacity})`; context.beginPath(); context.arc(particle.x, particle.y, particle.size * 1.15, 0, Math.PI * 2); context.fill() }
+      for (const particle of particles) { context.fillStyle = lightMode ? `rgba(12, 24, 42, ${.88 * particle.opacity})` : `rgba(223, 198, 255, ${.96 * particle.opacity})`; context.beginPath(); context.arc(particle.x, particle.y, particle.size * 1.15, 0, Math.PI * 2); context.fill() }
     }
     const observer = new ResizeObserver(resize)
     observer.observe(canvas); canvas.addEventListener('pointermove', onPointerMove); canvas.addEventListener('pointerleave', onPointerLeave)
