@@ -183,7 +183,7 @@ export function GettingStartedTutorial({
   }
 
   return (
-    <div className={rect ? 'onboarding-layer has-target' : 'onboarding-layer'} role="dialog" aria-modal="true" aria-label="FlagBox tutorial">
+    <div className={rect ? 'onboarding-layer has-target' : 'onboarding-layer'} data-no-specular role="dialog" aria-modal="true" aria-label="FlagBox tutorial">
       <div
         className={rect ? 'onboarding-spotlight' : 'onboarding-spotlight fullscreen'}
         style={rect ? { top: rect.top - 8, left: rect.left - 8, width: rect.width + 16, height: rect.height + 16 } : undefined}
