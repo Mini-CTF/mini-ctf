@@ -297,10 +297,10 @@ html.flagbox-intro-active::-webkit-scrollbar, html.flagbox-intro-active body::-w
 .flagbox-stroke-intro { isolation: isolate; background: #030507; }
 .flagbox-stroke-intro::before { display: none; }
 .flagbox-stroke-intro .flagbox-intro-skip { z-index: 3; color: rgba(255,255,255,.55); }
-.flagbox-stroke-intro__glow { position: absolute; width: min(76vw, 940px); height: min(42vw, 460px); border-radius: 50%; background: radial-gradient(ellipse, rgba(41, 126, 255, .22), rgba(24, 77, 178, .06) 48%, transparent 72%); filter: blur(8px); animation: flagbox-stroke-glow 2.9s ease-out both; }
+.flagbox-stroke-intro__glow { position: absolute; width: min(76vw, 940px); height: min(42vw, 460px); border-radius: 50%; background: radial-gradient(ellipse, rgba(41, 126, 255, .22), rgba(24, 77, 178, .06) 48%, transparent 72%); filter: blur(8px); animation: flagbox-stroke-glow 1.45s ease-out both; }
 .flagbox-stroke-intro__wordmark { position: relative; z-index: 2; width: min(92vw, 1500px); }
 .flagbox-stroke-intro__wordmark .stroke-text__stroke, .flagbox-stroke-intro__wordmark .stroke-text__fill { font-family: var(--sans); }
-.flagbox-stroke-intro__copy { position: absolute; z-index: 2; bottom: clamp(56px, 10vh, 110px); margin: 0; color: rgba(208, 225, 255, .68); font: 700 clamp(10px, 1vw, 13px)/1 var(--sans); letter-spacing: .34em; opacity: 0; animation: flagbox-stroke-copy .5s ease 2.38s forwards; }
+.flagbox-stroke-intro__copy { position: absolute; z-index: 2; bottom: clamp(56px, 10vh, 110px); margin: 0; color: rgba(208, 225, 255, .68); font: 700 clamp(10px, 1vw, 13px)/1 var(--sans); letter-spacing: .34em; opacity: 0; animation: flagbox-stroke-copy .25s ease 1.19s forwards; }
 @keyframes flagbox-stroke-glow { 0% { opacity: 0; transform: scale(.72); } 35% { opacity: 1; } 100% { opacity: .68; transform: scale(1.08); } }
 @keyframes flagbox-stroke-copy { to { opacity: 1; transform: translateY(-2px); } }
 @media (max-width: 620px) { .flagbox-stroke-intro__wordmark { width: 96vw; } .flagbox-stroke-intro__wordmark .stroke-text__svg { height: 160px; } .flagbox-stroke-intro__copy { letter-spacing: .2em; } }
