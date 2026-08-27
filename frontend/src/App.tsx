@@ -389,7 +389,7 @@ function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
     <LetterGlitch className="flagbox-stroke-intro__glitch" />
     <button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button>
     <div className="flagbox-stroke-intro__glow" aria-hidden="true" />
-    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeWidth={1.35} drawDuration={3.1} fillDelay={0.28} />
+    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeWidth={1.35} drawDuration={3.1} fillDelay={0.14} />
     <p className="flagbox-stroke-intro__copy">LEARN · ANALYZE · CAPTURE</p>
   </div>
 }
