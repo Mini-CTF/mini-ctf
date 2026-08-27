@@ -296,12 +296,8 @@ html.flagbox-intro-active::-webkit-scrollbar, html.flagbox-intro-active body::-w
 /* Full-screen FlagBox stroke-text intro, adapted from React Bits. */
 .flagbox-stroke-intro { isolation: isolate; background: #030507; }
 .flagbox-stroke-intro::before { display: none; }
-.flagbox-stroke-intro__glitch { position: absolute; inset: 0; z-index: 0; opacity: .72; }
-.letter-glitch { position: relative; width: 100%; height: 100%; overflow: hidden; background: #030507; }
-.letter-glitch__canvas { display: block; width: 100%; height: 100%; }
-.letter-glitch__outer-vignette, .letter-glitch__center-vignette { position: absolute; inset: 0; pointer-events: none; }
-.letter-glitch__outer-vignette { background: radial-gradient(circle, rgba(3,5,7,0) 54%, rgba(3,5,7,.92) 100%); }
-.letter-glitch__center-vignette { background: radial-gradient(circle, rgba(3,5,7,.72) 0%, rgba(3,5,7,0) 60%); }
+.flagbox-stroke-intro__beams { position: absolute; inset: 0; z-index: 0; opacity: .68; }
+.flagbox-stroke-intro__beams::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle, rgba(3,5,7,.08) 20%, rgba(3,5,7,.88) 100%); }
 .flagbox-stroke-intro .flagbox-intro-skip { z-index: 3; color: rgba(255,255,255,.55); }
 .flagbox-stroke-intro__glow { position: absolute; width: min(76vw, 940px); height: min(42vw, 460px); border-radius: 50%; background: radial-gradient(ellipse, rgba(41, 126, 255, .22), rgba(24, 77, 178, .06) 48%, transparent 72%); filter: blur(8px); animation: flagbox-stroke-glow 5.8s ease-out both; }
 .flagbox-stroke-intro__wordmark { position: relative; z-index: 2; width: min(92vw, 1500px); }
