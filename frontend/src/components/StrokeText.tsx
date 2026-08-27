@@ -12,6 +12,7 @@ type StrokeTextProps = {
   strokeWidth?: number
   drawDuration?: number
   fillDelay?: number
+  fillDuration?: number
   stagger?: number
   fontSize?: number
   fontWeight?: number | string
@@ -20,7 +21,7 @@ type StrokeTextProps = {
 }
 
 /** Adapted from React Bits' Stroke Text component. */
-export default function StrokeText({ text, strokeColor = '#ffffff', fillColor = '#ffffff', strokeWidth = 1.25, drawDuration = 1.55, fillDelay = 0.18, stagger = 0.055, fontSize = 220, fontWeight = 800, letterSpacing = -16, className = '' }: StrokeTextProps) {
+export default function StrokeText({ text, strokeColor = '#ffffff', fillColor = '#ffffff', strokeWidth = 1.25, drawDuration = 1.55, fillDelay = 0.18, fillDuration, stagger = 0.055, fontSize = 220, fontWeight = 800, letterSpacing = -16, className = '' }: StrokeTextProps) {
   const rootRef = useRef<HTMLSpanElement | null>(null)
   const strokeTextRef = useRef<SVGTextElement | null>(null)
   const wipeRectRef = useRef<SVGRectElement | null>(null)
@@ -69,9 +70,9 @@ export default function StrokeText({ text, strokeColor = '#ffffff', fillColor = 
     if (wipe) gsap.set(wipe, { attr: { width: 0 } })
     const timeline = gsap.timeline({ defaults: { overwrite: 'auto' } })
     timeline.to(strokes, { strokeDashoffset: 0, duration: drawDuration, ease: 'power2.out', stagger }, 0)
-    if (wipe) timeline.to(wipe, { attr: { width: box.width }, duration: Math.max(0.4, drawDuration * 0.5), ease: 'power2.inOut' }, drawDuration + fillDelay)
+    if (wipe) timeline.to(wipe, { attr: { width: box.width }, duration: fillDuration ?? Math.max(0.4, drawDuration * 0.5), ease: 'power2.inOut' }, drawDuration + fillDelay)
     return () => { timeline.kill(); gsap.killTweensOf(targets) }
-  }, [box, dash, drawDuration, fillDelay, stagger])
+  }, [box, dash, drawDuration, fillDelay, fillDuration, stagger])
 
   const viewBox = box ? `${box.x} ${box.y} ${box.width} ${box.height}` : `0 ${-fontSize} 600 ${fontSize * 1.3}`
   return <span ref={rootRef} className={`stroke-text ${className}`.trim()} style={{ '--stroke-text-height': `${Math.round(fontSize * 1.3)}px` } as CSSProperties} role="img" aria-label={text}>
