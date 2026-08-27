@@ -3222,7 +3222,7 @@ html[data-theme="light"] .learn-check li {
   min-height: 100%;
   overflow: hidden;
   border-right: 1px solid rgba(255, 255, 255, .09);
-  background: #071321;
+  background: #02030a;
 }
 .auth-showcase::after {
   content: '';

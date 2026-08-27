@@ -37,7 +37,7 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
     const onPointerLeave = () => { mouse.x = -1000; mouse.y = -1000 }
     const animate = () => {
       frame = requestAnimationFrame(animate)
-      context.fillStyle = '#071321'; context.fillRect(0, 0, width, height)
+      context.fillStyle = '#02030a'; context.fillRect(0, 0, width, height)
       for (const particle of particles) {
         if (particle.x > width || particle.x < 0) particle.directionX = -particle.directionX
         if (particle.y > height || particle.y < 0) particle.directionY = -particle.directionY
@@ -52,11 +52,11 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
           if (distanceSquared > 20000) continue
           const opacity = Math.max(0, 1 - distanceSquared / 20000)
           const nearMouse = Math.hypot(first.x - mouse.x, first.y - mouse.y) < mouse.radius
-          context.strokeStyle = nearMouse ? `rgba(255, 255, 255, ${opacity * .62})` : `rgba(200, 150, 255, ${opacity * .42})`
-          context.lineWidth = .8; context.beginPath(); context.moveTo(first.x, first.y); context.lineTo(second.x, second.y); context.stroke()
+          context.strokeStyle = nearMouse ? `rgba(255, 255, 255, ${opacity * .8})` : `rgba(207, 160, 255, ${opacity * .62})`
+          context.lineWidth = 1.15; context.beginPath(); context.moveTo(first.x, first.y); context.lineTo(second.x, second.y); context.stroke()
         }
       }
-      for (const particle of particles) { context.fillStyle = 'rgba(210, 177, 255, .88)'; context.beginPath(); context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); context.fill() }
+      for (const particle of particles) { context.fillStyle = 'rgba(223, 198, 255, .96)'; context.beginPath(); context.arc(particle.x, particle.y, particle.size * 1.15, 0, Math.PI * 2); context.fill() }
     }
     const observer = new ResizeObserver(resize)
     observer.observe(canvas); canvas.addEventListener('pointermove', onPointerMove); canvas.addEventListener('pointerleave', onPointerLeave)
