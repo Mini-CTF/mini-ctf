@@ -931,6 +931,8 @@ html[data-theme='light'] .brand img { mix-blend-mode: multiply; }
 html[data-theme='light'] .hero-banner-content h1 { color: #18263a !important; }
 html[data-theme='light'] .hero-banner-wordmark { color: color-mix(in srgb, #18263a 17%, transparent); }
 .home-page .hero-banner-dots { left: calc(max(7vw, 72px) + clamp(42px, 7vw, 92px)); right: auto; }
+/* The split authentication screen intentionally has no enclosing card in either theme. */
+html[data-theme] .auth-login-shell .auth-card { border: 0 !important; background: transparent !important; box-shadow: none !important; }
 /* Locale guard: keep English labels and CTAs on one intentional line. */
 .nav-button, .header-login, .language-toggle, .hero-banner-content .button, .section-heading .text-link, .footer-status { white-space: nowrap; }
 .hero-banner-content h1 { text-wrap: balance; }
