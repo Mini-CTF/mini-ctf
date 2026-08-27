@@ -5,7 +5,7 @@ import { ArrowRight, Zap } from 'lucide-react'
 import './aether-flow-hero.css'
 
 type AetherFlowHeroProps = { className?: string; showContent?: boolean }
-type Particle = { x: number; y: number; directionX: number; directionY: number; size: number }
+type Particle = { x: number; y: number; directionX: number; directionY: number; size: number; opacity: number }
 
 /** Adapted for FlagBox from the supplied Aether Flow Hero component. */
 export default function AetherFlowHero({ className = '', showContent = true }: AetherFlowHeroProps) {
@@ -18,10 +18,12 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
 
     const mouse = { x: -1000, y: -1000, radius: 200 }
     let particles: Particle[] = []
-    let width = 0, height = 0, frame = 0
+    let width = 0, height = 0, frame = 0, targetCount = 0, respawnQueue = 0, tick = 0
+    const createParticle = (): Particle => ({ x: Math.random() * width, y: Math.random() * height, directionX: Math.random() * .4 - .2, directionY: Math.random() * .4 - .2, size: Math.random() * 2 + 1, opacity: 0 })
     const init = () => {
-      const count = Math.max(34, Math.min(88, Math.round((width * height) / 9000)))
-      particles = Array.from({ length: count }, () => ({ x: Math.random() * width, y: Math.random() * height, directionX: Math.random() * .4 - .2, directionY: Math.random() * .4 - .2, size: Math.random() * 2 + 1 }))
+      targetCount = Math.max(34, Math.min(88, Math.round((width * height) / 9000)))
+      particles = Array.from({ length: targetCount }, createParticle)
+      respawnQueue = 0
     }
     const resize = () => {
       const rect = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1
@@ -37,13 +39,19 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
     const onPointerLeave = () => { mouse.x = -1000; mouse.y = -1000 }
     const animate = () => {
       frame = requestAnimationFrame(animate)
+      tick += 1
       context.fillStyle = '#02030a'; context.fillRect(0, 0, width, height)
-      for (const particle of particles) {
-        if (particle.x > width || particle.x < 0) particle.directionX = -particle.directionX
-        if (particle.y > height || particle.y < 0) particle.directionY = -particle.directionY
+      const beforeCount = particles.length
+      particles = particles.filter((particle) => {
         const dx = mouse.x - particle.x, dy = mouse.y - particle.y, distance = Math.hypot(dx, dy)
         if (distance > 0 && distance < mouse.radius + particle.size) { const force = (mouse.radius - distance) / mouse.radius; particle.x -= dx / distance * force * 5; particle.y -= dy / distance * force * 5 }
         particle.x += particle.directionX; particle.y += particle.directionY
+        particle.opacity = Math.min(1, particle.opacity + .018)
+        return particle.x > -90 && particle.x < width + 90 && particle.y > -90 && particle.y < height + 90
+      })
+      respawnQueue += beforeCount - particles.length
+      if (particles.length + respawnQueue < targetCount) respawnQueue = targetCount - particles.length
+      if (respawnQueue > 0 && tick % 4 === 0) { particles.push(createParticle()); respawnQueue -= 1 }
       }
       for (let a = 0; a < particles.length; a += 1) {
         const first = particles[a]
@@ -52,11 +60,11 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
           if (distanceSquared > 20000) continue
           const opacity = Math.max(0, 1 - distanceSquared / 20000)
           const nearMouse = Math.hypot(first.x - mouse.x, first.y - mouse.y) < mouse.radius
-          context.strokeStyle = nearMouse ? `rgba(255, 255, 255, ${opacity * .8})` : `rgba(207, 160, 255, ${opacity * .62})`
+          context.strokeStyle = nearMouse ? `rgba(255, 255, 255, ${opacity * .8 * Math.min(first.opacity, second.opacity)})` : `rgba(207, 160, 255, ${opacity * .62 * Math.min(first.opacity, second.opacity)})`
           context.lineWidth = 1.15; context.beginPath(); context.moveTo(first.x, first.y); context.lineTo(second.x, second.y); context.stroke()
         }
       }
-      for (const particle of particles) { context.fillStyle = 'rgba(223, 198, 255, .96)'; context.beginPath(); context.arc(particle.x, particle.y, particle.size * 1.15, 0, Math.PI * 2); context.fill() }
+      for (const particle of particles) { context.fillStyle = `rgba(223, 198, 255, ${.96 * particle.opacity})`; context.beginPath(); context.arc(particle.x, particle.y, particle.size * 1.15, 0, Math.PI * 2); context.fill() }
     }
     const observer = new ResizeObserver(resize)
     observer.observe(canvas); canvas.addEventListener('pointermove', onPointerMove); canvas.addEventListener('pointerleave', onPointerLeave)
