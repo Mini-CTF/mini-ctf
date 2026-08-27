@@ -37,7 +37,7 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
     const onPointerLeave = () => { mouse.x = -1000; mouse.y = -1000 }
     const animate = () => {
       frame = requestAnimationFrame(animate)
-      context.fillStyle = '#02030a'; context.fillRect(0, 0, width, height)
+      context.fillStyle = '#071321'; context.fillRect(0, 0, width, height)
       for (const particle of particles) {
         if (particle.x > width || particle.x < 0) particle.directionX = -particle.directionX
         if (particle.y > height || particle.y < 0) particle.directionY = -particle.directionY

@@ -3222,7 +3222,7 @@ html[data-theme="light"] .learn-check li {
   min-height: 100%;
   overflow: hidden;
   border-right: 1px solid rgba(255, 255, 255, .09);
-  background: #030507;
+  background: #071321;
 }
 .auth-showcase::after {
   content: '';
@@ -3230,7 +3230,7 @@ html[data-theme="light"] .learn-check li {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, rgba(5, 8, 18, .02), rgba(3, 5, 12, .78) 92%);
+  background: radial-gradient(circle at 50% 50%, rgba(18, 48, 78, .03), rgba(4, 13, 27, .76) 92%);
 }
 .auth-showcase__aether { position: absolute; inset: 0; z-index: 0; display: block; width: 100%; height: 100%; }
 .auth-login-shell > .auth-page { position: relative; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: clamp(84px, 10vh, 120px) clamp(36px, 8vw, 132px) clamp(38px, 7vh, 78px); background: radial-gradient(circle at 78% 18%, rgba(83, 58, 237, .10), transparent 34%), #0a0d13; }
