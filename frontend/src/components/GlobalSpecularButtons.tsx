@@ -52,8 +52,6 @@ type Effect = {
   height: number
   angle: number
   idleAngle: number
-  originalPosition: string
-  changedPosition: boolean
 }
 
 function rgb(value: string, fallback: [number, number, number]) {
@@ -82,7 +80,6 @@ export default function GlobalSpecularButtons() {
       effect.observer.disconnect()
       effect.fx.remove()
       effect.gl.getExtension('WEBGL_lose_context')?.loseContext()
-      if (effect.changedPosition) effect.button.style.position = effect.originalPosition
       delete effect.button.dataset.specularFx
       effects.delete(effect.button)
     }
@@ -90,14 +87,11 @@ export default function GlobalSpecularButtons() {
     const add = (button: HTMLButtonElement) => {
       if (button.dataset.specularFx || button.closest('[data-no-specular]')) return
       button.dataset.specularFx = 'true'
-      const originalPosition = button.style.position
-      const changedPosition = getComputedStyle(button).position === 'static'
-      if (changedPosition) button.style.position = 'relative'
 
       const fx = document.createElement('span')
       fx.className = 'global-specular-button__fx'
       fx.setAttribute('aria-hidden', 'true')
-      button.append(fx)
+      document.body.append(fx)
 
       const renderer = new Renderer({ alpha: true, premultipliedAlpha: true, antialias: true, dpr: window.devicePixelRatio || 1 })
       const gl = renderer.gl
@@ -113,11 +107,15 @@ export default function GlobalSpecularButtons() {
       } })
       const mesh = new Mesh(gl, { geometry, program })
       fx.append(renderer.gl.canvas)
-      const effect: Effect = { button, fx, renderer, gl, program, mesh, observer: new ResizeObserver(() => resize(effect)), width: 1, height: 1, angle: 2.4, idleAngle: 2.4, originalPosition, changedPosition }
+      const effect: Effect = { button, fx, renderer, gl, program, mesh, observer: new ResizeObserver(() => resize(effect)), width: 1, height: 1, angle: 2.4, idleAngle: 2.4 }
       const resize = (item: Effect) => {
         const rect = item.button.getBoundingClientRect()
         const dpr = window.devicePixelRatio || 1
         item.width = rect.width; item.height = rect.height
+        item.fx.style.left = `${rect.left - PAD}px`
+        item.fx.style.top = `${rect.top - PAD}px`
+        item.fx.style.width = `${rect.width + PAD * 2}px`
+        item.fx.style.height = `${rect.height + PAD * 2}px`
         item.renderer.setSize(rect.width + PAD * 2, rect.height + PAD * 2)
         item.program.uniforms.uCenter.value = [(PAD + rect.width / 2) * dpr, (PAD + rect.height / 2) * dpr]
         item.program.uniforms.uHalfSize.value = [(rect.width / 2) * dpr, (rect.height / 2) * dpr]
@@ -145,6 +143,8 @@ export default function GlobalSpecularButtons() {
       effects.forEach(effect => {
         if (!effect.button.isConnected) return remove(effect)
         const rect = effect.button.getBoundingClientRect()
+        effect.fx.style.left = `${rect.left - PAD}px`
+        effect.fx.style.top = `${rect.top - PAD}px`
         const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2
         const dx = Math.max(rect.left - pointerX, 0, pointerX - rect.right)
         const dy = Math.max(rect.top - pointerY, 0, pointerY - rect.bottom)
