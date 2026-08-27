@@ -169,7 +169,7 @@ function AppShell() {
     const timer = window.setTimeout(() => {
       setShowIntro(false)
       sessionStorage.setItem('flagbox-intro-seen', 'true')
-    }, 1800)
+    }, 6800)
     return () => window.clearTimeout(timer)
   }, [showIntro])
   useEffect(() => {
@@ -387,7 +387,7 @@ function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
   return <div className="flagbox-intro flagbox-stroke-intro" role="status" aria-label="FlagBox is loading.">
     <button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button>
     <div className="flagbox-stroke-intro__glow" aria-hidden="true" />
-    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeWidth={1.35} drawDuration={0.78} fillDelay={0.07} />
+    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeWidth={1.35} drawDuration={3.1} fillDelay={0.28} />
     <p className="flagbox-stroke-intro__copy">LEARN · ANALYZE · CAPTURE</p>
   </div>
 }
