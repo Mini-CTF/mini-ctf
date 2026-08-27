@@ -305,7 +305,7 @@ html.flagbox-intro-active::-webkit-scrollbar, html.flagbox-intro-active body::-w
 .community-list { margin-top: 18px; }
 .community-post-row { margin: 10px 0; padding: 28px 16px; }
 .flagbox-stroke-intro::before { display: none; }
-.flagbox-stroke-intro__beams { position: absolute; inset: 0; z-index: 0; opacity: .68; }
+.flagbox-stroke-intro__beams { position: absolute; inset: 0; z-index: 0; opacity: .68; transform: translateX(2vw); }
 .flagbox-stroke-intro__beams::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle, rgba(3,5,7,.08) 20%, rgba(3,5,7,.88) 100%); }
 .flagbox-stroke-intro .flagbox-intro-skip { z-index: 3; color: rgba(255,255,255,.55); }
 .flagbox-stroke-intro__glow { position: absolute; width: min(76vw, 940px); height: min(42vw, 460px); border-radius: 50%; background: radial-gradient(ellipse, rgba(198, 154, 242, .22), rgba(110, 68, 170, .06) 48%, transparent 72%); filter: blur(8px); animation: flagbox-stroke-glow 2.9s ease-out both; }
