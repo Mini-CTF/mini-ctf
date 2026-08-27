@@ -7,6 +7,7 @@ import GettingStartedTutorial from './onboarding'
 import { challengeGuides } from './challengeGuides'
 import { articleBySlug, LEARN_FIELDS, learnArticles, learnEn } from './learnContent'
 import StrokeText from './components/StrokeText'
+import LetterGlitch from './components/LetterGlitch'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
@@ -385,6 +386,7 @@ function LoadingState({ label }: { label: string }) {
 
 function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
   return <div className="flagbox-intro flagbox-stroke-intro" role="status" aria-label="FlagBox is loading.">
+    <LetterGlitch className="flagbox-stroke-intro__glitch" />
     <button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button>
     <div className="flagbox-stroke-intro__glow" aria-hidden="true" />
     <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeWidth={1.35} drawDuration={3.1} fillDelay={0.28} />
