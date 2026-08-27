@@ -1,0 +1,7 @@
+.aether-flow-hero { position: relative; width: 100%; height: 100%; overflow: hidden; background: #02030a; }
+.aether-flow-hero__canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.aether-flow-hero__content { position: relative; z-index: 1; display: grid; height: 100%; place-items: center; padding: 24px; color: #fff; text-align: center; }
+.aether-flow-hero__badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border: 1px solid rgba(168, 85, 247, .25); border-radius: 999px; background: rgba(168, 85, 247, .1); color: #e5e7eb; font-size: 14px; }
+.aether-flow-hero__content h1 { margin: 24px 0 12px; font-size: clamp(48px, 8vw, 112px); letter-spacing: -.06em; }
+.aether-flow-hero__content p { max-width: 560px; color: #9ca3af; }
+.aether-flow-hero__content button { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 14px 24px; border: 0; border-radius: 10px; background: #fff; color: #000; font-weight: 700; }
