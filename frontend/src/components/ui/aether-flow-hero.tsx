@@ -62,7 +62,7 @@ export default function AetherFlowHero({ className = '', showContent = true }: A
           const nearMouse = Math.hypot(first.x - mouse.x, first.y - mouse.y) < mouse.radius
           const alpha = opacity * Math.min(first.opacity, second.opacity)
           context.strokeStyle = lightMode ? `rgba(20, 31, 49, ${alpha * .64})` : nearMouse ? `rgba(255, 255, 255, ${alpha * .8})` : `rgba(207, 160, 255, ${alpha * .62})`
-          context.lineWidth = lightMode ? 1.05 : 1.15; context.beginPath(); context.moveTo(first.x, first.y); context.lineTo(second.x, second.y); context.stroke()
+          context.lineWidth = lightMode ? 2.45 : 2.75; context.beginPath(); context.moveTo(first.x, first.y); context.lineTo(second.x, second.y); context.stroke()
         }
       }
       for (const particle of particles) { context.fillStyle = lightMode ? `rgba(12, 24, 42, ${.88 * particle.opacity})` : `rgba(223, 198, 255, ${.96 * particle.opacity})`; context.beginPath(); context.arc(particle.x, particle.y, particle.size * 1.15, 0, Math.PI * 2); context.fill() }

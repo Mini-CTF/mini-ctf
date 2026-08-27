@@ -1209,7 +1209,7 @@ function LegacyLoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (resu
 }
 
 function LoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void }) {
-  return <div className="auth-login-shell"><section className="auth-showcase" aria-label="Interactive constellation background"><AetherFlowHero className="auth-showcase__aether" showContent={false} /><img className="auth-showcase__logo" src={flagBoxLogo} alt="" aria-hidden="true" /></section><LegacyLoginView onBack={onBack} onAuth={onAuth} /></div>
+  return <div className="auth-login-shell"><section className="auth-showcase" aria-label="Interactive constellation background"><AetherFlowHero className="auth-showcase__aether" showContent={false} /><span className="auth-showcase__wordmark" aria-hidden="true">FlagBox</span></section><LegacyLoginView onBack={onBack} onAuth={onAuth} /></div>
 }
 
 function ProviderIcon({ provider }: { provider: string }) {
