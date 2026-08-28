@@ -99,7 +99,7 @@ public class ChallengeService {
     User u = users.findByUsernameForUpdate(username).orElseThrow();
     if (solves.findByUserAndChallenge(u.getId(), id).isPresent()) {
       recordInCurrentTransaction(u, c, true);
-      return new ChallengeDtos.SubmitResult("already_solved", 0);
+      return new ChallengeDtos.SubmitResult("already_solved", 0, 0);
     }
     recordInCurrentTransaction(u, c, true);
     Solve solve = new Solve();
@@ -107,8 +107,10 @@ public class ChallengeService {
     solve.setChallenge(c);
     solves.save(solve);
     u.setScore(u.getScore() + c.getScore());
+    int awardedGems = gemsForDifficulty(c.getDifficulty());
+    u.setCipherGems(u.getCipherGems() + awardedGems);
     antiCheat.assessCorrectSubmission(u, c);
-    return new ChallengeDtos.SubmitResult("correct", c.getScore());
+    return new ChallengeDtos.SubmitResult("correct", c.getScore(), awardedGems);
   }
 
   @Transactional
@@ -263,6 +265,17 @@ public class ChallengeService {
     Challenge c = get(id);
     if (!c.isActive()) throw new EntityNotFoundException("Challenge not found");
     return c;
+  }
+
+  private int gemsForDifficulty(String difficulty) {
+    return switch (difficulty == null ? "" : difficulty.toUpperCase(Locale.ROOT)) {
+      case "BEGINNER" -> 1;
+      case "EASY" -> 3;
+      case "NORMAL" -> 5;
+      case "ADVANCED" -> 10;
+      case "EXPERT" -> 30;
+      default -> 0;
+    };
   }
 
   private Set<Long> solvedIds(String username) {

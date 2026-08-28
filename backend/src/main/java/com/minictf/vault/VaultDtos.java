@@ -30,7 +30,12 @@ public final class VaultDtos {
       boolean consumable) {}
 
   public record Summary(
-      int gems, int fragments, int hintCredits, List<Mission> missions, List<Cosmetic> cosmetics) {}
+      int gems,
+      int fragments,
+      int hintCredits,
+      List<String> dailyShopIds,
+      List<Mission> missions,
+      List<Cosmetic> cosmetics) {}
 
   public record HiddenMission(
       String id, String name, String description, boolean eligible, boolean completed) {}

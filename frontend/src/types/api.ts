@@ -230,6 +230,7 @@ export type VaultSummary = {
   gems: number
   fragments: number
   hintCredits: number
+  dailyShopIds: string[]
   missions: VaultMission[]
   cosmetics: VaultCosmetic[]
 }

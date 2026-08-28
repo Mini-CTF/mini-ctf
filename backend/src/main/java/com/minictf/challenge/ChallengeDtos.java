@@ -31,7 +31,7 @@ public final class ChallengeDtos {
 
   public record SubmitRequest(@NotBlank @Size(max = 200) String flag) {}
 
-  public record SubmitResult(String result, int awardedScore) {}
+  public record SubmitResult(String result, int awardedScore, int awardedGems) {}
 
   public record ActivityRequest(
       @NotBlank @Pattern(regexp = "OPENED|FOCUS_LOST|FOCUS_RESTORED") String type) {}

@@ -66,6 +66,66 @@ public class CipherVaultService {
               false,
               true),
           new Item(
+              "ember_guard_frame",
+              "Ember Guard",
+              "A warm, focused profile frame.",
+              "FRAME",
+              "STORE",
+              140,
+              0,
+              false,
+              false),
+          new Item(
+              "tidal_line_frame",
+              "Tidal Line",
+              "A clean blue line around your profile.",
+              "FRAME",
+              "STORE",
+              155,
+              0,
+              false,
+              false),
+          new Item(
+              "compass_pin",
+              "Compass Pin",
+              "A small mark for steady learners.",
+              "ACCESSORY",
+              "STORE",
+              75,
+              0,
+              false,
+              false),
+          new Item(
+              "redline_mark",
+              "Redline Mark",
+              "A precise profile accent.",
+              "ACCESSORY",
+              "STORE",
+              110,
+              0,
+              false,
+              false),
+          new Item(
+              "steady_solver",
+              "Steady Solver",
+              "A title for learners who keep going.",
+              "TITLE",
+              "STORE",
+              85,
+              0,
+              false,
+              false),
+          new Item(
+              "signal_keeper",
+              "Signal Keeper",
+              "A title for thoughtful problem solvers.",
+              "TITLE",
+              "STORE",
+              135,
+              0,
+              false,
+              false),
+          new Item(
               "neon_cipher_frame",
               "Neon Cipher",
               "A crafted neon frame.",
@@ -353,6 +413,7 @@ public class CipherVaultService {
         admin(user) ? 999999 : user.getCipherGems(),
         user.getVaultFragments(),
         admin(user) ? 999999 : user.getHintCredits(),
+        dailyStoreIds(),
         missionViews,
         ITEMS.stream()
             .filter(item -> !item.hidden() || admin(user) || available(user, item))
@@ -410,8 +471,20 @@ public class CipherVaultService {
   private boolean available(User user, Item item) {
     if (admin(user)) return true;
     if ("CREDIT".equals(item.type())) return false;
+    if ("STORE".equals(item.source()))
+      return owned.existsByUserIdAndCosmeticId(user.getId(), item.id());
     if ("TITLE".equals(item.type())) return titleEarned(user, item.id());
     return owned.existsByUserIdAndCosmeticId(user.getId(), item.id());
+  }
+
+  private List<String> dailyStoreIds() {
+    List<String> daily =
+        ITEMS.stream()
+            .filter(item -> "STORE".equals(item.source()) && !"CREDIT".equals(item.type()))
+            .map(Item::id)
+            .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+    Collections.shuffle(daily, new Random(today().toEpochDay()));
+    return daily.subList(0, Math.min(6, daily.size()));
   }
 
   private boolean titleEarned(User user, String id) {

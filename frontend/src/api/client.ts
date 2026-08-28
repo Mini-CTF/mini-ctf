@@ -95,7 +95,7 @@ export const api = {
   selectAttendanceTitle: (titleId: string) => request<AttendanceSummary>('/attendance/title', { method: 'PUT', body: JSON.stringify({ titleId }) }),
   attendanceRanking: () => request<AttendanceRankingRow[]>('/attendance/ranking'),
   submitFlag: (id: number, flag: string) =>
-    request<{ result: string; awardedScore: number }>(`/challenges/${id}/submit`, {
+    request<{ result: string; awardedScore: number; awardedGems: number }>(`/challenges/${id}/submit`, {
       method: 'POST',
       body: JSON.stringify({ flag }),
     }),
