@@ -3941,3 +3941,33 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
   color: var(--accent);
   font-weight: 700;
 }
+
+/* Keep the wallet values on separate rows, even when a large admin balance is shown. */
+.vault-wallet-redesigned .vault-balance {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto auto !important;
+  align-content: center;
+  gap: 6px;
+  min-width: 154px;
+}
+.vault-wallet-redesigned .vault-balance > strong,
+.vault-wallet-redesigned .vault-balance > small {
+  grid-column: 1 !important;
+  min-width: 0;
+  margin: 0;
+  overflow: visible;
+  white-space: nowrap;
+}
+.vault-wallet-redesigned .vault-balance > strong { grid-row: 1; }
+.vault-wallet-redesigned .vault-balance > small { grid-row: 2; }
+
+/* Product cards remain readable beneath the hover-equipped preview. */
+.vault-redesign .vault-shop-card {
+  border-color: color-mix(in srgb, var(--border) 72%, #d64151 28%);
+  background: color-mix(in srgb, var(--surface-strong) 94%, #d64151 6%);
+}
+.vault-hover-preview {
+  backdrop-filter: none;
+  background: color-mix(in srgb, var(--surface-strong) 96%, #d64151 4%);
+}

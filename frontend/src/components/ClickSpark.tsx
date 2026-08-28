@@ -67,6 +67,7 @@ export default function ClickSpark({ sparkColor = '#533aed', sparkSize = 10, spa
   }, [duration, ease, extraScale, sparkColor, sparkRadius, sparkSize])
 
   const onClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target instanceof Element && event.target.closest('[data-no-spark], .admin-console')) return
     const rect = canvasRef.current?.getBoundingClientRect()
     if (!rect) return
     const now = performance.now()

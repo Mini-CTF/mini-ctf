@@ -781,7 +781,7 @@ function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' |
 
 function TierEmblem({ tier }: { tier: string }) {
   const label = tierLabel(tier).toUpperCase()
-  return <span className={`tier-emblem tier-emblem-${tier}`} aria-label={`${label} tier`}>{label}</span>
+  return <span className={`tier-emblem tier-emblem-${tier}`} data-i18n-skip aria-label={`${label} tier`}>{label}</span>
 }
 function tierLabel(tier: string) { return ({ beginner: 'Beginner', rookie: 'Rookie', junior: 'Junior', senior: 'Senior', veteran: 'Veteran', master: 'Master', root: 'Root' } as Record<string, string>)[tier] ?? 'Beginner' }
 
