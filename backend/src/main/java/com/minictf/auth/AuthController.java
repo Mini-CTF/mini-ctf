@@ -48,6 +48,27 @@ public class AuthController {
     return ApiResponse.ok(service.login(req, http.getRemoteAddr()));
   }
 
+  @PostMapping("/recovery/username")
+  public ApiResponse<AuthDtos.RecoveryMessage> recoverUsername(
+      @Valid @RequestBody AuthDtos.UsernameRecoveryRequest req, HttpServletRequest http) {
+    rateLimits.check("recover-username", http.getRemoteAddr(), 5, 60);
+    return ApiResponse.ok(service.recoverUsername(req));
+  }
+
+  @PostMapping("/recovery/password")
+  public ApiResponse<AuthDtos.RecoveryMessage> requestPasswordReset(
+      @Valid @RequestBody AuthDtos.PasswordRecoveryRequest req, HttpServletRequest http) {
+    rateLimits.check("recover-password", http.getRemoteAddr(), 5, 60);
+    return ApiResponse.ok(service.requestPasswordReset(req));
+  }
+
+  @PostMapping("/recovery/reset")
+  public ApiResponse<AuthDtos.RecoveryMessage> resetPassword(
+      @Valid @RequestBody AuthDtos.PasswordResetRequest req, HttpServletRequest http) {
+    rateLimits.check("reset-password", http.getRemoteAddr(), 8, 60);
+    return ApiResponse.ok(service.resetPassword(req));
+  }
+
   @GetMapping("/me")
   public ApiResponse<AuthDtos.UserView> me(Authentication auth) {
     return ApiResponse.ok(service.toView(users.findByUsername(auth.getName()).orElseThrow()));

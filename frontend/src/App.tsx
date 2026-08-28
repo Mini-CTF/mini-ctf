@@ -4,7 +4,7 @@ import { api, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } 
 import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
 import { subscribeToSocialUpdates } from './api/realtime'
 import GettingStartedTutorial from './onboarding'
-import { challengeGuides } from './challengeGuides'
+import { guideForChallenge } from './challengeGuides'
 import { articleBySlug, LEARN_FIELDS, learnArticles, learnEn } from './learnContent'
 import StrokeText from './components/StrokeText'
 import Beams from './components/Beams'
@@ -608,7 +608,7 @@ function LegacyCipherVault({ user, onClose }: { user: User; onClose: () => void 
 
 function CipherVault({ user, onClose, onAppearanceChanged }: { user: User; onClose: () => void; onAppearanceChanged: () => Promise<void> }) {
   const [summary, setSummary] = useState<VaultSummary | null>(null)
-  const [tab, setTab] = useState<'shop' | 'missions'>('shop')
+  const [tab, setTab] = useState<'exchange' | 'shop' | 'missions'>('exchange')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [previewItem, setPreviewItem] = useState<VaultCosmetic | null>(null)
@@ -626,9 +626,10 @@ function CipherVault({ user, onClose, onAppearanceChanged }: { user: User; onClo
     try { setBusy(key); setError(''); setSummary(await action()); if (appearanceChanged) await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Vault action failed.') } finally { setBusy(null) }
   }
   const items = summary?.cosmetics.filter((item) => !item.hidden || item.owned || user.role === 'ADMIN') ?? []
-  const shop = items.filter((item) => item.source === 'STORE' && (item.type === 'CREDIT' || summary?.dailyShopIds?.includes(item.id)))
-  const preview = previewItem ?? shop[0] ?? null
-  return <div className="vault-backdrop" role="dialog" aria-modal="true" aria-label="레드 루비 교환소"><section className="cipher-vault vault-redesign"><header className="vault-header"><div><p className="eyebrow">CIPHER VAULT</p><h2>레드 루비 교환소</h2><p>학습으로 얻은 루비로 프로필을 나답게 꾸며 보세요.</p></div><button className="vault-close" type="button" onClick={onClose} aria-label="상점 닫기">×</button></header>{!summary ? <LoadingState label="보관함을 불러오는 중..." /> : <><div className="vault-wallet vault-wallet-redesigned"><div className="ruby-wallet"><span className="ruby-gem" aria-hidden="true" /><strong>{summary.gems}</strong><small>보유 루비</small></div><div className="vault-balance"><strong>{summary.hintCredits}</strong><small>힌트 크레딧</small></div><p className="vault-admin-status">{user.role === 'ADMIN' ? '관리자 계정은 모든 아이템을 자유롭게 사용할 수 있어요.' : '출석과 미션을 완료하면 루비를 얻을 수 있어요.'}</p></div><nav className="vault-tabs" aria-label="레드 루비 교환소 메뉴"><button className={tab === 'shop' ? 'active' : ''} type="button" onClick={() => setTab('shop')}>교환소</button><button className={tab === 'missions' ? 'active' : ''} type="button" onClick={() => setTab('missions')}>오늘의 미션</button></nav>{tab === 'shop' && <><div className="vault-shop-heading"><div><span className="vault-kicker">TODAY'S SHOP</span><h3>오늘의 상점</h3><p>매일 자정에 새로운 6개의 꾸미기 아이템이 바뀝니다.</p></div><span>매일 00:00 갱신</span></div><div className="vault-shop-layout"><div className="vault-grid item-grid vault-shop-grid">{shop.map((item) => <article className={`vault-card item-card vault-shop-card ${item.equipped ? 'equipped' : ''}`} key={item.id} onMouseEnter={() => setPreviewItem(item)} onFocus={() => setPreviewItem(item)}><span className="vault-kicker">{item.type === 'FRAME' ? '프로필 테두리' : item.type === 'ACCESSORY' ? '프로필 장식' : item.type === 'TITLE' ? '칭호' : '힌트 크레딧'}</span><div className="vault-item-glyph">{item.type === 'FRAME' ? '▣' : item.type === 'ACCESSORY' ? '◇' : item.type === 'TITLE' ? '✦' : '+'}</div><h3>{item.name}</h3><p>{item.description}</p><VaultItemHoverPreview user={user} item={item} equipped={summary.cosmetics.filter((cosmetic) => cosmetic.equipped)} /><div className="item-footer"><span className="ruby-price"><span className="ruby-gem small" aria-hidden="true" />{item.gemCost}</span><button className="button primary" type="button" disabled={(!item.consumable && item.owned) || busy === item.id || (user.role !== 'ADMIN' && summary.gems < item.gemCost)} onClick={() => void run(item.id, () => api.buyVaultItem(item.id))}>{item.consumable ? '크레딧 추가' : item.owned ? '보유 중' : '교환하기'}</button></div></article>)}</div><VaultCosmeticPreview user={user} item={preview} equipped={summary.cosmetics.filter((item) => item.equipped)} /></div></>}{tab === 'missions' && <div className="vault-grid mission-grid">{summary.missions.map((mission) => <article className={`vault-card mission-card ${mission.completed ? 'complete' : ''}`} key={mission.id}><div className="vault-card-icon">{mission.completed ? '✓' : '◌'}</div><div><span className="vault-kicker">오늘의 미션</span><h3>{mission.name}</h3><p>{mission.description}</p></div><button className="button primary" type="button" disabled={mission.completed || !mission.eligible || busy === mission.id} onClick={() => void run(mission.id, () => api.claimVaultMission(mission.id))}>{mission.completed ? '완료' : mission.eligible ? '보상 받기' : '진행 중'}</button></article>)}</div>}{error && <p className="alert error vault-error">{error}</p>}</>}</section></div>
+  const exchangeItems = items.filter((item) => item.source === 'STORE')
+  const shop = exchangeItems.filter((item) => item.type === 'CREDIT' || summary?.dailyShopIds?.includes(item.id))
+  const preview = previewItem ?? (tab === 'exchange' ? exchangeItems[0] : shop[0]) ?? null
+  return <div className="vault-backdrop" role="dialog" aria-modal="true" aria-label="레드 루비 교환소"><section className="cipher-vault vault-redesign"><header className="vault-header"><div><p className="eyebrow">CIPHER VAULT</p><h2>레드 루비 교환소</h2><p>학습으로 얻은 루비로 프로필을 나답게 꾸며 보세요.</p></div><button className="vault-close" type="button" onClick={onClose} aria-label="상점 닫기">×</button></header>{!summary ? <LoadingState label="보관함을 불러오는 중..." /> : <><div className="vault-wallet vault-wallet-redesigned"><div className="ruby-wallet"><span className="ruby-gem" aria-hidden="true" /><strong>{summary.gems}</strong><small>보유 루비</small></div><div className="vault-balance"><strong>{summary.hintCredits}</strong><small>힌트 크레딧</small></div><p className="vault-admin-status">{user.role === 'ADMIN' ? '관리자 계정은 모든 아이템을 자유롭게 사용할 수 있어요.' : '출석과 미션을 완료하면 루비를 얻을 수 있어요.'}</p></div><nav className="vault-tabs" aria-label="레드 루비 교환소 메뉴"><button className={tab === 'exchange' ? 'active' : ''} type="button" onClick={() => setTab('exchange')}>교환소</button><button className={tab === 'shop' ? 'active' : ''} type="button" onClick={() => setTab('shop')}>오늘의 상점</button><button className={tab === 'missions' ? 'active' : ''} type="button" onClick={() => setTab('missions')}>오늘의 미션</button></nav>{(tab === 'exchange' || tab === 'shop') && <><div className="vault-shop-heading"><div><span className="vault-kicker">TODAY'S SHOP</span><h3>{tab === 'exchange' ? '교환소' : '오늘의 상점'}</h3><p>{tab === 'exchange' ? '보유 루비로 원하는 꾸미기 아이템을 교환하세요.' : '매일 자정에 새로운 6개의 꾸미기 아이템이 바뀝니다.'}</p></div><span>{tab === 'exchange' ? '전체 상품' : '매일 00:00 갱신'}</span></div><div className="vault-shop-layout"><div className="vault-grid item-grid vault-shop-grid">{(tab === 'exchange' ? exchangeItems : shop).map((item) => <article className={`vault-card item-card vault-shop-card ${item.equipped ? 'equipped' : ''}`} key={item.id} onMouseEnter={() => setPreviewItem(item)} onFocus={() => setPreviewItem(item)}><span className="vault-kicker">{item.type === 'FRAME' ? '프로필 테두리' : item.type === 'ACCESSORY' ? '프로필 장식' : item.type === 'TITLE' ? '칭호' : '힌트 크레딧'}</span><div className="vault-item-glyph">{item.type === 'FRAME' ? '▣' : item.type === 'ACCESSORY' ? '◇' : item.type === 'TITLE' ? '✦' : '+'}</div><h3>{item.name}</h3><p>{item.description}</p><VaultItemHoverPreview user={user} item={item} equipped={summary.cosmetics.filter((cosmetic) => cosmetic.equipped)} /><div className="item-footer"><span className="ruby-price"><span className="ruby-gem small" aria-hidden="true" />{item.gemCost}</span><button className="button primary" type="button" disabled={(!item.consumable && item.owned) || busy === item.id || (user.role !== 'ADMIN' && summary.gems < item.gemCost)} onClick={() => void run(item.id, () => api.buyVaultItem(item.id))}>{item.consumable ? '크레딧 추가' : item.owned ? '보유 중' : '교환하기'}</button></div></article>)}</div><VaultCosmeticPreview user={user} item={preview} equipped={summary.cosmetics.filter((item) => item.equipped)} /></div></>}{tab === 'missions' && <div className="vault-grid mission-grid">{summary.missions.map((mission) => <article className={`vault-card mission-card ${mission.completed ? 'complete' : ''}`} key={mission.id}><div className="vault-card-icon">{mission.completed ? '✓' : '◌'}</div><div><span className="vault-kicker">오늘의 미션</span><h3>{mission.name}</h3><p>{mission.description}</p></div><button className="button primary" type="button" disabled={mission.completed || !mission.eligible || busy === mission.id} onClick={() => void run(mission.id, () => api.claimVaultMission(mission.id))}>{mission.completed ? '완료' : mission.eligible ? '보상 받기' : '진행 중'}</button></article>)}</div>}{error && <p className="alert error vault-error">{error}</p>}</>}</section></div>
 }
 
 function VaultItemHoverPreview({ user, item, equipped }: { user: User; item: VaultCosmetic; equipped: VaultCosmetic[] }) {
@@ -715,7 +716,7 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
   }, [loggedIn, item?.hintAvailable])
   if (loadError) return <div className="page"><p className="alert error">{loadError}</p><button type="button" className="button secondary" onClick={onBack}>← Back to challenges</button></div>
   if (!item) return <div className="page"><LoadingState label="Opening challenge..." /></div>
-  const guide = challengeGuides[item.title]
+  const guide = guideForChallenge(item.title, item.category, item.difficulty)
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setAwarded(null)
@@ -1260,36 +1261,36 @@ function LogList({ items, onControl }: { items: { id: number; title: string; det
   return <div className="admin-table">{items.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.title}</strong><small>{item.detail} · {new Date(item.date).toLocaleString()}</small></div><div className="inline-actions"><button className="button secondary" type="button" onClick={() => onControl(item.id, false)}>Redact</button><button className="button ghost danger-button" type="button" onClick={() => onControl(item.id, true)}>Hide</button></div></div>)}</div>
 }
 
-function LegacyLoginView({ onBack, onAuth, language }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {
+function LegacyLoginView({ onBack, onAuth, language: _language }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {
   const location = useLocation()
-  const [registering, setRegistering] = useState(false)
-  const oauthError = oauthErrorMessage(new URLSearchParams(location.search).get('oauthError'))
-  const sessionExpired = new URLSearchParams(location.search).get('sessionExpired') === '1'
-  const [error, setError] = useState(sessionExpired ? sessionExpiredMessage : oauthError)
-  const [errorCause, setErrorCause] = useState({ oauthError, sessionExpired })
-  if (errorCause.oauthError !== oauthError || errorCause.sessionExpired !== sessionExpired) {
-    setErrorCause({ oauthError, sessionExpired })
-    setError(sessionExpired ? sessionExpiredMessage : oauthError)
-  }
+  const resetToken = new URLSearchParams(location.search).get('resetToken') ?? ''
+  const [mode, setMode] = useState<'login' | 'register' | 'username' | 'password' | 'reset'>(resetToken ? 'reset' : 'login')
+  const [error, setError] = useState(() => oauthErrorMessage(new URLSearchParams(location.search).get('oauthError')))
+  const [notice, setNotice] = useState('')
   const [providers, setProviders] = useState<string[]>([])
-  useEffect(() => {
-    api.oauthProviders().then(setProviders).catch(() => setProviders(['google', 'github', 'discord']))
-  }, [])
-  useLayoutEffect(() => {
-    const examples = language === 'ko'
-      ? { username: '예: 영문·숫자·밑줄 3자 이상', nickname: '예: FlagBox 학습자', password: '예: 8자 이상 비밀번호', passwordConfirmation: '예: 비밀번호를 다시 입력하세요' }
-      : { username: 'Ex: flagbox_user', nickname: 'Ex: FlagBox Learner', password: 'Ex: 8 or more characters', passwordConfirmation: 'Ex: Enter the same password again' }
-    Object.entries(examples).forEach(([name, placeholder]) => {
-      document.querySelector<HTMLInputElement>(`.auth-page input[name="${name}"]`)?.setAttribute('placeholder', placeholder)
-    })
-  }, [language, registering])
+  useEffect(() => { api.oauthProviders().then(setProviders).catch(() => setProviders(['google', 'github', 'discord'])) }, [])
+  const title = mode === 'register' ? '계정을 만들어 보세요.' : mode === 'username' ? '아이디 찾기' : mode === 'password' ? '비밀번호 재설정' : mode === 'reset' ? '새 비밀번호 설정' : '계속하려면 로그인하세요.'
   const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); setError(''); const form = new FormData(event.currentTarget)
-    const username = String(form.get('username')).trim(); const password = String(form.get('password')); const passwordConfirmation = String(form.get('passwordConfirmation')); if (registering && password !== passwordConfirmation) { setError('Passwords do not match.'); return } try { const result = registering ? await api.register({ username, nickname: String(form.get('nickname')).trim(), password, passwordConfirmation }) : await api.login({ username, password }); onAuth(result) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Authentication failed.') }
+    event.preventDefault(); setError(''); setNotice('')
+    const form = new FormData(event.currentTarget)
+    const username = String(form.get('username') ?? '').trim()
+    const email = String(form.get('email') ?? '').trim()
+    const password = String(form.get('password') ?? '')
+    const passwordConfirmation = String(form.get('passwordConfirmation') ?? '')
+    try {
+      if (mode === 'register') {
+        if (password !== passwordConfirmation) throw new Error('비밀번호 확인이 일치하지 않습니다.')
+        onAuth(await api.register({ username, nickname: String(form.get('nickname') ?? '').trim(), email, password, passwordConfirmation }))
+      } else if (mode === 'login') onAuth(await api.login({ username, password }))
+      else if (mode === 'username') setNotice((await api.recoverUsername(email)).message)
+      else if (mode === 'password') setNotice((await api.requestPasswordReset(username, email)).message)
+      else { setNotice((await api.resetPassword(resetToken, password, passwordConfirmation)).message); setMode('login') }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : '요청을 처리하지 못했습니다.') }
   }
-  return <div className="auth-page"><button className="back-link" type="button" onClick={onBack}>← Back home</button><div className="auth-card"><p className="eyebrow">SECURE ACCESS</p><h1>{registering ? 'Create your account.' : 'Sign in to continue.'}</h1><form className="auth-form" onSubmit={submit}><label>Username<input name="username" placeholder="Ex: flagbox_user" required minLength={3} maxLength={50} pattern="[A-Za-z0-9_]+" title="Use only letters, numbers, and underscores." autoComplete="username" /></label>{registering && <label>Display name (optional)<input name="nickname" placeholder="Ex: FlagBox Learner" maxLength={80} /></label>}<label>Password<input name="password" type="password" placeholder="Ex: 8 or more characters" required minLength={registering ? 8 : undefined} maxLength={100} autoComplete={registering ? 'new-password' : 'current-password'} /></label>{registering && <label>Confirm password<input name="passwordConfirmation" type="password" placeholder="Ex: Enter the same password again" required minLength={8} maxLength={100} autoComplete="new-password" /></label>}<button className="button primary" type="submit">{registering ? 'Create account' : 'Sign in'}</button></form>{error && <p className="alert error">{error}</p>}{providers.length > 0 && <><div className="auth-divider"><span>or continue with</span></div><div className="social-buttons">{providers.map((provider) => <button className={`social-button oauth-${provider}`} type="button" key={provider} onClick={() => { window.location.href = `${oauthBaseUrl}/api/auth/oauth/${provider}/authorize` }}><ProviderIcon provider={provider} /><span>Continue with {provider[0].toUpperCase() + provider.slice(1)}</span></button>)}</div></>}<p className="auth-footnote">{registering ? 'Already have an account?' : 'New to Mini CTF?'} <button type="button" onClick={() => setRegistering(!registering)}>{registering ? 'Sign in' : 'Create an account'}</button></p></div></div>
+  const switchMode = (next: typeof mode) => { setError(''); setNotice(''); setMode(next) }
+  const isRecovery = mode === 'username' || mode === 'password' || mode === 'reset'
+  return <div className="auth-page"><button className="back-link" type="button" onClick={onBack}>← 홈으로</button><div className="auth-card"><p className="eyebrow">SECURE ACCESS</p><h1>{title}</h1>{isRecovery && <p className="auth-recovery-copy">{mode === 'username' ? '일반 회원가입 때 등록한 이메일로 아이디를 안내합니다. OAuth 계정은 제외됩니다.' : mode === 'password' ? '아이디와 가입 이메일이 일치하면 안전한 비밀번호 재설정 링크를 보냅니다.' : '새 비밀번호를 입력해 주세요. 링크는 한 번만 사용할 수 있습니다.'}</p>}<form className="auth-form" onSubmit={submit}>{(mode === 'login' || mode === 'register' || mode === 'password') && <label>아이디<input name="username" required minLength={3} maxLength={50} pattern="[A-Za-z0-9_]+" autoComplete="username" /></label>}{mode === 'register' && <label>표시 이름 (선택)<input name="nickname" maxLength={80} /></label>}{(mode === 'register' || mode === 'username' || mode === 'password') && <label>가입 이메일<input name="email" type="email" required maxLength={254} autoComplete="email" /></label>}{(mode === 'login' || mode === 'register' || mode === 'reset') && <label>{mode === 'reset' ? '새 비밀번호' : '비밀번호'}<input name="password" type="password" required minLength={mode === 'login' ? undefined : 8} maxLength={100} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} /></label>}{(mode === 'register' || mode === 'reset') && <label>비밀번호 확인<input name="passwordConfirmation" type="password" required minLength={8} maxLength={100} autoComplete="new-password" /></label>}<button className="button primary" type="submit">{mode === 'register' ? '계정 만들기' : mode === 'username' ? '아이디 안내 받기' : mode === 'password' ? '재설정 링크 받기' : mode === 'reset' ? '비밀번호 변경' : '로그인'}</button></form>{notice && <p className="alert success">{notice}</p>}{error && <p className="alert error">{error}</p>}{(mode === 'login' || mode === 'register') && <><div className="auth-divider"><span>또는</span></div><div className="social-buttons">{providers.map((provider) => <button className={`social-button oauth-${provider}`} type="button" key={provider} onClick={() => { window.location.href = `${oauthBaseUrl}/api/auth/oauth/${provider}/authorize` }}><ProviderIcon provider={provider} /><span>{provider[0].toUpperCase() + provider.slice(1)}로 계속하기</span></button>)}</div></>}<div className="auth-footnote auth-links">{mode === 'login' && <><button type="button" onClick={() => switchMode('username')}>아이디를 잊으셨나요?</button><button type="button" onClick={() => switchMode('password')}>비밀번호를 잊으셨나요?</button><span>처음이신가요? <button type="button" onClick={() => switchMode('register')}>회원가입</button></span></>}{mode === 'register' && <span>이미 계정이 있으신가요? <button type="button" onClick={() => switchMode('login')}>로그인</button></span>}{isRecovery && <button type="button" onClick={() => switchMode('login')}>로그인으로 돌아가기</button>}</div></div></div>
 }
-
 function LoginView({ onBack, onAuth, language }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {
   return <div className="auth-login-shell"><section className="auth-showcase" aria-label="Interactive constellation background"><AetherFlowHero className="auth-showcase__aether" showContent={false} /><span className="auth-showcase__wordmark" aria-hidden="true">FlagBox</span></section><LegacyLoginView onBack={onBack} onAuth={onAuth} language={language} /></div>
 }

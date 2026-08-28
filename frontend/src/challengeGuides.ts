@@ -352,3 +352,30 @@ export const challengeGuides: Record<string, ChallengeGuide> = {
     ['가장 바깥 인코딩 형태를 식별합니다(hex/base64).', '디코딩 → 결과 재관찰을 반복합니다.', '평문이 나올 때까지 반복해 플래그를 제출합니다.'],
   ),
 }
+
+/** 카탈로그로 추가되는 연습 문제도 개념 → 도구 → 순서 안내를 빠짐없이 제공한다. */
+export function guideForChallenge(title: string, category: string, difficulty: string): ChallengeGuide {
+  const exact = challengeGuides[title]
+  if (exact) return exact
+  const categoryCopy: Record<string, { concept: string; tools: string[] }> = {
+    WEB: {
+      concept: '웹 자료는 브라우저에 전달되는 순간 사용자가 확인할 수 있습니다. 소스·요청·저장소의 작은 단서를 차례대로 읽는 습관이 중요해요.',
+      tools: ['브라우저 개발자 도구(F12)', '텍스트 편집기 또는 CyberChef'],
+    },
+    FORENSIC: {
+      concept: '포렌식은 파일과 기록에 남은 흔적을 읽는 과정입니다. 파일 형식과 시간·문자열 같은 기초 단서부터 확인하세요.',
+      tools: ['텍스트 편집기', 'CyberChef 또는 파일 분석 도구'],
+    },
+    REVERSING: {
+      concept: '리버싱은 프로그램이 입력을 어떻게 바꾸고 비교하는지 읽는 과정입니다. 연산 순서를 적고, 반대 순서로 되돌리면 돼요.',
+      tools: ['텍스트 편집기', '파이썬 또는 간단한 계산기'],
+    },
+  }
+  const selected = categoryCopy[category] ?? categoryCopy.WEB
+  const depth = difficulty === 'BEGINNER' ? '한 번의' : difficulty === 'EXPERT' ? '여러 단계의' : '두세 단계의'
+  return g(selected.concept, selected.tools, [
+    '첨부 파일을 내려받아 문제 설명과 같은 이름의 단서를 찾습니다.',
+    `${depth} 변환 규칙을 메모하고, 한 단계씩 결과를 확인합니다.`,
+    '결과가 CTF{ 로 시작하는지 확인한 뒤 그대로 제출합니다.',
+  ])
+}

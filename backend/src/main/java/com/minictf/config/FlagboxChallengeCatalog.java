@@ -2,6 +2,7 @@ package com.minictf.config;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HexFormat;
@@ -42,8 +43,12 @@ final class FlagboxChallengeCatalog {
           + new StringBuilder("ABCDEFGHIJKLMNOPQRSTUVWXYZ").reverse().toString()
           + "+/";
 
-  static final List<Seed> SEEDS =
-      List.of(
+  static final List<Seed> SEEDS = buildSeeds();
+
+  private static List<Seed> buildSeeds() {
+    List<Seed> seeds =
+        new ArrayList<>(
+            List.of(
           // ───────────────────────────── WEB · BEGINNER (5)
 
           new Seed(
@@ -849,7 +854,74 @@ final class FlagboxChallengeCatalog {
                         + "\noutput  = "
                         + vmRun(flag, program)
                         + "\n");
-              }));
+              })));
+    addExpandedSeeds(seeds, "WEB", "w");
+    addExpandedSeeds(seeds, "FORENSIC", "f");
+    addExpandedSeeds(seeds, "REVERSING", "r");
+    return List.copyOf(seeds);
+  }
+
+  /**
+   * 3개 분야에 각 35개(첫걸음 5 / 쉬움 10 / 보통 10 / 어려움 5 / 도전 5)를 더한다.
+   * 개별 파일과 지문은 번호·분야·변환법에 맞춰 생성되어 기존 문제와 같은 오프라인 풀이 흐름을 유지한다.
+   */
+  private static void addExpandedSeeds(List<Seed> seeds, String category, String prefix) {
+    String[] difficulties = {
+      "BEGINNER", "EASY", "NORMAL", "ADVANCED", "EXPERT"
+    };
+    int[] counts = {5, 10, 10, 5, 5};
+    int[] scores = {50, 150, 300, 600, 1000};
+    String[] levelNames = {"첫걸음", "쉬움", "보통", "어려움", "도전"};
+    String[] methods = {"Base64", "16진수", "문자 뒤집기", "ROT13", "HTML 엔터티", "XOR 7", "줄 끝 공백", "문자 코드"};
+    int number = 1;
+    for (int level = 0; level < difficulties.length; level++) {
+      for (int index = 0; index < counts[level]; index++, number++) {
+        String method = methods[(number - 1) % methods.length];
+        String topic = categoryTopic(category, number);
+        String title = topic + " " + levelNames[level] + " " + String.format("%02d", index + 1);
+        String key = prefix + "x" + String.format("%02d", number);
+        String description =
+            "%s 자료에서 %s로 감춰진 확인 코드를 찾는 연습이에요. 파일을 열고, 설명에 나온 단서를 한 단계씩 따라가 보세요."
+                .formatted(topic, method);
+        String hint =
+            "%s 방식이에요. 파일에서 규칙에 맞는 문자열을 먼저 찾은 뒤, 변환 도구나 간단한 스크립트로 원문을 확인하세요."
+                .formatted(method);
+        seeds.add(
+            new Seed(
+                key,
+                title,
+                category,
+                difficulties[level],
+                scores[level],
+                hint,
+                description,
+                key + ".txt",
+                flag -> expandedArtifact(method, category, flag)));
+      }
+    }
+  }
+
+  private static String categoryTopic(String category, int number) {
+    String[] web = {"공개 소스의 메모", "요청 기록의 단서", "브라우저 저장소", "응답 헤더", "배포 파일 점검", "URL 매개변수", "쿠키 흔적", "프런트 코드 읽기"};
+    String[] forensic = {"사진 파일의 꼬리", "로그의 시간표", "메모리 조각", "문서 메타데이터", "네트워크 캡처", "압축 파일의 흔적", "삭제된 메모", "파일 시그니처"};
+    String[] reversing = {"비교 함수 읽기", "문자열 테이블", "바이트 연산", "입력 검증 루틴", "간단한 난독화", "조건 분기", "변환 함수", "작은 가상 머신"};
+    String[] source = switch (category) { case "WEB" -> web; case "FORENSIC" -> forensic; default -> reversing; };
+    return source[(number - 1) % source.length];
+  }
+
+  private static byte[] expandedArtifact(String method, String category, String flag) {
+    String prefix = "# " + category + " training artifact\\n# 필요한 변환: " + method + "\\n\\n";
+    return switch (method) {
+      case "Base64" -> txt(prefix + "payload = " + b64(flag) + "\\n");
+      case "16진수" -> txt(prefix + "payload_hex = " + hex(flag) + "\\n");
+      case "문자 뒤집기" -> txt(prefix + "payload_reversed = " + reverse(flag) + "\\n");
+      case "ROT13" -> txt(prefix + "payload_rot13 = " + rot13(flag) + "\\n");
+      case "HTML 엔터티" -> txt(prefix + "payload_entity = " + htmlEntities(flag) + "\\n");
+      case "XOR 7" -> txt(prefix + "key = 7\\npayload_hex = " + xorHex(flag, "\\u0007") + "\\n");
+      case "줄 끝 공백" -> spaceStego(flag);
+      default -> txt(prefix + "character_codes = " + joinInts(charCodes(flag)) + "\\n");
+    };
+  }
 
   // ───────────────────────────── 변환·파일 헬퍼 ─────────────────────────────
 

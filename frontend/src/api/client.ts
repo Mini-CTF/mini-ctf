@@ -79,11 +79,15 @@ export const api = {
   register: (payload: {
     username: string
     nickname: string
+    email: string
     password: string
     passwordConfirmation: string
   }) => request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
   login: (payload: { username: string; password: string }) =>
     request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+  recoverUsername: (email: string) => request<{ message: string }>('/auth/recovery/username', { method: 'POST', body: JSON.stringify({ email }) }),
+  requestPasswordReset: (username: string, email: string) => request<{ message: string }>('/auth/recovery/password', { method: 'POST', body: JSON.stringify({ username, email }) }),
+  resetPassword: (token: string, password: string, passwordConfirmation: string) => request<{ message: string }>('/auth/recovery/reset', { method: 'POST', body: JSON.stringify({ token, password, passwordConfirmation }) }),
   me: () => request<User>('/auth/me'),
   oauthProviders: () => request<string[]>('/auth/oauth/providers'),
   stats: () => request<Stats>('/stats'),

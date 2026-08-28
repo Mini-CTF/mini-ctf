@@ -17,6 +17,9 @@ public class User {
   @Column(length = 80)
   private String nickname;
 
+  @Column(length = 254)
+  private String email;
+
   @JsonIgnore
   @Column(name = "password_hash")
   private String passwordHash;
@@ -119,6 +122,14 @@ public class User {
 
   public void setNickname(String value) {
     nickname = value;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String value) {
+    email = value;
   }
 
   public String getPasswordHash() {

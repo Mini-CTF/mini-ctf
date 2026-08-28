@@ -3924,3 +3924,20 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
   .header-ruby-balance { display: none; }
   .vault-shop-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
 }
+
+.auth-recovery-copy {
+  margin: -4px 0 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 16px;
+}
+.auth-links > button {
+  color: var(--accent);
+  font-weight: 700;
+}
