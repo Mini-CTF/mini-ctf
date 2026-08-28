@@ -3397,3 +3397,317 @@ html[data-theme='light'] .auth-login-shell .oauth-discord span { color: #fff; }
 .loadout-footer small span {
   opacity: 1;
 }
+
+/* Profile customization and Ruby Exchange: calm, spacious surfaces shared with My Page. */
+.profile-editor,
+.loadout-panel {
+  padding: clamp(24px, 3vw, 34px);
+  border-radius: 22px;
+}
+.profile-editor h2,
+.loadout-panel h2 {
+  margin: 4px 0 20px;
+  font-size: 23px;
+  letter-spacing: -0.025em;
+}
+.profile-editor form {
+  display: grid;
+  gap: 18px;
+}
+.profile-editor label {
+  display: grid;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.profile-editor input,
+.profile-editor textarea {
+  min-height: 48px;
+  padding: 13px 15px;
+  border-radius: 12px;
+}
+.profile-editor textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.profile-editor .button.primary {
+  margin-top: 4px;
+  min-height: 46px;
+}
+.profile-vault-button {
+  margin-top: 16px;
+  min-height: 46px;
+}
+.loadout-panel {
+  margin-top: 24px;
+}
+.loadout-group {
+  margin-top: 22px;
+  margin-bottom: 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.loadout-group h3 {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.loadout-grid {
+  gap: 11px;
+}
+.loadout-item {
+  min-height: 58px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border-color: var(--border);
+  background: var(--surface-strong);
+}
+.loadout-item:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-strong));
+}
+.loadout-item.equipped {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-strong));
+}
+.loadout-footer {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top-color: var(--border);
+}
+
+.vault-redesign {
+  width: min(1160px, 100%);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 28px 82px rgba(0, 0, 0, 0.42);
+}
+.vault-redesign::before {
+  display: none;
+}
+.vault-redesign .vault-header {
+  padding-bottom: 24px;
+  border-bottom-color: var(--border);
+}
+.vault-redesign .vault-header .eyebrow,
+.vault-redesign .vault-kicker {
+  color: #d64151;
+}
+.vault-redesign .vault-header h2 {
+  font-size: clamp(31px, 5vw, 49px);
+  letter-spacing: -0.045em;
+  color: var(--text);
+}
+.vault-redesign .vault-header p:last-child {
+  color: var(--muted);
+  font-size: 15px;
+}
+.vault-redesign .vault-close {
+  border-color: var(--border);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+.vault-redesign .vault-close:hover {
+  background: var(--text);
+  color: var(--surface);
+}
+.vault-wallet-redesigned {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) minmax(150px, auto) 1fr;
+  gap: 12px;
+  padding: 24px 0;
+}
+.vault-redesign .ruby-wallet,
+.vault-redesign .vault-balance {
+  padding: 15px 17px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-strong);
+}
+.vault-redesign .ruby-wallet {
+  border-color: rgba(214, 65, 81, 0.42);
+  background: rgba(214, 65, 81, 0.07);
+}
+.vault-redesign .ruby-wallet strong,
+.vault-redesign .vault-balance strong {
+  color: var(--text);
+  font-size: 25px;
+}
+.vault-redesign .ruby-wallet small,
+.vault-redesign .vault-balance small {
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.vault-redesign .vault-admin-status {
+  align-self: center;
+  margin: 0;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-align: right;
+}
+.vault-redesign .vault-tabs {
+  gap: 20px;
+  margin-bottom: 24px;
+  border-bottom-color: var(--border);
+}
+.vault-redesign .vault-tabs button {
+  padding: 12px 4px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+.vault-redesign .vault-tabs button.active {
+  color: var(--text);
+  border-bottom-color: #d64151;
+  background: transparent;
+}
+.vault-shop-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 245px;
+  gap: 24px;
+  align-items: start;
+}
+.vault-shop-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.vault-redesign .vault-shop-card {
+  min-height: 226px;
+  padding: 21px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-strong);
+  box-shadow: none;
+}
+.vault-redesign .vault-shop-card:hover,
+.vault-redesign .vault-shop-card:focus-within {
+  transform: none;
+  border-color: #d64151;
+  box-shadow: 0 0 0 3px rgba(214, 65, 81, 0.1);
+}
+.vault-redesign .vault-item-glyph {
+  margin: 17px 0 8px;
+  color: #d64151;
+  font-size: 28px;
+}
+.vault-redesign .vault-shop-card h3 {
+  color: var(--text);
+  font-size: 18px;
+}
+.vault-redesign .vault-shop-card p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.vault-redesign .item-footer {
+  left: 21px;
+  right: 21px;
+  bottom: 19px;
+  color: var(--text);
+  font-family: inherit;
+}
+.vault-redesign .ruby-price {
+  color: #c83243;
+  font-weight: 800;
+}
+.vault-cosmetic-preview {
+  position: sticky;
+  top: 0;
+  min-height: 252px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-strong);
+  text-align: center;
+}
+.vault-cosmetic-preview .eyebrow {
+  margin-bottom: 23px;
+  color: #d64151;
+}
+.vault-preview-avatar {
+  display: grid;
+  width: 88px;
+  height: 88px;
+  place-items: center;
+  margin: 0 auto 15px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 25px;
+  font-weight: 800;
+}
+.vault-preview-avatar.equipped-blue_terminal_frame,
+.vault-preview-avatar.equipped-neon_cipher_frame {
+  border-color: #63d4ff;
+  box-shadow: 0 0 0 5px rgba(99, 212, 255, 0.15);
+}
+.vault-preview-avatar.equipped-violet_circuit_frame {
+  border-color: #b47fff;
+  box-shadow: 0 0 0 5px rgba(180, 127, 255, 0.15);
+}
+.vault-preview-avatar.equipped-ghost_protocol {
+  border-color: #d599ff;
+  box-shadow: 0 0 0 5px rgba(213, 153, 255, 0.15);
+}
+.vault-preview-identity {
+  display: grid;
+  gap: 5px;
+}
+.vault-preview-identity > strong {
+  color: var(--text);
+  font-size: 16px;
+}
+.vault-preview-identity > small,
+.vault-cosmetic-preview > p:last-child,
+.vault-credit-preview span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.vault-preview-identity .profile-title {
+  margin: 0;
+  font-size: 12px;
+}
+.vault-cosmetic-preview > p:last-child {
+  margin: 19px 0 0;
+  padding-top: 17px;
+  border-top: 1px solid var(--border);
+}
+.vault-credit-preview {
+  display: grid;
+  gap: 9px;
+  padding: 24px 8px;
+}
+.vault-credit-preview strong {
+  color: var(--text);
+  font-size: 17px;
+}
+@media (max-width: 820px) {
+  .vault-wallet-redesigned,
+  .vault-shop-layout {
+    grid-template-columns: 1fr;
+  }
+  .vault-redesign .vault-admin-status {
+    text-align: left;
+  }
+  .vault-cosmetic-preview {
+    position: static;
+    min-height: auto;
+  }
+}
+@media (max-width: 560px) {
+  .vault-shop-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-editor,
+  .loadout-panel {
+    padding: 22px;
+  }
+}
