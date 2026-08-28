@@ -35,6 +35,10 @@ public class Challenge {
   private String artifactPath;
 
   @JsonIgnore
+  @Column(name = "artifact_data", columnDefinition = "BYTEA")
+  private byte[] artifactData;
+
+  @JsonIgnore
   @Column(name = "hint_text", columnDefinition = "TEXT")
   private String hintText;
 
@@ -120,6 +124,14 @@ public class Challenge {
 
   public void setArtifactPath(String v) {
     artifactPath = v;
+  }
+
+  public byte[] getArtifactData() {
+    return artifactData;
+  }
+
+  public void setArtifactData(byte[] v) {
+    artifactData = v;
   }
 
   public String getHintText() {

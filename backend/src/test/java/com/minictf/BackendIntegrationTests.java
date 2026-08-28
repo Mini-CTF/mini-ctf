@@ -20,6 +20,8 @@ import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import com.minictf.vault.VaultMissionCompletionRepository;
 import com.minictf.vault.VaultOwnedCosmeticRepository;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -373,6 +375,8 @@ class BackendIntegrationTests {
                 .header("Authorization", bearer(token)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sizeBytes").value(13));
+    Challenge stored = challenges.findById(challenge.getId()).orElseThrow();
+    Files.deleteIfExists(Path.of("build/test-artifacts").resolve(stored.getArtifactPath()));
     mvc.perform(
             get("/api/challenges/{id}/artifact", challenge.getId())
                 .header("Authorization", bearer(token)))

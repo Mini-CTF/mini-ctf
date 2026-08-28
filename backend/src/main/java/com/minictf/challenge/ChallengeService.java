@@ -173,12 +173,12 @@ public class ChallengeService {
     if (!target.startsWith(artifactRoot))
       throw new IllegalArgumentException("Invalid artifact path");
     try {
+      byte[] content = upload.getBytes();
       Files.createDirectories(target.getParent());
-      try (var input = upload.getInputStream()) {
-        Files.copy(input, target);
-      }
+      Files.write(target, content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
       removeManagedArtifact(c);
       c.setArtifactPath(relative);
+      c.setArtifactData(content);
       return new ChallengeDtos.ArtifactView(target.getFileName().toString(), Files.size(target));
     } catch (IOException ex) {
       throw new ArtifactStorageException(ex);
@@ -190,6 +190,7 @@ public class ChallengeService {
     Challenge c = get(id);
     removeManagedArtifact(c);
     c.setArtifactPath(null);
+    c.setArtifactData(null);
   }
 
   public Path artifact(Long id) {
@@ -197,8 +198,21 @@ public class ChallengeService {
     if (c.getArtifactPath() == null || c.getArtifactPath().isBlank())
       throw new EntityNotFoundException("Artifact not found");
     Path file = artifactRoot.resolve(c.getArtifactPath()).normalize();
-    if (!file.startsWith(artifactRoot) || !Files.isRegularFile(file))
+    if (!file.startsWith(artifactRoot))
       throw new EntityNotFoundException("Artifact not found");
+    if (!Files.isRegularFile(file) && c.getArtifactData() != null) {
+      try {
+        Files.createDirectories(file.getParent());
+        Files.write(
+            file,
+            c.getArtifactData(),
+            StandardOpenOption.CREATE,
+            StandardOpenOption.TRUNCATE_EXISTING);
+      } catch (IOException exception) {
+        throw new ArtifactStorageException(exception);
+      }
+    }
+    if (!Files.isRegularFile(file)) throw new EntityNotFoundException("Artifact not found");
     return file;
   }
 
