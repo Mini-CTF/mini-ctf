@@ -37,6 +37,7 @@ type Language = 'ko' | 'en'
 const initialTheme: Theme = localStorage.getItem('mini-ctf-theme') === 'light' ? 'light' : 'dark'
 const initialLanguage: Language = localStorage.getItem('flagbox-language') === 'en' ? 'en' : 'ko'
 const oauthBaseUrl = import.meta.env.VITE_OAUTH_BASE_URL ?? 'http://localhost:8080'
+const publicSiteUrl = 'https://frontend-mini-ctf.vercel.app'
 const publicProfileEvent = 'flagbox:open-public-profile'
 function openPublicProfile(username: string) { window.dispatchEvent(new CustomEvent<string>(publicProfileEvent, { detail: username })) }
 
@@ -167,6 +168,30 @@ function AppShell() {
   const [showIntro, setShowIntro] = useState(() => sessionStorage.getItem('flagbox-intro-seen') !== 'true')
   const [showTutorial, setShowTutorial] = useState(false)
   const [showMemberTutorial, setShowMemberTutorial] = useState(false)
+
+  useEffect(() => {
+    const page = location.pathname.startsWith('/challenges')
+      ? { title: '워게임 문제', description: '웹, 포렌식, 리버싱 CTF 워게임을 풀며 보안 실력을 키워 보세요.' }
+      : location.pathname.startsWith('/ranking')
+        ? { title: '랭킹', description: 'FlagBox 학습자의 워게임 점수와 해결 기록을 확인하세요.' }
+        : location.pathname.startsWith('/community')
+          ? { title: '커뮤니티', description: 'FlagBox 학습자와 질문, 학습 기록, 안전한 풀이 경험을 나누세요.' }
+          : location.pathname.startsWith('/learn')
+            ? { title: '보안 학습 가이드', description: 'CTF 워게임을 시작하기 위한 웹, 포렌식, 리버싱 보안 학습 가이드입니다.' }
+            : location.pathname.startsWith('/login')
+              ? { title: '로그인', description: 'FlagBox에서 CTF 워게임 보안 학습을 시작하세요.' }
+              : { title: 'CTF 워게임 보안 학습 플랫폼', description: 'FlagBox는 CTF 워게임, 보안 학습 가이드, 랭킹과 커뮤니티를 제공하는 온라인 보안 학습 플랫폼입니다.' }
+    const title = `FlagBox | ${page.title}`
+    const canonicalUrl = `${publicSiteUrl}${location.pathname === '/' ? '/' : location.pathname}`
+    document.title = title
+    document.querySelector('meta[name="description"]')?.setAttribute('content', page.description)
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', title)
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', page.description)
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonicalUrl)
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', title)
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', page.description)
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonicalUrl)
+  }, [location.pathname])
 
   useEffect(() => {
     if (!showIntro) return

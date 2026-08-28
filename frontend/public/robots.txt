@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /friends
+
+Sitemap: https://frontend-mini-ctf.vercel.app/sitemap.xml
