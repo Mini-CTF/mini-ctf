@@ -10,8 +10,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -66,6 +68,16 @@ public class GlobalExceptionHandler {
     return response(HttpStatus.CONFLICT, "USERNAME_EXISTS", "이미 사용 중인 username입니다.");
   }
 
+  @ExceptionHandler(AuthService.AccountRecoveryUnavailableException.class)
+  ResponseEntity<ErrorResponse> accountRecoveryUnavailable(
+      AuthService.AccountRecoveryUnavailableException ex) {
+    log.warn("Account recovery requested without a usable mail sender", ex);
+    return response(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "ACCOUNT_RECOVERY_UNAVAILABLE",
+        "이메일 발송 설정이 아직 완료되지 않았습니다. 관리자에게 문의해 주세요.");
+  }
+
   @ExceptionHandler(AuthController.OAuthProviderUnavailableException.class)
   ResponseEntity<ErrorResponse> oauthUnavailable() {
     return response(
@@ -80,6 +92,26 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(com.minictf.challenge.ChallengeService.InvalidFlagException.class)
   ResponseEntity<ErrorResponse> invalidFlag() {
     return response(HttpStatus.UNPROCESSABLE_ENTITY, "INVALID_FLAG", "FLAG가 올바르지 않습니다.");
+  }
+
+  @ExceptionHandler(com.minictf.challenge.ChallengeService.ArtifactStorageException.class)
+  ResponseEntity<ErrorResponse> artifactStorage(
+      com.minictf.challenge.ChallengeService.ArtifactStorageException ex) {
+    log.error("Challenge artifact storage failure", ex);
+    return response(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "ARTIFACT_STORAGE_UNAVAILABLE",
+        "문제 파일 저장소에 일시적으로 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  ResponseEntity<ErrorResponse> unreadableRequest(HttpMessageNotReadableException ex) {
+    return response(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "요청 형식이 올바르지 않습니다.");
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  ResponseEntity<ErrorResponse> unsupportedMethod(HttpRequestMethodNotSupportedException ex) {
+    return response(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "지원하지 않는 요청 방식입니다.");
   }
 
   @ExceptionHandler(RateLimitService.RateLimitedException.class)

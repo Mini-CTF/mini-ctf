@@ -9,10 +9,10 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,13 +113,19 @@ public class AuthService {
 
   private void sendMail(String to, String subject, String body) {
     JavaMailSender sender = mailSender.getIfAvailable();
-    if (sender == null || mailFrom.isBlank()) throw new IllegalStateException("이메일 발송 설정이 아직 완료되지 않았습니다.");
+    if (sender == null || mailFrom.isBlank()) {
+      throw new AccountRecoveryUnavailableException();
+    }
     SimpleMailMessage message = new SimpleMailMessage();
     message.setFrom(mailFrom);
     message.setTo(to);
     message.setSubject(subject);
     message.setText(body);
-    sender.send(message);
+    try {
+      sender.send(message);
+    } catch (org.springframework.mail.MailException exception) {
+      throw new AccountRecoveryUnavailableException(exception);
+    }
   }
 
   private static String newResetToken() {
@@ -176,4 +182,15 @@ public class AuthService {
   public static class AccountSuspendedException extends RuntimeException {}
 
   public static class DuplicateUsernameException extends RuntimeException {}
+
+  /** The recovery feature is enabled only after a production mail sender is configured. */
+  public static class AccountRecoveryUnavailableException extends RuntimeException {
+    AccountRecoveryUnavailableException() {
+      super("이메일 발송 설정이 아직 완료되지 않았습니다.");
+    }
+
+    AccountRecoveryUnavailableException(Exception cause) {
+      super("이메일 발송 설정을 확인해 주세요.", cause);
+    }
+  }
 }

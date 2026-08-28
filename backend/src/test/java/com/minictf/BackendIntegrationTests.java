@@ -202,10 +202,11 @@ class BackendIntegrationTests {
   void authenticationUsesSafeErrorsAndNeverStoresPlainPassword() throws Exception {
     String body =
         """
-                {"username":"Student_1","nickname":"","password":"strong-password","passwordConfirmation":"strong-password"}
+                {"username":"Student_1","nickname":"","email":"student_1@example.test","password":"strong-password","passwordConfirmation":"strong-password"}
                 """;
     String uniqueUsername = "Student_" + System.nanoTime();
-    body = body.replace("Student_1", uniqueUsername);
+    String uniqueEmail = uniqueUsername.toLowerCase() + "@example.test";
+    body = body.replace("Student_1", uniqueUsername).replace("student_1@example.test", uniqueEmail);
     mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.success").value(true))
@@ -242,12 +243,26 @@ class BackendIntegrationTests {
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"username\":\"another_user\",\"nickname\":\"\",\"password\":\"strong-password\",\"passwordConfirmation\":\"different-password\"}"))
+                    "{\"username\":\"another_user\",\"nickname\":\"\",\"email\":\"another_user@example.test\",\"password\":\"strong-password\",\"passwordConfirmation\":\"different-password\"}"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.error.code").value("INVALID_INPUT"));
     mvc.perform(get("/api/users/me"))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+  }
+
+  @Test
+  void unavailableRecoveryMailIsReportedWithoutAnInternalServerError() throws Exception {
+    User learner = user("recovery_user", "USER");
+    learner.setEmail("recovery_user@example.test");
+    users.saveAndFlush(learner);
+
+    mvc.perform(
+            post("/api/auth/recovery/username")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"recovery_user@example.test\"}"))
+        .andExpect(status().isServiceUnavailable())
+        .andExpect(jsonPath("$.error.code").value("ACCOUNT_RECOVERY_UNAVAILABLE"));
   }
 
   @Test

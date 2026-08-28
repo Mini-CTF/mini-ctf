@@ -137,6 +137,7 @@ public class SecurityConfig {
                 a.requestMatchers(
                         "/api/auth/register",
                         "/api/auth/login",
+                        "/api/auth/recovery/**",
                         "/api/auth/oauth/**",
                         "/oauth2/**",
                         "/login/**",
