@@ -25,6 +25,8 @@ import type {
 import { clearAuthToken, getAuthToken } from './session'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
+const REQUEST_TIMEOUT_MS = 12_000
+const GET_RETRY_DELAYS_MS = [500, 1_250]
 export const rankingChangedEvent = 'flagbox:ranking-changed'
 export const sessionExpiredEvent = 'flagbox:session-expired'
 export const sessionExpiredMessage = '다른 기기에서 로그인되어 세션이 만료되었습니다.'
@@ -33,20 +35,44 @@ function normalizeUsername(username: string): string {
   return username.trim().replace(/^@\s*/, '')
 }
 
+const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms))
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAuthToken()
   const headers = new Headers(init.headers)
   if (init.body) headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
-  const response = await fetch(`${baseUrl}${path}`, { ...init, headers })
-  const body = await response.json().catch(() => null)
-  if (body?.error?.code === 'SESSION_EXPIRED_OTHER_LOGIN') {
-    clearAuthToken()
-    window.dispatchEvent(new CustomEvent(sessionExpiredEvent, { detail: sessionExpiredMessage }))
+  const retryDelays = init.method && init.method !== 'GET' ? [] : GET_RETRY_DELAYS_MS
+  let lastError: unknown
+  for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+    try {
+      const response = await fetch(`${baseUrl}${path}`, { ...init, headers, signal: controller.signal })
+      const body = await response.json().catch(() => null)
+      if (body?.error?.code === 'SESSION_EXPIRED_OTHER_LOGIN') {
+        clearAuthToken()
+        window.dispatchEvent(new CustomEvent(sessionExpiredEvent, { detail: sessionExpiredMessage }))
+      }
+      if (response.ok) return (body?.data ?? body) as T
+      const error = new Error(body?.error?.message ?? 'Request failed. Please try again.')
+      if (response.status < 500 || attempt === retryDelays.length) throw error
+      lastError = error
+    } catch (cause) {
+      lastError = cause
+      if (attempt === retryDelays.length) {
+        if (cause instanceof DOMException && cause.name === 'AbortError') {
+          throw new Error('The server is taking too long to respond. Please try again.', { cause })
+        }
+        throw new Error(cause instanceof Error ? cause.message : 'Request failed. Please try again.', { cause })
+      }
+    } finally {
+      window.clearTimeout(timeout)
+    }
+    await wait(retryDelays[attempt])
   }
-  if (!response.ok) throw new Error(body?.error?.message ?? 'Request failed. Please try again.')
-  return (body?.data ?? body) as T
+  throw lastError instanceof Error ? lastError : new Error('Request failed. Please try again.')
 }
 
 export const api = {

@@ -160,7 +160,7 @@ function AppShell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [compactLayout, setCompactLayout] = useState(() => window.innerWidth <= 620)
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
+  const loading = false
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const [vaultOpen, setVaultOpen] = useState(false)
@@ -192,21 +192,31 @@ function AppShell() {
     return () => document.documentElement.classList.remove('flagbox-intro-active')
   }, [showIntro])
 
-  const refresh = async () => {
-    setLoading(true)
+  const refresh = useCallback(async () => {
     setError('')
-    try {
-      const [nextStats, nextChallenges, nextRanking, nextAttendanceRanking] = await Promise.all([api.stats(), api.challenges(), api.ranking(), api.attendanceRanking()])
-      setStats(nextStats)
-      setChallenges(nextChallenges)
-      setRanking(nextRanking)
-      setAttendanceRanking(nextAttendanceRanking)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not connect to the API.')
-    } finally {
-      setLoading(false)
+    const [statsResult, challengesResult, rankingResult, attendanceRankingResult] = await Promise.allSettled([
+      api.stats(),
+      api.challenges(),
+      api.ranking(),
+      api.attendanceRanking(),
+    ])
+    if (statsResult.status === 'fulfilled') setStats(statsResult.value)
+    if (challengesResult.status === 'fulfilled') setChallenges(challengesResult.value)
+    if (rankingResult.status === 'fulfilled') setRanking(rankingResult.value)
+    if (attendanceRankingResult.status === 'fulfilled') setAttendanceRanking(attendanceRankingResult.value)
+
+    const failures = [statsResult, challengesResult, rankingResult, attendanceRankingResult].filter(
+      (result) => result.status === 'rejected',
+    )
+    if (failures.length > 0) {
+      const firstFailure = failures[0] as PromiseRejectedResult
+      setError(
+        firstFailure.reason instanceof Error
+          ? `Some platform data could not be loaded. ${firstFailure.reason.message}`
+          : 'Some platform data could not be loaded. Please retry.',
+      )
     }
-  }
+  }, [])
 
   useEffect(() => {
     const expireSession = () => {
@@ -228,18 +238,11 @@ function AppShell() {
     if (getAuthToken()) {
       api.me().then(setUser).catch(() => clearAuthToken())
     }
-    void Promise.all([api.stats(), api.challenges(), api.ranking(), api.attendanceRanking()])
-      .then(([nextStats, nextChallenges, nextRanking, nextAttendanceRanking]) => {
-        setStats(nextStats)
-        setChallenges(nextChallenges)
-        setRanking(nextRanking)
-        setAttendanceRanking(nextAttendanceRanking)
-      })
-      .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : 'Could not connect to the API.')
-      })
-      .finally(() => setLoading(false))
-  }, [])
+    // The tutorial and its static banner should not wait for every live API request.
+    // Render immediately, then fill each independent data area as it arrives.
+    const initialLoad = window.setTimeout(() => void refresh(), 0)
+    return () => window.clearTimeout(initialLoad)
+  }, [refresh])
 
   useEffect(() => {
     const interval = window.setInterval(() => {
