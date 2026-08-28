@@ -48,18 +48,21 @@ public class FlagboxChallengeInitializer {
       for (FlagboxChallengeCatalog.Seed seed : FlagboxChallengeCatalog.SEEDS) {
         String flag = ensureFlag(flags, seed.key());
         var existing = challenges.findByTitle(seed.title()).orElse(null);
+        byte[] artifact = seed.artifact().write(flag);
         if (existing != null) {
           Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
-          Files.write(file, seed.artifact().write(flag));
+          Files.write(file, artifact);
+          existing.setArtifactData(artifact);
           syncExisting(
               existing, seed, root.relativize(file).toString().replace('\\', '/'), flag, encoder);
           challenges.save(existing);
           continue;
         }
         Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
-        Files.write(file, seed.artifact().write(flag));
+        Files.write(file, artifact);
         String artifactPath = root.relativize(file).toString().replace('\\', '/');
-        service.create(
+        var created =
+            service.create(
             new ChallengeDtos.AdminRequest(
                 seed.title(),
                 seed.description(),
@@ -71,6 +74,9 @@ public class FlagboxChallengeInitializer {
                 true,
                 seed.hint(),
                 1));
+        var challenge = challenges.findById(created.id()).orElseThrow();
+        challenge.setArtifactData(artifact);
+        challenges.save(challenge);
       }
       saveFlags(root, flags);
     };
