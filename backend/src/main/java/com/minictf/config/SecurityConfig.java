@@ -42,7 +42,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableScheduling
 public class SecurityConfig {
   private static final String DISCORD_USER_AGENT =
-      "Mini-CTF (https://frontend-six-rho-92.vercel.app, 0.1)";
+      "FlagBox (https://flagbox.vercel.app, 0.1)";
 
   @Bean
   PasswordEncoder passwordEncoder() {

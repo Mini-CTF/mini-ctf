@@ -75,8 +75,8 @@ spring:
             user-name-attribute: id
           discord:
             authorization-uri: https://discord.com/oauth2/authorize
-            token-uri: https://frontend-mini-ctf.vercel.app/api/discord-token
-            user-info-uri: https://frontend-mini-ctf.vercel.app/api/discord-user
+            token-uri: https://flagbox.vercel.app/api/discord-token
+            user-info-uri: https://flagbox.vercel.app/api/discord-user
             user-name-attribute: id
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize

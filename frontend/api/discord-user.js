@@ -3,7 +3,7 @@ import { timingSafeEqual } from 'node:crypto'
 import process from 'node:process'
 
 const DISCORD_USER_ENDPOINT = 'https://discord.com/api/v10/users/@me'
-const USER_AGENT = 'Mini-CTF (https://frontend-six-rho-92.vercel.app, 0.1)'
+const USER_AGENT = 'FlagBox (https://flagbox.vercel.app, 0.1)'
 
 function secureEqual(left, right) {
   const leftBuffer = Buffer.from(left ?? '')

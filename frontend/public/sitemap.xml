@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://frontend-mini-ctf.vercel.app/</loc></url>
-  <url><loc>https://frontend-mini-ctf.vercel.app/challenges</loc></url>
-  <url><loc>https://frontend-mini-ctf.vercel.app/ranking</loc></url>
-  <url><loc>https://frontend-mini-ctf.vercel.app/community</loc></url>
-  <url><loc>https://frontend-mini-ctf.vercel.app/learn</loc></url>
-  <url><loc>https://frontend-mini-ctf.vercel.app/login</loc></url>
+  <url><loc>https://flagbox.vercel.app/</loc></url>
+  <url><loc>https://flagbox.vercel.app/challenges</loc></url>
+  <url><loc>https://flagbox.vercel.app/ranking</loc></url>
+  <url><loc>https://flagbox.vercel.app/community</loc></url>
+  <url><loc>https://flagbox.vercel.app/learn</loc></url>
+  <url><loc>https://flagbox.vercel.app/login</loc></url>
 </urlset>

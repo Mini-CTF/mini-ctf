@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
   private static final String FLAGBOX_PRODUCTION_CALLBACK =
-      "https://frontend-mini-ctf.vercel.app/auth/callback";
+      "https://flagbox.vercel.app/auth/callback";
   private final OAuthAccountRepository accounts;
   private final UserRepository users;
   private final AuthService authService;

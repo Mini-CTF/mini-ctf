@@ -37,7 +37,7 @@ type Language = 'ko' | 'en'
 const initialTheme: Theme = localStorage.getItem('mini-ctf-theme') === 'light' ? 'light' : 'dark'
 const initialLanguage: Language = localStorage.getItem('flagbox-language') === 'en' ? 'en' : 'ko'
 const oauthBaseUrl = import.meta.env.VITE_OAUTH_BASE_URL ?? 'http://localhost:8080'
-const publicSiteUrl = 'https://frontend-mini-ctf.vercel.app'
+const publicSiteUrl = 'https://flagbox.vercel.app'
 const publicProfileEvent = 'flagbox:open-public-profile'
 function openPublicProfile(username: string) { window.dispatchEvent(new CustomEvent<string>(publicProfileEvent, { detail: username })) }
 

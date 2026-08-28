@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class OAuth2LoginFailureHandler implements AuthenticationFailureHandler {
   private static final Logger log = LoggerFactory.getLogger(OAuth2LoginFailureHandler.class);
   private static final String FLAGBOX_PRODUCTION_CALLBACK =
-      "https://frontend-mini-ctf.vercel.app/auth/callback";
+      "https://flagbox.vercel.app/auth/callback";
   private final String redirect;
 
   public OAuth2LoginFailureHandler(

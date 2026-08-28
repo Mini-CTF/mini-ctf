@@ -4,4 +4,4 @@ Disallow: /admin
 Disallow: /profile
 Disallow: /friends
 
-Sitemap: https://frontend-mini-ctf.vercel.app/sitemap.xml
+Sitemap: https://flagbox.vercel.app/sitemap.xml

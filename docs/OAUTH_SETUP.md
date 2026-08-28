@@ -35,6 +35,6 @@ Restart the backend after changing `.env`. The login page queries
 ## Deployment
 
 Use HTTPS and replace `localhost:8080` with the public backend origin in both provider consoles.
-Set `OAUTH_SUCCESS_REDIRECT` to `<frontend-origin>/auth/callback` and configure the reverse proxy
+Set `OAUTH_SUCCESS_REDIRECT` to `https://flagbox.vercel.app/auth/callback` and configure the reverse proxy
 to forward `/api`, `/oauth2`, and `/login` to Spring Boot. Keep client secrets in the deployment
 secret store; never commit them.
