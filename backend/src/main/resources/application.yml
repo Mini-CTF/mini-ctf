@@ -122,6 +122,11 @@ spring.mail:
   properties:
     mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
     mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
+    # Do not let an unreachable SMTP server hold an account-recovery request open.
+    # The API converts a mail failure into a clear, retryable 503 response.
+    mail.smtp.connectiontimeout: ${MAIL_CONNECTION_TIMEOUT_MS:5000}
+    mail.smtp.timeout: ${MAIL_READ_TIMEOUT_MS:5000}
+    mail.smtp.writetimeout: ${MAIL_WRITE_TIMEOUT_MS:5000}
 
 springdoc:
   api-docs.path: /v3/api-docs
