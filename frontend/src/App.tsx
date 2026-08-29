@@ -1274,8 +1274,14 @@ function LegacyLoginView({ onBack, onAuth, language: _language }: { onBack: () =
   const [mode, setMode] = useState<'login' | 'register' | 'username' | 'password' | 'reset'>(resetToken ? 'reset' : 'login')
   const [error, setError] = useState(() => oauthErrorMessage(new URLSearchParams(location.search).get('oauthError')))
   const [notice, setNotice] = useState('')
-  const [providers, setProviders] = useState<string[]>([])
-  useEffect(() => { api.oauthProviders().then(setProviders).catch(() => setProviders(['google', 'github', 'discord'])) }, [])
+  // Keep the standard providers visible while a free Render instance wakes up. Previously this
+  // began as an empty list, making every OAuth button briefly disappear during a cold start.
+  const [providers, setProviders] = useState<string[]>(['google', 'github', 'discord'])
+  useEffect(() => {
+    api.oauthProviders()
+      .then((available) => { if (available.length > 0) setProviders(available) })
+      .catch(() => undefined)
+  }, [])
   const title = mode === 'register' ? '계정을 만들어 보세요.' : mode === 'username' ? '아이디 찾기' : mode === 'password' ? '비밀번호 재설정' : mode === 'reset' ? '새 비밀번호 설정' : '계속하려면 로그인하세요.'
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setError(''); setNotice('')
