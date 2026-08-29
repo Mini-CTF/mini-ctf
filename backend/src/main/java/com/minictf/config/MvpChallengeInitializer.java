@@ -37,7 +37,9 @@ public class MvpChallengeInitializer {
       Path mvpRoot = root.resolve("mvp").normalize();
       if (!mvpRoot.startsWith(root)) throw new IllegalStateException("Invalid MVP artifact path");
       Files.createDirectories(mvpRoot);
+      boolean hasFlagStore = Files.isRegularFile(root.resolve(".mvp-flags.properties"));
       Properties flags = loadOrCreateFlags(root);
+      if (!hasFlagStore && hasPersistedMvpArtifacts(challenges)) return;
 
       seed(
           challenges,
@@ -179,6 +181,18 @@ public class MvpChallengeInitializer {
     byte[] bytes = new byte[12];
     new SecureRandom().nextBytes(bytes);
     return HexFormat.of().formatHex(bytes);
+  }
+
+  private static boolean hasPersistedMvpArtifacts(ChallengeRepository challenges) {
+    return List.of(
+            "Signal in Plain Sight",
+            "Proxy Afterimage",
+            "Orbit Gatekeeper",
+            "Header Hunt",
+            "Layered Evidence")
+        .stream()
+        .map(challenges::findByTitle)
+        .allMatch(challenge -> challenge.isPresent() && challenge.get().getArtifactData() != null);
   }
 
   private static void writeVerifier(Path zipPath, String flag) throws IOException {
