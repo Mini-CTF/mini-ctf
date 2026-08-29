@@ -88,7 +88,7 @@ public class AuthService {
     String email = request.email().trim().toLowerCase();
     users.findByEmailIgnoreCase(email).filter(user -> user.getPasswordHash() != null).ifPresent(user ->
         sendMail(email, "FlagBox 아이디 안내", "FlagBox에서 사용하는 아이디는 @" + user.getUsername() + " 입니다."));
-    return new AuthDtos.RecoveryMessage("입력한 이메일로 안내를 보냈습니다. OAuth 로그인 계정은 이 기능을 사용할 수 없습니다.");
+    return new AuthDtos.RecoveryMessage("아이디 안내를 이메일로 보냈습니다. 이메일을 확인해 주세요.");
   }
 
   @Transactional
@@ -106,7 +106,7 @@ public class AuthService {
           resetTokens.save(token);
           sendMail(email, "FlagBox 비밀번호 재설정", "아래 링크는 20분 동안만 유효합니다.\n" + resetUrl + "?resetToken=" + raw);
         });
-    return new AuthDtos.RecoveryMessage("계정 정보가 일치하면 비밀번호 재설정 링크를 이메일로 보냈습니다.");
+    return new AuthDtos.RecoveryMessage("비밀번호 재설정 링크를 이메일로 보냈습니다. 이메일을 확인해 주세요.");
   }
 
   @Transactional

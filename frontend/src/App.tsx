@@ -151,6 +151,7 @@ function App() {
 function AppShell() {
   const routerNavigate = useNavigate()
   const location = useLocation()
+  const isPasswordResetLink = location.pathname === '/login' && new URLSearchParams(location.search).has('resetToken')
   const [user, setUser] = useState<User | null>(null)
   const [, setStats] = useState<Stats>(emptyStats)
   const [challenges, setChallenges] = useState<ChallengeSummary[]>([])
@@ -166,7 +167,7 @@ function AppShell() {
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const [vaultOpen, setVaultOpen] = useState(false)
   const [headerGems, setHeaderGems] = useState<number | null>(null)
-  const [showIntro, setShowIntro] = useState(() => sessionStorage.getItem('flagbox-intro-seen') !== 'true')
+  const [showIntro, setShowIntro] = useState(() => !isPasswordResetLink && sessionStorage.getItem('flagbox-intro-seen') !== 'true')
   const [showTutorial, setShowTutorial] = useState(false)
   const [showMemberTutorial, setShowMemberTutorial] = useState(false)
 
@@ -195,6 +196,12 @@ function AppShell() {
   }, [location.pathname])
 
   useEffect(() => {
+    if (!isPasswordResetLink) return
+    setShowIntro(false)
+    setShowTutorial(false)
+    setShowMemberTutorial(false)
+  }, [isPasswordResetLink])
+  useEffect(() => {
     if (!showIntro) return
     const timer = window.setTimeout(() => {
       setShowIntro(false)
@@ -203,11 +210,11 @@ function AppShell() {
     return () => window.clearTimeout(timer)
   }, [showIntro])
   useEffect(() => {
-    if (showIntro || user || sessionStorage.getItem('flagbox-tutorial-seen') === 'true') return
+    if (isPasswordResetLink || showIntro || user || sessionStorage.getItem('flagbox-tutorial-seen') === 'true') return
     if (sessionStorage.getItem('flagbox-intro-seen') !== 'true') return
     const timer = window.setTimeout(() => setShowTutorial(true), 240)
     return () => window.clearTimeout(timer)
-  }, [showIntro, user])
+  }, [isPasswordResetLink, showIntro, user])
   useEffect(() => {
     if (!user || showIntro || showTutorial || sessionStorage.getItem('flagbox-member-tutorial-seen') === 'true') return
     const timer = window.setTimeout(() => setShowMemberTutorial(true), 380)
