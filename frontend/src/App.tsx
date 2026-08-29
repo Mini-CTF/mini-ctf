@@ -341,7 +341,7 @@ function AppShell() {
   const text = uiCopy[language]
 
   const featuredChallenges = useMemo(
-    () => [...challenges].sort(byDifficulty).slice(0, 3),
+    () => [...challenges].sort((a, b) => Number(a.solved) - Number(b.solved) || byDifficulty(a, b)).slice(0, 3),
     [challenges],
   )
   const visibleChallenges = useMemo(
@@ -413,7 +413,7 @@ function AppShell() {
     <main>
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       <Routes>
-        <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
+        <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onCommunity={() => go('/community')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges" element={guarded(<ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh(); void refreshWallet() }} />)} />
         <Route path="/learn" element={<LearnView lang={language} />} />
@@ -517,11 +517,11 @@ function LearnArticleRoute({ lang }: { lang: 'ko' | 'en' }) {
   )
 }
 
-function Home({ language, challenges, onExplore, onRanking, onOpen }: { language: Language; challenges: ChallengeSummary[]; onExplore: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void }) {
+function Home({ language, challenges, onExplore, onCommunity, onRanking, onOpen }: { language: Language; challenges: ChallengeSummary[]; onExplore: () => void; onCommunity: () => void; onRanking: () => void; onOpen: (item: ChallengeSummary) => void }) {
   const banners = [
     { label: 'START FROM ZERO', title: '처음 배우는 보안도\nFlagBox와 함께.', description: '복잡한 이론보다 쉬운 문제부터. 직접 풀며 기초를 익혀 보세요.', action: '첫 문제 풀어보기', onClick: onExplore },
     { label: 'DAILY PRACTICE', title: '하루 한 문제로\n가볍게 시작해요.', description: '짧은 도전이 모여 실력이 됩니다. 오늘의 학습 기록을 남겨 보세요.', action: '워게임 둘러보기', onClick: onExplore },
-    { label: 'ASK AND GROW', title: '혼자 고민하지 말고\n함께 배워요.', description: '커뮤니티에서 질문하고, 다른 학습자의 풀이 경험도 만나 보세요.', action: '커뮤니티 둘러보기', onClick: onRanking },
+    { label: 'ASK AND GROW', title: '혼자 고민하지 말고\n함께 배워요.', description: '커뮤니티에서 질문하고, 다른 학습자의 풀이 경험도 만나 보세요.', action: '커뮤니티 둘러보기', onClick: onCommunity },
     { label: 'BEGINNER WARGAME', title: '보안은, 직접 풀어보면\n더 쉬워집니다.', description: '처음부터 차근차근. 부담 없이 시작하는 FlagBox 워게임입니다.', action: '첫 문제 풀어보기', onClick: onExplore },
     { label: 'LEARN AT YOUR PACE', title: '막혀도 괜찮아요.\n힌트가 함께해요.', description: '문제를 읽고, 단서를 찾고, 필요한 순간에는 힌트를 사용해 보세요.', action: '워게임 둘러보기', onClick: onExplore },
     { label: 'KEEP THE MOMENTUM', title: '오늘의 작은 풀이가\n내일의 실력이 돼요.', description: '매일의 도전과 학습 기록을 FlagBox에서 이어가 보세요.', action: '랭킹 둘러보기', onClick: onRanking },
@@ -529,7 +529,7 @@ function Home({ language, challenges, onExplore, onRanking, onOpen }: { language
   const englishBanners = [
     { label: 'START FROM ZERO', title: 'New to security?\nStart with FlagBox.', description: 'Skip the jargon. Build the fundamentals by solving safe, approachable problems.', action: 'Solve your first challenge', onClick: onExplore },
     { label: 'DAILY PRACTICE', title: 'One challenge a day.\nA great place to start.', description: 'Small and safe practice sessions add up. Keep track of today’s learning.', action: 'Browse wargames', onClick: onExplore },
-    { label: 'ASK AND GROW', title: 'Do not get stuck alone.\nLearn together.', description: 'Ask questions in the community and learn from other learners’ experiences.', action: 'Visit community', onClick: onRanking },
+    { label: 'ASK AND GROW', title: 'Do not get stuck alone.\nLearn together.', description: 'Ask questions in the community and learn from other learners’ experiences.', action: 'Visit community', onClick: onCommunity },
     { label: 'BEGINNER WARGAME', title: 'Security gets easier\nwhen you solve it.', description: 'Take it one step at a time. FlagBox wargames are made for a safe first start.', action: 'Solve your first challenge', onClick: onExplore },
     { label: 'LEARN AT YOUR PACE', title: 'Take your time.\nHints are here.', description: 'Read the prompt, find your bearings, and use a hint whenever you need one.', action: 'Browse wargames', onClick: onExplore },
     { label: 'KEEP THE MOMENTUM', title: 'Small challenges today.\nStronger skills tomorrow.', description: 'Keep your attendance and learning record going in FlagBox.', action: 'Explore rankings', onClick: onRanking },

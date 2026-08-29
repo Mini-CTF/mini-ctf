@@ -170,6 +170,22 @@ export function GettingStartedTutorial({
       ? { skip: '건너뛰기', prev: '이전', next: '다음', finish: 'FlagBox 시작!' }
       : { skip: 'Skip', prev: 'Back', next: 'Next', finish: "Let's go!" }
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key === 'ArrowLeft' && step > 0) setStep((value) => value - 1)
+      if (event.key === 'ArrowRight') {
+        if (last) onClose()
+        else setStep((value) => value + 1)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [last, onClose, step])
+
   let cardStyle: React.CSSProperties | undefined
   if (rect) {
     const below = rect.bottom + 16
@@ -192,6 +208,9 @@ export function GettingStartedTutorial({
         <span className="onboarding-count">
           {step + 1} / {steps.length}
         </span>
+        <div className="onboarding-progress" aria-label={`Step ${step + 1} of ${steps.length}`}>
+          {steps.map((_, index) => <i className={index <= step ? 'complete' : ''} key={index} />)}
+        </div>
         <h2>{text.title}</h2>
         <p aria-live="polite">{text.body}</p>
         <div className="onboarding-actions">
