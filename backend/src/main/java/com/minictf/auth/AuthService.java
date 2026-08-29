@@ -3,9 +3,14 @@ package com.minictf.auth;
 import com.minictf.admin.SecurityEventService;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -27,6 +32,9 @@ public class AuthService {
   private final ObjectProvider<JavaMailSender> mailSender;
   private final String resetUrl;
   private final String mailFrom;
+  private final String resendApiKey;
+  private final String resendFrom;
+  private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
   public AuthService(
       UserRepository users,
@@ -36,7 +44,9 @@ public class AuthService {
       PasswordResetTokenRepository resetTokens,
       ObjectProvider<JavaMailSender> mailSender,
       @Value("${app.account-recovery.reset-url:http://localhost:5173/login}") String resetUrl,
-      @Value("${app.account-recovery.from:}") String mailFrom) {
+      @Value("${app.account-recovery.from:}") String mailFrom,
+      @Value("${RESEND_API_KEY:}") String resendApiKey,
+      @Value("${RESEND_FROM:}") String resendFrom) {
     this.users = users;
     this.encoder = encoder;
     this.jwt = jwt;
@@ -45,6 +55,8 @@ public class AuthService {
     this.mailSender = mailSender;
     this.resetUrl = resetUrl;
     this.mailFrom = mailFrom;
+    this.resendApiKey = resendApiKey;
+    this.resendFrom = resendFrom;
   }
 
   @Transactional
@@ -112,6 +124,10 @@ public class AuthService {
   }
 
   private void sendMail(String to, String subject, String body) {
+    if (!resendApiKey.isBlank()) {
+      sendWithResend(to, subject, body);
+      return;
+    }
     JavaMailSender sender = mailSender.getIfAvailable();
     if (sender == null || mailFrom.isBlank()) {
       throw new AccountRecoveryUnavailableException();
@@ -126,6 +142,52 @@ public class AuthService {
     } catch (org.springframework.mail.MailException exception) {
       throw new AccountRecoveryUnavailableException(exception);
     }
+  }
+
+  /**
+   * Render's free web services block outbound SMTP ports. Resend uses HTTPS instead, so recovery
+   * mail works on the free plan as well as locally with SMTP.
+   */
+  private void sendWithResend(String to, String subject, String body) {
+    String from = resendFrom.isBlank() ? mailFrom : resendFrom;
+    if (from.isBlank()) throw new AccountRecoveryUnavailableException();
+    String payload =
+        "{\"from\":\""
+            + jsonValue(from)
+            + "\",\"to\":[\""
+            + jsonValue(to)
+            + "\"],\"subject\":\""
+            + jsonValue(subject)
+            + "\",\"text\":\""
+            + jsonValue(body)
+            + "\"}";
+    HttpRequest request =
+        HttpRequest.newBuilder(URI.create("https://api.resend.com/emails"))
+            .timeout(Duration.ofSeconds(8))
+            .header("Authorization", "Bearer " + resendApiKey)
+            .header("Content-Type", "application/json")
+            .header("User-Agent", "FlagBox/1.0")
+            .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
+            .build();
+    try {
+      HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+      if (response.statusCode() < 200 || response.statusCode() >= 300)
+        throw new AccountRecoveryUnavailableException();
+    } catch (InterruptedException exception) {
+      Thread.currentThread().interrupt();
+      throw new AccountRecoveryUnavailableException(exception);
+    } catch (Exception exception) {
+      throw new AccountRecoveryUnavailableException(exception);
+    }
+  }
+
+  private static String jsonValue(String value) {
+    return value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\r", "\\r")
+        .replace("\n", "\\n")
+        .replace("\t", "\\t");
   }
 
   private static String newResetToken() {

@@ -6,14 +6,14 @@
 
 ```text
 PASSWORD_RESET_URL=https://flagbox.vercel.app/login
-MAIL_FROM=FlagBox <your-gmail-address@gmail.com>
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=your-gmail-address@gmail.com
-MAIL_PASSWORD=your-16-character-google-app-password
-MAIL_SMTP_AUTH=true
-MAIL_SMTP_STARTTLS=true
+RESEND_API_KEY=re_xxxxxxxxx
+RESEND_FROM=FlagBox <onboarding@resend.dev>
 ```
+
+Render Free blocks outbound SMTP ports (25, 465, and 587), so Gmail SMTP cannot
+deliver production recovery email there. Use a Resend API key instead: its API is
+HTTPS-based. The `onboarding@resend.dev` sender can be used for a private test;
+verify a domain in Resend and replace `RESEND_FROM` before sending to all users.
 
 Google 계정에는 일반 비밀번호가 아니라 **2단계 인증을 켠 뒤 발급한 앱 비밀번호**를 사용합니다. 발급한 앱 비밀번호는 공백 없이 `MAIL_PASSWORD`에 넣습니다.
 
