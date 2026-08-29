@@ -46,21 +46,28 @@ public class FlagboxChallengeInitializer {
       Properties flags = loadFlags(root);
 
       for (FlagboxChallengeCatalog.Seed seed : FlagboxChallengeCatalog.SEEDS) {
-        String flag = ensureFlag(flags, seed.key());
         var existing = challenges.findByTitle(seed.title()).orElse(null);
-        byte[] artifact = seed.artifact().write(flag);
-        if (existing != null) {
-          Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
-          Files.write(file, artifact);
-          existing.setArtifactData(artifact);
-          syncExisting(
-              existing, seed, root.relativize(file).toString().replace('\\', '/'), flag, encoder);
+        Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
+        String artifactPath = root.relativize(file).toString().replace('\\', '/');
+        String storedFlag = flags.getProperty(seed.key());
+        if (existing != null
+            && (storedFlag == null || storedFlag.isBlank())
+            && existing.getArtifactData() != null) {
+          syncExisting(existing, seed, artifactPath, null, encoder);
           challenges.save(existing);
           continue;
         }
-        Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
+
+        String flag = ensureFlag(flags, seed.key());
+        byte[] artifact = seed.artifact().write(flag);
+        if (existing != null) {
+          Files.write(file, artifact);
+          existing.setArtifactData(artifact);
+          syncExisting(existing, seed, artifactPath, flag, encoder);
+          challenges.save(existing);
+          continue;
+        }
         Files.write(file, artifact);
-        String artifactPath = root.relativize(file).toString().replace('\\', '/');
         var created =
             service.create(
             new ChallengeDtos.AdminRequest(
@@ -114,9 +121,9 @@ public class FlagboxChallengeInitializer {
       existing.setArtifactPath(artifactPath);
       changed = true;
     }
-    // Artifacts are regenerated from the local flag store on every startup. Keep the persisted
-    // verifier in lockstep when that store is restored, replaced, or newly generated.
-    if (!encoder.matches(flag, existing.getFlagHash())) {
+    // An ephemeral host can lose the local flag store. In that case, retain the database-backed
+    // artifact and verifier instead of generating a different flag on every restart.
+    if (flag != null && !encoder.matches(flag, existing.getFlagHash())) {
       existing.setFlagHash(encoder.encode(flag));
       changed = true;
     }

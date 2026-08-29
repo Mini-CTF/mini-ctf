@@ -93,6 +93,8 @@ Copy-Item .env.example .env
 
 실제 `.env`는 커밋하지 않습니다.
 
+운영 환경의 이메일 복구·Render 설정은 [운영 설정 안내](docs/PRODUCTION_SETUP.md)를 참고하세요.
+
 ### 3. PostgreSQL
 
 ```powershell
