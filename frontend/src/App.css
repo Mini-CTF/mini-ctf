@@ -3329,6 +3329,34 @@ html[data-theme='light'] .auth-login-shell .oauth-discord span { color: #fff; }
   font-weight: 700;
 }
 
+/* Difficulty names are Korean in the default locale.  Keep the technical
+   monospace face for category labels, but use the UI face for Hangul labels
+   so their strokes retain their intended shape at compact badge sizes. */
+.card-top .badge.beginner,
+.card-top .badge.easy,
+.card-top .badge.normal,
+.card-top .badge.advanced,
+.card-top .badge.expert,
+.badge-line .badge.beginner,
+.badge-line .badge.easy,
+.badge-line .badge.normal,
+.badge-line .badge.advanced,
+.badge-line .badge.expert {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  box-sizing: border-box;
+  padding: 5px 10px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
 /* ���� ����������: �� �ٹ̱� �г� ���� */
 .loadout-panel {
   margin-top: 20px;
