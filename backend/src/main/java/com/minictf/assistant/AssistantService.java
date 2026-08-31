@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AssistantService {
-  private static final String ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions";
+  private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/";
   private static final String SAFE_REPLY_KO =
       "정답 FLAG나 완성된 풀이를 직접 제공할 수는 없어요. 문제 설명에서 목표와 입력값을 다시 확인한 뒤, 막힌 지점을 한 단계씩 질문해 보세요.";
   private static final String SAFE_REPLY_EN =
@@ -38,9 +38,9 @@ public class AssistantService {
       ChallengeRepository challenges,
       RateLimitService rateLimits,
       ObjectMapper objectMapper,
-      @Value("${NVIDIA_API_KEY:}") String apiKey,
-      @Value("${NVIDIA_MODEL:nvidia/llama-3.3-nemotron-super-49b-v1}") String primaryModel,
-      @Value("${NVIDIA_FALLBACK_MODEL:meta/llama-3.1-8b-instruct}") String fallbackModel) {
+      @Value("${GEMINI_API_KEY:}") String apiKey,
+      @Value("${GEMINI_MODEL:gemini-2.5-flash}") String primaryModel,
+      @Value("${GEMINI_FALLBACK_MODEL:gemini-2.5-flash-lite}") String fallbackModel) {
     this.challenges = challenges;
     this.rateLimits = rateLimits;
     this.objectMapper = objectMapper;
@@ -100,17 +100,14 @@ public class AssistantService {
       String payload =
           objectMapper.writeValueAsString(
               Map.of(
-                  "model", model,
-                  "temperature", 0.35,
-                  "max_tokens", 420,
-                  "messages",
-                  List.of(
-                      Map.of("role", "system", "content", system),
-                      Map.of("role", "user", "content", message))));
+                  "systemInstruction", Map.of("parts", List.of(Map.of("text", system))),
+                  "contents",
+                  List.of(Map.of("role", "user", "parts", List.of(Map.of("text", message)))),
+                  "generationConfig", Map.of("temperature", 0.35, "maxOutputTokens", 420)));
       HttpRequest request =
-          HttpRequest.newBuilder(URI.create(ENDPOINT))
+          HttpRequest.newBuilder(URI.create(ENDPOINT + model + ":generateContent"))
               .timeout(Duration.ofSeconds(12))
-              .header("Authorization", "Bearer " + apiKey)
+              .header("x-goog-api-key", apiKey)
               .header("Content-Type", "application/json")
               .header("Accept", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
@@ -119,7 +116,7 @@ public class AssistantService {
           httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
       if (response.statusCode() < 200 || response.statusCode() >= 300) return null;
       JsonNode root = objectMapper.readTree(response.body());
-      return root.path("choices").path(0).path("message").path("content").asText(null);
+      return root.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
       return null;
