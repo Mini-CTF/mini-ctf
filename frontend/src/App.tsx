@@ -570,7 +570,7 @@ function AssistantFeedbackDialog({ user, language, onClose, onLogin }: { user: U
       setError(cause instanceof Error ? cause.message : (ko ? '피드백을 보내지 못했어요.' : 'Could not send feedback.'))
     } finally { setBusy(false) }
   }
-  const visibleRating = hoverRating ?? rating ?? 5
+  const visibleRating = hoverRating ?? rating ?? 0
   const ratingText = !rating && !hoverRating ? (ko ? '별점을 클릭해 주세요' : 'Click a star to rate') : (ko ? ['아쉬워요', '조금 아쉬워요', '보통이에요', '만족해요', '매우 만족해요'][visibleRating - 1] : ['Very poor', 'Needs improvement', 'Okay', 'Good', 'Excellent'][visibleRating - 1])
   return <section className="assistant-feedback-dialog" role="dialog" aria-modal="false" aria-label={ko ? 'FlagBox 피드백' : 'FlagBox feedback'} data-no-specular>
     <header className="ai-chat-header"><div className="ai-chat-title"><span className="ai-chat-mark" aria-hidden="true">✎</span><div><strong>{ko ? 'FlagBox 피드백' : 'FlagBox feedback'}</strong><small>{ko ? 'AI 학습 도우미를 더 좋게 만들 의견을 들려주세요.' : 'Help us improve the AI learning helper.'}</small></div></div><button className="ai-chat-close" type="button" onClick={onClose} aria-label={ko ? '피드백 닫기' : 'Close feedback'}>×</button></header>
