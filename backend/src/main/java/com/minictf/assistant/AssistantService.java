@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AssistantService {
@@ -84,6 +85,7 @@ public class AssistantService {
     feedback.save(item);
   }
 
+  @Transactional(readOnly = true)
   public List<AssistantDtos.FeedbackView> feedback() {
     return feedback.findTop100ByOrderByCreatedAtDesc().stream()
         .map(item -> new AssistantDtos.FeedbackView(item.getId(), item.getUser().getUsername(), item.getUser().getNickname(), item.getRating(), item.getComment(), item.getCreatedAt()))
