@@ -55,10 +55,10 @@ html[data-theme='light'] .ai-chat-message.assistant span { background: #edf4fb; 
 /* FlagBox quick assistant: readable in both themes, without relying on a dark-only navy surface. */
 .floating-menu-trigger { width: 62px; height: 62px; border: 2px solid #70b6ff; background: radial-gradient(circle at 32% 28%, #4da3ff, #1552b7 66%, #0b2861); color: #fff; box-shadow: 0 14px 32px rgba(30, 104, 211, .42), inset 0 1px 1px rgba(255,255,255,.38); }
 .floating-menu-trigger:hover, .floating-menu-trigger.is-open { border-color: #d7eeff; background: radial-gradient(circle at 32% 28%, #72baff, #1d66d2 66%, #10377d); }
-.quick-menu { bottom: 76px; gap: 10px; }
-.quick-menu-item { min-height: 42px; gap: 10px; padding: 9px 16px 9px 11px; font-family: var(--font-sans, system-ui, sans-serif); font-size: 13px; font-weight: 700; letter-spacing: .01em; }
-.quick-menu-icon { width: 23px; height: 23px; }
-.quick-menu-icon svg { width: 15px; height: 15px; }
+.quick-menu { bottom: 82px; gap: 12px; }
+.quick-menu-item { min-height: 50px; gap: 12px; padding: 10px 19px 10px 13px; font-family: var(--font-sans, system-ui, sans-serif); font-size: 15px; font-weight: 750; letter-spacing: .015em; }
+.quick-menu-icon { width: 27px; height: 27px; }
+.quick-menu-icon svg { width: 17px; height: 17px; }
 .ai-chat { width: min(410px, calc(100vw - 32px)); height: min(540px, calc(100vh - 112px)); border-width: 2px; border-radius: 18px; }
 .ai-chat-header { min-height: 74px; padding: 14px 16px; }
 .ai-chat-title strong { font-size: 16px; letter-spacing: .01em; }
@@ -102,4 +102,4 @@ html[data-theme='light'] .floating-menu-trigger:hover, html[data-theme='light'] 
 html[data-theme='light'] .ai-chat { border-color: #a8c9eb; box-shadow: 0 20px 50px rgba(30, 76, 123, .2); }
 html[data-theme='light'] .assistant-feedback-bar { color: #36516c; }
 html[data-theme='light'] .assistant-feedback-dialog { border-color: #a8c9eb; box-shadow: 0 20px 50px rgba(30, 76, 123, .2); }
-@media (max-width: 620px) { .floating-menu-trigger { width: 58px; height: 58px; } .quick-menu { bottom: 70px; } .ai-chat { width: min(410px, calc(100vw - 24px)); height: min(540px, calc(100vh - 96px)); } }
+@media (max-width: 620px) { .floating-menu-trigger { width: 58px; height: 58px; } .quick-menu { bottom: 74px; gap: 10px; } .quick-menu-item { min-height: 47px; padding: 9px 17px 9px 12px; font-size: 14px; } .quick-menu-icon { width: 25px; height: 25px; } .quick-menu-icon svg { width: 16px; height: 16px; } .ai-chat { width: min(410px, calc(100vw - 24px)); height: min(540px, calc(100vh - 96px)); } }
