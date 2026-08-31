@@ -1389,6 +1389,74 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+.footer-policy-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.footer-policy-links button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.footer-policy-links button:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.policy-page {
+  width: min(100% - 40px, 860px);
+  margin: 0 auto;
+  padding: 64px 0 96px;
+}
+.policy-card {
+  padding: clamp(28px, 5vw, 52px);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--panel);
+}
+.policy-card .back-link {
+  margin-bottom: 36px;
+}
+.policy-card h1 {
+  margin: 8px 0 14px;
+  color: var(--text);
+  font-size: clamp(30px, 5vw, 46px);
+  letter-spacing: -.035em;
+}
+.policy-intro {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.8;
+  word-break: keep-all;
+}
+.policy-sections {
+  display: grid;
+  gap: 14px;
+  margin-top: 36px;
+}
+.policy-sections article {
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--background) 36%, var(--panel));
+}
+.policy-sections h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+}
+.policy-sections p {
+  margin: 9px 0 0;
+  color: var(--muted);
+  line-height: 1.75;
+  word-break: keep-all;
+}
 .footer-links a {
   width: fit-content;
   color: var(--accent);
