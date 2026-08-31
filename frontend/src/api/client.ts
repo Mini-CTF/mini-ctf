@@ -80,7 +80,7 @@ async function request<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  assistantChat: (payload: { message: string; challengeId?: number; language: 'ko' | 'en' }) =>
+  assistantChat: (payload: { message: string; challengeId?: number; language: 'ko' | 'en'; history?: { role: 'assistant' | 'user'; content: string }[] }) =>
     request<AssistantReply>('/assistant/chat', { method: 'POST', body: JSON.stringify(payload), timeoutMs: 30_000 }),
   register: (payload: {
     username: string

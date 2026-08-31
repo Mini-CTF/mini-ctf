@@ -12,6 +12,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -61,9 +62,9 @@ public class AssistantService {
       return new AssistantDtos.ChatReply(korean ? SAFE_REPLY_KO : SAFE_REPLY_EN, contextLabel(request.challengeId()));
 
     Challenge challenge = request.challengeId() == null ? null : findChallenge(request.challengeId());
-    String response = callModel(primaryModel, systemPrompt(korean, challenge), request.message());
+    String response = callModel(primaryModel, systemPrompt(korean, challenge), request.message(), request.history());
     if (response == null && !fallbackModel.equals(primaryModel))
-      response = callModel(fallbackModel, systemPrompt(korean, challenge), request.message());
+      response = callModel(fallbackModel, systemPrompt(korean, challenge), request.message(), request.history());
     if (response == null || response.isBlank()) throw new AssistantUnavailableException();
     return new AssistantDtos.ChatReply(response.trim(), challenge == null ? null : challenge.getTitle());
   }
@@ -99,21 +100,32 @@ public class AssistantService {
                 + challenge.getDescription();
     return "You are FlagBox Coach, a warm beginner-focused cybersecurity learning assistant. "
         + language
-        + " Explain one small next step at a time. Teach concepts, safe tools, and how to read clues. "
+        + " For a greeting or short check-in, reply warmly in one or two sentences and offer Web, Forensics, or Reversing as choices. "
+        + " For learning questions, begin with a plain-language explanation, then give at most three small numbered next steps. "
+        + " Define unfamiliar terms immediately and avoid jargon, long disclaimers, and generic filler. Ask one useful follow-up question when context is missing. "
+        + " Keep the response concise enough to scan in a chat panel. Teach concepts, safe tools, and how to read clues. "
         + "Never reveal a FLAG, exact final answer, complete exploit payload, or a full solve path. "
         + "Do not provide instructions for attacking real systems; keep examples limited to the FlagBox exercise. "
         + "If asked for restricted content, politely redirect to a conceptual hint. "
         + context;
   }
 
-  private String callModel(String model, String system, String message) {
+  private String callModel(
+      String model, String system, String message, List<AssistantDtos.ChatTurn> history) {
     try {
+      List<Map<String, Object>> contents = new ArrayList<>();
+      if (history != null) {
+        for (AssistantDtos.ChatTurn turn : history) {
+          String role = "assistant".equals(turn.role()) ? "model" : "user";
+          contents.add(Map.of("role", role, "parts", List.of(Map.of("text", turn.content()))));
+        }
+      }
+      contents.add(Map.of("role", "user", "parts", List.of(Map.of("text", message))));
       String payload =
           objectMapper.writeValueAsString(
               Map.of(
                   "systemInstruction", Map.of("parts", List.of(Map.of("text", system))),
-                  "contents",
-                  List.of(Map.of("role", "user", "parts", List.of(Map.of("text", message)))),
+                  "contents", contents,
                   "generationConfig", Map.of("temperature", 0.35, "maxOutputTokens", 420)));
       HttpRequest request =
           HttpRequest.newBuilder(URI.create(ENDPOINT + model + ":generateContent"))

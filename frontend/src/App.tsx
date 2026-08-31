@@ -467,7 +467,7 @@ function LegacyFloatingAssistant({ user, language, path, onLogin, initialOpen }:
     setMessages((current) => [...current, { role: 'user', content: message }])
     try {
       setBusy(true)
-      const reply = await api.assistantChat({ message, challengeId: challengeId ? Number(challengeId) : undefined, language })
+      const reply = await api.assistantChat({ message, challengeId: challengeId ? Number(challengeId) : undefined, language, history: messages.slice(-6) })
       setMessages((current) => [...current, { role: 'assistant', content: reply.message }])
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : (ko ? 'AI 도우미에 연결하지 못했어요.' : 'Could not reach the AI helper.'))
@@ -511,7 +511,7 @@ function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { use
     setMessages((current) => [...current, { role: 'user', content: message }])
     try {
       setBusy(true)
-      const reply = await api.assistantChat({ message, challengeId: challengeId ? Number(challengeId) : undefined, language })
+      const reply = await api.assistantChat({ message, challengeId: challengeId ? Number(challengeId) : undefined, language, history: messages.slice(-6) })
       setMessages((current) => [...current, { role: 'assistant', content: reply.message }])
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : (ko ? 'AI 도우미에 연결하지 못했어요.' : 'Could not reach the AI helper.'))
