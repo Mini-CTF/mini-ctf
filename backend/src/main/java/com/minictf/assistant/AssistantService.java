@@ -48,8 +48,8 @@ public class AssistantService {
     this.rateLimits = rateLimits;
     this.objectMapper = objectMapper;
     this.apiKey = apiKey;
-    this.primaryModel = primaryModel;
-    this.fallbackModel = fallbackModel;
+    this.primaryModel = normalizeModel(primaryModel);
+    this.fallbackModel = normalizeModel(fallbackModel);
     this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(6)).build();
   }
 
@@ -74,6 +74,14 @@ public class AssistantService {
 
   private String contextLabel(Long challengeId) {
     return challengeId == null ? null : challenges.findById(challengeId).map(Challenge::getTitle).orElse(null);
+  }
+
+  private static String normalizeModel(String model) {
+    return switch (model) {
+      case "gemini-2.5-flash" -> "gemini-3.7-flash";
+      case "gemini-2.5-flash-lite" -> "gemini-3.5-flash-lite";
+      default -> model;
+    };
   }
 
   private String systemPrompt(boolean korean, Challenge challenge) {
