@@ -5,6 +5,7 @@ import type {
   ChallengeSummary,
   AttendanceRankingRow,
   AttendanceSummary,
+  AssistantReply,
   AdminDashboard,
   AdminPost,
   CommunityCategory,
@@ -37,19 +38,22 @@ function normalizeUsername(username: string): string {
 
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+type ApiRequestInit = RequestInit & { timeoutMs?: number }
+
+async function request<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
   const token = getAuthToken()
   const headers = new Headers(init.headers)
   if (init.body) headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
   const retryDelays = init.method && init.method !== 'GET' ? [] : GET_RETRY_DELAYS_MS
+  const { timeoutMs = REQUEST_TIMEOUT_MS, ...fetchInit } = init
   let lastError: unknown
   for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
     const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
     try {
-      const response = await fetch(`${baseUrl}${path}`, { ...init, headers, signal: controller.signal })
+      const response = await fetch(`${baseUrl}${path}`, { ...fetchInit, headers, signal: controller.signal })
       const body = await response.json().catch(() => null)
       if (body?.error?.code === 'SESSION_EXPIRED_OTHER_LOGIN') {
         clearAuthToken()
@@ -76,6 +80,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  assistantChat: (payload: { message: string; challengeId?: number; language: 'ko' | 'en' }) =>
+    request<AssistantReply>('/assistant/chat', { method: 'POST', body: JSON.stringify(payload), timeoutMs: 30_000 }),
   register: (payload: {
     username: string
     nickname: string

@@ -84,6 +84,14 @@ public class GlobalExceptionHandler {
         HttpStatus.SERVICE_UNAVAILABLE, "OAUTH_PROVIDER_UNAVAILABLE", "설정되지 않은 OAuth 제공자입니다.");
   }
 
+  @ExceptionHandler(com.minictf.assistant.AssistantService.AssistantUnavailableException.class)
+  ResponseEntity<ErrorResponse> assistantUnavailable() {
+    return response(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "ASSISTANT_UNAVAILABLE",
+        "AI 도우미가 잠시 응답하지 않습니다. 잠시 후 다시 시도해 주세요.");
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   ResponseEntity<ErrorResponse> conflict() {
     return response(HttpStatus.CONFLICT, "CONFLICT", "중복되거나 충돌하는 데이터입니다.");

@@ -70,6 +70,11 @@ export type AttendanceRankingRow = {
 
 export type Stats = { challenges: number; solves: number; users: number }
 
+export type AssistantReply = {
+  message: string
+  contextLabel: string | null
+}
+
 export type CommunityCategory = 'FREE' | 'QUESTION' | 'CTF' | 'NOTICE'
 
 export type PostSummary = {

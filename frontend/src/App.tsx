@@ -431,12 +431,56 @@ function AppShell() {
     </main>
     {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
     <PublicProfileDialog />
+    <FloatingAssistant user={user} language={language} path={path} onLogin={() => go('/login')} />
     <footer className="site-footer"><span><strong>FlagBox</strong> · {text.footer}</span><span className="footer-status">{text.status}</span></footer>
   </div>
 }
 
 function NavButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: string }) { return <button className={active ? 'nav-button active' : 'nav-button'} type="button" onClick={onClick}>{children}</button> }
 function GlobeIcon() { return <svg className="language-globe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M3.8 12h16.4M12 3.5c2.5 2.35 3.75 5.18 3.75 8.5S14.5 18.15 12 20.5M12 3.5C9.5 5.85 8.25 8.68 8.25 12S9.5 18.15 12 20.5" /></svg> }
+
+type AssistantMessage = { role: 'assistant' | 'user'; content: string }
+function FloatingAssistant({ user, language, path, onLogin }: { user: User | null; language: Language; path: string; onLogin: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [messages, setMessages] = useState<AssistantMessage[]>([])
+  const [draft, setDraft] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const listRef = useRef<HTMLDivElement>(null)
+  const challengeId = /^\/challenges\/(\d+)$/.exec(path)?.[1]
+  const ko = language === 'ko'
+  const greeting = challengeId
+    ? (ko ? '지금 보고 있는 문제를 함께 살펴볼게요. 막힌 부분을 편하게 물어보세요.' : 'Let’s look at this challenge together. Tell me where you are stuck.')
+    : (ko ? '안녕하세요, FlagBox 학습 도우미예요. 보안 개념이나 문제 풀이의 다음 단계를 물어보세요.' : 'Hi, I’m the FlagBox learning helper. Ask about security concepts or your next step.')
+  useEffect(() => { if (open && messages.length === 0) setMessages([{ role: 'assistant', content: greeting }]) }, [open, greeting, messages.length])
+  useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }) }, [messages, busy])
+  const send = async (event: FormEvent) => {
+    event.preventDefault()
+    const message = draft.trim()
+    if (!message || busy) return
+    if (!user) { onLogin(); return }
+    setDraft('')
+    setError('')
+    setMessages((current) => [...current, { role: 'user', content: message }])
+    try {
+      setBusy(true)
+      const reply = await api.assistantChat({ message, challengeId: challengeId ? Number(challengeId) : undefined, language })
+      setMessages((current) => [...current, { role: 'assistant', content: reply.message }])
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : (ko ? 'AI 도우미에 연결하지 못했어요.' : 'Could not reach the AI helper.'))
+    } finally { setBusy(false) }
+  }
+  const shortcuts = ko ? ['개념을 쉽게 설명해줘', '어디부터 봐야 해?', '다음 단계만 알려줘'] : ['Explain the concept simply', 'Where should I start?', 'Give me one next step']
+  return <div className={open ? 'assistant-widget open' : 'assistant-widget'} data-no-specular>
+    {open && <section className="assistant-panel" role="dialog" aria-modal="false" aria-label={ko ? 'FlagBox AI 도우미' : 'FlagBox AI helper'}>
+      <header><div><span className="assistant-status" /><div><strong>{ko ? 'AI 학습 도우미' : 'AI Learning Helper'}</strong><small>{challengeId ? (ko ? '현재 문제를 함께 보는 중' : 'Looking at this challenge') : (ko ? '초보자용 보안 가이드' : 'Beginner-friendly security guide')}</small></div></div><button type="button" onClick={() => setOpen(false)} aria-label={ko ? 'AI 도우미 닫기' : 'Close AI helper'}>×</button></header>
+      <div className="assistant-messages" ref={listRef}>{messages.map((message, index) => <article className={`assistant-message ${message.role}`} key={`${message.role}-${index}`}><span>{message.content}</span></article>)}{busy && <article className="assistant-message assistant"><span className="assistant-typing"><i /><i /><i /></span></article>}</div>
+      {!user ? <button className="assistant-login" type="button" onClick={onLogin}>{ko ? '로그인하고 AI 도우미 사용하기' : 'Sign in to use the AI helper'}</button> : <><div className="assistant-shortcuts">{shortcuts.map((shortcut) => <button type="button" key={shortcut} onClick={() => setDraft(shortcut)}>{shortcut}</button>)}</div><form onSubmit={(event) => void send(event)}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1200} placeholder={ko ? '질문을 입력하세요' : 'Ask a question'} /><button type="submit" disabled={busy || !draft.trim()}>{ko ? '보내기' : 'Send'}</button></form></>}
+      <p className="assistant-note">{ko ? '정답 FLAG나 완성 풀이 대신, 이해를 돕는 다음 단계만 안내해요.' : 'It gives learning guidance, not FLAGS or complete solutions.'}</p>{error && <p className="assistant-error">{error}</p>}
+    </section>}
+    <button className="assistant-fab" type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={ko ? 'AI 학습 도우미 열기' : 'Open AI learning helper'}><span className="assistant-fab-spark">✦</span><span>{ko ? 'AI 도움' : 'AI Help'}</span></button>
+  </div>
+}
 
 function LoadingState({ label }: { label: string }) {
   return <div className="loading-state" role="status"><span className="loading-mark" aria-hidden="true" /><p>{label}</p></div>
