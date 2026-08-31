@@ -437,7 +437,11 @@ function AppShell() {
     <FloatingAssistant key={assistantOpenRequest} initialOpen={assistantOpenRequest > 0} user={user} language={language} path={path} onLogin={() => go('/login')} />
     {assistantFeedbackOpen && <AssistantFeedbackDialog user={user} language={language} onClose={() => setAssistantFeedbackOpen(false)} onLogin={() => go('/login')} />}
     <FloatingQuickMenu language={language} onHome={() => go('/')} onCommunity={(nextCategory) => go(`/community?category=${nextCategory}`)} onChallenges={() => go('/challenges')} onAiMode={() => setAssistantOpenRequest((current) => current + 1)} onFeedback={() => setAssistantFeedbackOpen(true)} />
-    <footer className="site-footer"><span><strong>FlagBox</strong> · {text.footer}</span><span className="footer-status">{text.status}</span></footer>
+    <footer className="site-footer">
+      <div className="footer-brand"><strong>FlagBox</strong><p>{language === 'ko' ? '보안을 처음 배우는 사람을 위한 쉽고 안전한 워게임 학습 플랫폼' : 'A safe, beginner-friendly wargame learning platform.'}</p></div>
+      <div className="footer-links"><div><b>{language === 'ko' ? '서비스' : 'Services'}</b><span>{language === 'ko' ? '워게임 · 학습 · 랭킹 · 커뮤니티 · 상점' : 'Wargames · Learn · Rankings · Community · Shop'}</span></div><div><b>{language === 'ko' ? '도움말' : 'Help'}</b><span>{language === 'ko' ? '이용 안내 · 자주 묻는 질문 · 피드백' : 'Guide · FAQ · Feedback'}</span><a href="mailto:flagbox.contact@gmail.com">{language === 'ko' ? '문의하기: flagbox.contact@gmail.com' : 'Contact: flagbox.contact@gmail.com'}</a></div><div><b>{language === 'ko' ? '정책' : 'Policies'}</b><span>{language === 'ko' ? '이용약관 · 개인정보처리방침 · 안전한 학습 가이드' : 'Terms · Privacy · Safe learning guide'}</span></div></div>
+      <div className="footer-bottom"><span>© 2026 FlagBox. All rights reserved.</span><span>{language === 'ko' ? 'Mini-CTF 프로젝트를 기반으로 운영됩니다.' : 'Built on the Mini-CTF project.'}</span></div>
+    </footer>
   </div>
 }
 
