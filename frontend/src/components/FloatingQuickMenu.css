@@ -85,9 +85,9 @@ html[data-theme='light'] .ai-chat-message.assistant span { background: #edf4fb; 
 .assistant-rating-line { display: flex; align-items: center; gap: 14px; }
 .assistant-rating { display: flex; gap: 5px; }
 .assistant-rating label { position: relative; display: grid; width: 48px; height: 48px; place-items: center; color: #c9ced5; cursor: pointer; transition: color .16s ease, transform .16s ease, filter .16s ease; }
-.assistant-rating label svg { width: 46px; height: 46px; fill: currentColor; stroke: currentColor; stroke-width: .75; }
+.assistant-rating label svg { width: 46px; height: 46px; fill: #c9ced5 !important; stroke: #c9ced5 !important; stroke-width: .75; }
 .assistant-rating label:hover { color: #ffbd18; transform: translateY(-2px) scale(1.07); filter: drop-shadow(0 6px 7px rgba(255,189,24,.22)); }
-.assistant-rating label.selected { color: #ffbd18; }
+.assistant-rating label.selected svg, .assistant-rating label:hover svg { fill: #ffbd18 !important; stroke: #ffbd18 !important; }
 .assistant-rating input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .assistant-rating label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .assistant-rating-score { color: var(--text); font-size: 25px; font-weight: 800; line-height: 1; letter-spacing: -.04em; }
