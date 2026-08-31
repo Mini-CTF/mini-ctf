@@ -11,6 +11,7 @@ import Beams from './components/Beams'
 import AetherFlowHero from './components/ui/aether-flow-hero'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
+import FloatingQuickMenu from './components/FloatingQuickMenu'
 import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
@@ -170,6 +171,7 @@ function AppShell() {
   const [showIntro, setShowIntro] = useState(() => !isPasswordResetLink && sessionStorage.getItem('flagbox-intro-seen') !== 'true')
   const [showTutorial, setShowTutorial] = useState(false)
   const [showMemberTutorial, setShowMemberTutorial] = useState(false)
+  const [assistantOpenRequest, setAssistantOpenRequest] = useState(0)
 
   useEffect(() => {
     const page = location.pathname.startsWith('/challenges')
@@ -420,7 +422,7 @@ function AppShell() {
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
         <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
         <Route path="/friends" element={guarded(<FriendsView user={user} onLogin={() => go('/login')} />)} />
-        <Route path="/community" element={guarded(<EnhancedCommunityView user={user} onLogin={() => go('/login')} />)} />
+        <Route path="/community" element={guarded(<EnhancedCommunityView key={location.search} user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community/:postId" element={guarded(<CommunityPostRoute user={user} />)} />
         <Route path="/learn/:slug" element={<LearnArticleRoute lang={language} />} />
         <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole />) : <Navigate to="/" replace />} />
@@ -431,7 +433,8 @@ function AppShell() {
     </main>
     {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
     <PublicProfileDialog />
-    <FloatingAssistant user={user} language={language} path={path} onLogin={() => go('/login')} />
+    <FloatingAssistant key={assistantOpenRequest} initialOpen={assistantOpenRequest > 0} user={user} language={language} path={path} onLogin={() => go('/login')} />
+    <FloatingQuickMenu language={language} onHome={() => go('/')} onCommunity={(nextCategory) => go(`/community?category=${nextCategory}`)} onChallenges={() => go('/challenges')} onAiMode={() => setAssistantOpenRequest((current) => current + 1)} />
     <footer className="site-footer"><span><strong>FlagBox</strong> · {text.footer}</span><span className="footer-status">{text.status}</span></footer>
   </div>
 }
@@ -440,8 +443,8 @@ function NavButton({ active, onClick, children }: { active: boolean; onClick: ()
 function GlobeIcon() { return <svg className="language-globe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M3.8 12h16.4M12 3.5c2.5 2.35 3.75 5.18 3.75 8.5S14.5 18.15 12 20.5M12 3.5C9.5 5.85 8.25 8.68 8.25 12S9.5 18.15 12 20.5" /></svg> }
 
 type AssistantMessage = { role: 'assistant' | 'user'; content: string }
-function FloatingAssistant({ user, language, path, onLogin }: { user: User | null; language: Language; path: string; onLogin: () => void }) {
-  const [open, setOpen] = useState(false)
+function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { user: User | null; language: Language; path: string; onLogin: () => void; initialOpen: boolean }) {
+  const [open, setOpen] = useState(initialOpen)
   const [messages, setMessages] = useState<AssistantMessage[]>([])
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
@@ -1025,8 +1028,14 @@ function FriendsView({ user, onLogin }: { user: User | null; onLogin: () => void
   return <div className="page friends-page"><PageIntro eyebrow="FRIENDS & MESSAGES" title="Friends" description="Add fellow learners and keep the conversation private." /><section className="social-panel"><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Account username (e.g. @player_1)" minLength={3} maxLength={80} autoComplete="off" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={() => void api.acceptFriend(friend.username).then(refresh).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not accept request.'))}>Accept</button> : <button type="button" className="text-link" onClick={() => { if (!window.confirm('Remove this friend?')) return; void api.removeFriend(friend.username).then(() => { if (selectedFriend === friend.username) setSelectedFriend(null); return refresh() }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not remove friend.')) }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list" ref={messageList}>{messages.map((message) => <article className={message.sender === user.username ? 'message sent' : 'message received'} key={message.id}><span>{message.content}</span>{message.sender === user.username && <div className="message-meta"><small>{message.read ? 'Read' : 'Sent'}</small><div className="message-actions"><button type="button" onClick={() => void editMessage(message)}>Edit</button><button type="button" onClick={() => void deleteMessage(message)}>Delete</button></div></div>}</article>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</section>{error && <p className="alert error">{error}</p>}</div>
 }
 
+function communityCategoryFromSearch(search: string): CommunityCategory | undefined {
+  const value = new URLSearchParams(search).get('category')
+  return value === 'NOTICE' || value === 'QUESTION' ? value : undefined
+}
+
 function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: () => void }) {
-  const [category, setCategory] = useState<CommunityCategory | undefined>()
+  const location = useLocation()
+  const [category, setCategory] = useState<CommunityCategory | undefined>(() => communityCategoryFromSearch(location.search))
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [notices, setNotices] = useState<PostSummary[]>([])
   const [error, setError] = useState('')
