@@ -1395,15 +1395,30 @@
   align-items: flex-start;
   gap: 4px;
 }
+.footer-policy-links a {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
 .footer-policy-links button {
   padding: 0;
   border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
+  text-align: left;
+  text-decoration: none;
+  text-underline-offset: 4px;
   cursor: pointer;
 }
-.footer-policy-links button:hover {
+.footer-policy-links a:hover,
+.footer-policy-links a:focus-visible,
+.footer-policy-links button:hover,
+.footer-policy-links button:focus-visible {
   color: var(--accent);
   text-decoration: underline;
 }
