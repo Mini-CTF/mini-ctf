@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode, type WheelEvent } from 'react'
+import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent, type ReactNode, type WheelEvent } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
 import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
@@ -528,6 +528,11 @@ function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { use
     event.preventDefault()
     shortcutsElement.scrollLeft += event.deltaY || event.deltaX
   }
+  const submitOnEnter = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
+    event.preventDefault()
+    if (!busy && draft.trim()) event.currentTarget.form?.requestSubmit()
+  }
   const sendFeedback = async (rating: number) => {
     if (!user) { onLogin(); return }
     const comment = window.prompt(ko ? '도우미를 더 좋게 만들 의견이 있으면 적어 주세요. (선택)' : 'Tell us how to improve the helper. (Optional)')
@@ -543,7 +548,7 @@ function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { use
   return <section className="ai-chat" role="dialog" aria-modal="false" aria-label={ko ? 'FlagBox AI 도우미' : 'FlagBox AI helper'} data-no-specular>
     <header className="ai-chat-header"><div className="ai-chat-title"><span className="ai-chat-mark" aria-hidden="true">✦</span><div><strong>{ko ? 'AI 학습 도우미' : 'AI Learning Helper'}</strong><small>{challengeId ? (ko ? '현재 문제를 함께 보는 중' : 'Looking at this challenge') : (ko ? '초보자용 보안 가이드' : 'Beginner-friendly security guide')}</small></div></div><button className="ai-chat-close" type="button" onClick={() => setOpen(false)} aria-label={ko ? 'AI 도우미 닫기' : 'Close AI helper'}>×</button></header>
     <div className="ai-chat-messages" ref={listRef}>{messages.map((message, index) => <article className={`ai-chat-message ${message.role}`} key={`${message.role}-${index}`}><span>{message.content}</span></article>)}{busy && <article className="ai-chat-message assistant"><span>{ko ? '답변을 준비하고 있어요…' : 'Preparing a reply…'}</span></article>}</div>
-    {!user ? <button className="button primary" type="button" onClick={onLogin}>{ko ? '로그인하고 AI 도우미 사용하기' : 'Sign in to use the AI helper'}</button> : <><div className="assistant-shortcuts" onWheel={scrollShortcutsHorizontally}>{shortcuts.map((shortcut) => <button type="button" key={shortcut} onClick={() => setDraft(shortcut)}>{shortcut}</button>)}</div><form className="ai-chat-input" onSubmit={(event) => void send(event)}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1200} placeholder={ko ? '질문을 입력하세요' : 'Ask a question'} /><button type="submit" disabled={busy || !draft.trim()} aria-label={ko ? '보내기' : 'Send'}>↑</button></form></>}
+    {!user ? <button className="button primary" type="button" onClick={onLogin}>{ko ? '로그인하고 AI 도우미 사용하기' : 'Sign in to use the AI helper'}</button> : <><div className="assistant-shortcuts" onWheel={scrollShortcutsHorizontally}>{shortcuts.map((shortcut) => <button type="button" key={shortcut} onClick={() => setDraft(shortcut)}>{shortcut}</button>)}</div><form className="ai-chat-input" onSubmit={(event) => void send(event)}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={submitOnEnter} maxLength={1200} placeholder={ko ? '질문을 입력하세요 (Enter 전송 · Shift+Enter 줄바꿈)' : 'Ask a question (Enter to send · Shift+Enter for a new line)'} /><button type="submit" disabled={busy || !draft.trim()} aria-label={ko ? '보내기' : 'Send'}>↑</button></form></>}
     <p className="assistant-note">{ko ? '정답 FLAG나 완성 풀이 대신, 이해를 돕는 다음 단계만 안내해요.' : 'It gives learning guidance, not FLAGS or complete solutions.'}</p>{feedbackNotice && <p className="assistant-feedback-notice">{feedbackNotice}</p>}{error && <p className="assistant-error">{error}</p>}
   </section>
 }

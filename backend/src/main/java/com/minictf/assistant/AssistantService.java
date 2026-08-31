@@ -147,7 +147,9 @@ public class AssistantService {
               Map.of(
                   "role", role,
                   "parts", List.of(Map.of("text", content.substring(0, Math.min(content.length(), 1200))))));
-          if (contents.size() == 6) break;
+          // Keep enough context for a natural conversation without making every
+          // request unnecessarily slow.
+          if (contents.size() == 4) break;
         }
       }
       contents.add(Map.of("role", "user", "parts", List.of(Map.of("text", message))));
@@ -156,7 +158,7 @@ public class AssistantService {
               Map.of(
                   "systemInstruction", Map.of("parts", List.of(Map.of("text", system))),
                   "contents", contents,
-                  "generationConfig", Map.of("temperature", 0.35, "maxOutputTokens", 420)));
+                  "generationConfig", Map.of("temperature", 0.35, "maxOutputTokens", 720)));
       HttpRequest request =
           HttpRequest.newBuilder(URI.create(ENDPOINT + model + ":generateContent"))
               .timeout(Duration.ofSeconds(12))
@@ -172,7 +174,14 @@ public class AssistantService {
         return null;
       }
       JsonNode root = objectMapper.readTree(response.body());
-      return root.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
+      JsonNode parts = root.path("candidates").path(0).path("content").path("parts");
+      if (!parts.isArray()) return null;
+      StringBuilder text = new StringBuilder();
+      for (JsonNode part : parts) {
+        String value = part.path("text").asText("");
+        if (!value.isBlank()) text.append(value);
+      }
+      return text.isEmpty() ? null : text.toString();
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
       log.warn("Gemini assistant request was interrupted");
