@@ -74,8 +74,16 @@ html[data-theme='light'] .ai-chat-message.assistant span { background: #edf4fb; 
 .assistant-feedback-bar button { border: 1px solid var(--line); border-radius: 999px; padding: 6px 9px; background: var(--surface-raised); color: var(--text); font-size: 12px; font-weight: 800; }
 .assistant-feedback-bar button:hover { border-color: var(--accent); color: var(--accent); }
 .assistant-feedback-notice { margin: 0; padding: 0 12px 10px; color: #54d494; font-size: 12px; font-weight: 700; }
+.assistant-feedback-dialog { position: fixed; right: 28px; bottom: 96px; z-index: 41; width: min(410px, calc(100vw - 32px)); overflow: hidden; border: 2px solid rgba(103,168,255,.45); border-radius: 18px; background: var(--surface); box-shadow: 0 20px 52px rgba(0,0,0,.38); }
+.assistant-feedback-form { display: grid; gap: 16px; padding: 18px; }
+.assistant-feedback-form label { display: grid; gap: 9px; color: var(--text); font-size: 14px; font-weight: 800; }
+.assistant-feedback-form textarea { min-height: 118px; resize: vertical; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg); color: var(--text); font: inherit; font-size: 14px; line-height: 1.6; }
+.assistant-rating { display: flex; gap: 7px; }
+.assistant-rating button { border: 0; padding: 0; background: transparent; color: #667487; font-size: 27px; line-height: 1; }
+.assistant-rating button.selected { color: #ffc44d; text-shadow: 0 2px 10px rgba(255,196,77,.28); }
 html[data-theme='light'] .floating-menu-trigger { border-color: #1667c9; background: radial-gradient(circle at 32% 28%, #5ab4ff, #1977dc 64%, #0c4f9f); box-shadow: 0 12px 28px rgba(20, 108, 206, .3), inset 0 1px 1px rgba(255,255,255,.42); }
 html[data-theme='light'] .floating-menu-trigger:hover, html[data-theme='light'] .floating-menu-trigger.is-open { border-color: #093f81; background: radial-gradient(circle at 32% 28%, #76c2ff, #2087ee 64%, #0d5eb7); }
 html[data-theme='light'] .ai-chat { border-color: #a8c9eb; box-shadow: 0 20px 50px rgba(30, 76, 123, .2); }
 html[data-theme='light'] .assistant-feedback-bar { color: #36516c; }
+html[data-theme='light'] .assistant-feedback-dialog { border-color: #a8c9eb; box-shadow: 0 20px 50px rgba(30, 76, 123, .2); }
 @media (max-width: 620px) { .floating-menu-trigger { width: 58px; height: 58px; } .quick-menu { bottom: 70px; } .ai-chat { width: min(410px, calc(100vw - 24px)); height: min(540px, calc(100vh - 96px)); } }

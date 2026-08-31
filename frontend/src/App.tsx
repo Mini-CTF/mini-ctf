@@ -172,6 +172,7 @@ function AppShell() {
   const [showTutorial, setShowTutorial] = useState(false)
   const [showMemberTutorial, setShowMemberTutorial] = useState(false)
   const [assistantOpenRequest, setAssistantOpenRequest] = useState(0)
+  const [assistantFeedbackOpen, setAssistantFeedbackOpen] = useState(false)
 
   useEffect(() => {
     const page = location.pathname.startsWith('/challenges')
@@ -434,7 +435,8 @@ function AppShell() {
     {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
     <PublicProfileDialog />
     <FloatingAssistant key={assistantOpenRequest} initialOpen={assistantOpenRequest > 0} user={user} language={language} path={path} onLogin={() => go('/login')} />
-    <FloatingQuickMenu language={language} onHome={() => go('/')} onCommunity={(nextCategory) => go(`/community?category=${nextCategory}`)} onChallenges={() => go('/challenges')} onAiMode={() => setAssistantOpenRequest((current) => current + 1)} />
+    {assistantFeedbackOpen && <AssistantFeedbackDialog user={user} language={language} onClose={() => setAssistantFeedbackOpen(false)} onLogin={() => go('/login')} />}
+    <FloatingQuickMenu language={language} onHome={() => go('/')} onCommunity={(nextCategory) => go(`/community?category=${nextCategory}`)} onChallenges={() => go('/challenges')} onAiMode={() => setAssistantOpenRequest((current) => current + 1)} onFeedback={() => setAssistantFeedbackOpen(true)} />
     <footer className="site-footer"><span><strong>FlagBox</strong> · {text.footer}</span><span className="footer-status">{text.status}</span></footer>
   </div>
 }
@@ -529,13 +531,40 @@ function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { use
       setError(cause instanceof Error ? cause.message : (ko ? '피드백을 보내지 못했어요.' : 'Could not send feedback.'))
     }
   }
+  void sendFeedback
   if (!open) return null
   return <section className="ai-chat" role="dialog" aria-modal="false" aria-label={ko ? 'FlagBox AI 도우미' : 'FlagBox AI helper'} data-no-specular>
     <header className="ai-chat-header"><div className="ai-chat-title"><span className="ai-chat-mark" aria-hidden="true">✦</span><div><strong>{ko ? 'AI 학습 도우미' : 'AI Learning Helper'}</strong><small>{challengeId ? (ko ? '현재 문제를 함께 보는 중' : 'Looking at this challenge') : (ko ? '초보자용 보안 가이드' : 'Beginner-friendly security guide')}</small></div></div><button className="ai-chat-close" type="button" onClick={() => setOpen(false)} aria-label={ko ? 'AI 도우미 닫기' : 'Close AI helper'}>×</button></header>
-    <div className="assistant-feedback-bar"><span>{ko ? '도움이 되었나요?' : 'Was this helpful?'}</span><button type="button" onClick={() => void sendFeedback(5)}>👍 {ko ? '도움 됨' : 'Helpful'}</button><button type="button" onClick={() => void sendFeedback(2)}>✎ {ko ? '개선 의견' : 'Improve'}</button></div>
     <div className="ai-chat-messages" ref={listRef}>{messages.map((message, index) => <article className={`ai-chat-message ${message.role}`} key={`${message.role}-${index}`}><span>{message.content}</span></article>)}{busy && <article className="ai-chat-message assistant"><span>{ko ? '답변을 준비하고 있어요…' : 'Preparing a reply…'}</span></article>}</div>
     {!user ? <button className="button primary" type="button" onClick={onLogin}>{ko ? '로그인하고 AI 도우미 사용하기' : 'Sign in to use the AI helper'}</button> : <><div className="assistant-shortcuts">{shortcuts.map((shortcut) => <button type="button" key={shortcut} onClick={() => setDraft(shortcut)}>{shortcut}</button>)}</div><form className="ai-chat-input" onSubmit={(event) => void send(event)}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1200} placeholder={ko ? '질문을 입력하세요' : 'Ask a question'} /><button type="submit" disabled={busy || !draft.trim()} aria-label={ko ? '보내기' : 'Send'}>↑</button></form></>}
     <p className="assistant-note">{ko ? '정답 FLAG나 완성 풀이 대신, 이해를 돕는 다음 단계만 안내해요.' : 'It gives learning guidance, not FLAGS or complete solutions.'}</p>{feedbackNotice && <p className="assistant-feedback-notice">{feedbackNotice}</p>}{error && <p className="assistant-error">{error}</p>}
+  </section>
+}
+
+function AssistantFeedbackDialog({ user, language, onClose, onLogin }: { user: User | null; language: Language; onClose: () => void; onLogin: () => void }) {
+  const ko = language === 'ko'
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const [notice, setNotice] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!user) { onLogin(); return }
+    if (!comment.trim()) { setError(ko ? '의견을 한 줄 이상 입력해 주세요.' : 'Please enter a short comment.'); return }
+    try {
+      setBusy(true); setError('')
+      await api.submitAssistantFeedback({ rating, comment: comment.trim() })
+      setNotice(ko ? '피드백을 보내 주셔서 고마워요.' : 'Thanks for your feedback.')
+      setComment('')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : (ko ? '피드백을 보내지 못했어요.' : 'Could not send feedback.'))
+    } finally { setBusy(false) }
+  }
+  return <section className="assistant-feedback-dialog" role="dialog" aria-modal="false" aria-label={ko ? 'FlagBox 피드백' : 'FlagBox feedback'} data-no-specular>
+    <header className="ai-chat-header"><div className="ai-chat-title"><span className="ai-chat-mark" aria-hidden="true">✎</span><div><strong>{ko ? 'FlagBox 피드백' : 'FlagBox feedback'}</strong><small>{ko ? 'AI 학습 도우미를 더 좋게 만들 의견을 들려주세요.' : 'Help us improve the AI learning helper.'}</small></div></div><button className="ai-chat-close" type="button" onClick={onClose} aria-label={ko ? '피드백 닫기' : 'Close feedback'}>×</button></header>
+    <form className="assistant-feedback-form" onSubmit={(event) => void submit(event)}><label>{ko ? '만족도' : 'Rating'}<div className="assistant-rating">{[1, 2, 3, 4, 5].map((value) => <button key={value} type="button" className={value <= rating ? 'selected' : ''} onClick={() => setRating(value)} aria-label={`${value} stars`}>★</button>)}</div></label><label>{ko ? '의견' : 'Comment'}<textarea value={comment} onChange={(event) => setComment(event.target.value)} maxLength={1000} placeholder={ko ? '좋았던 점이나 불편했던 점을 자유롭게 적어 주세요.' : 'Tell us what worked well or what felt inconvenient.'} /></label><button className="button primary" type="submit" disabled={busy}>{busy ? (ko ? '보내는 중…' : 'Sending…') : (ko ? '피드백 보내기' : 'Send feedback')}</button></form>
+    {notice && <p className="assistant-feedback-notice">{notice}</p>}{error && <p className="assistant-error">{error}</p>}
   </section>
 }
 

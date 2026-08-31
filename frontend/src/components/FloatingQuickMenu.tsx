@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { CircleHelp, Home, Megaphone, Menu, Sparkles, Swords, X } from 'lucide-react'
+import { CircleHelp, Home, Megaphone, Menu, MessageSquarePlus, Sparkles, Swords, X } from 'lucide-react'
 import './FloatingQuickMenu.css'
 
 type CommunityCategory = 'NOTICE' | 'QUESTION'
@@ -11,6 +11,7 @@ type FloatingQuickMenuProps = {
   onCommunity: (category: CommunityCategory) => void
   onChallenges: () => void
   onAiMode: () => void
+  onFeedback: () => void
 }
 
 const copy = {
@@ -23,6 +24,7 @@ const copy = {
     question: 'Q&A',
     challenges: 'Challenges',
     aiMode: 'AI Mode',
+    feedback: '피드백',
     aiLabel: 'AI 학습 도우미 열기',
   },
   en: {
@@ -34,11 +36,12 @@ const copy = {
     question: 'Q&A',
     challenges: 'Challenges',
     aiMode: 'AI Mode',
+    feedback: 'Feedback',
     aiLabel: 'Open AI learning helper',
   },
 } as const
 
-export default function FloatingQuickMenu({ language, onHome, onCommunity, onChallenges, onAiMode }: FloatingQuickMenuProps) {
+export default function FloatingQuickMenu({ language, onHome, onCommunity, onChallenges, onAiMode, onFeedback }: FloatingQuickMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const labels = copy[language]
 
@@ -56,6 +59,7 @@ export default function FloatingQuickMenu({ language, onHome, onCommunity, onCha
         <QuickMenuButton label={labels.question} icon={<CircleHelp />} onClick={() => { closeMenu(); onCommunity('QUESTION') }} />
         <QuickMenuButton label={labels.challenges} icon={<Swords />} onClick={() => { closeMenu(); onChallenges() }} />
         <QuickMenuButton label={labels.aiMode} icon={<Sparkles />} accent onClick={openAiMode} />
+        <QuickMenuButton label={labels.feedback} icon={<MessageSquarePlus />} onClick={() => { closeMenu(); onFeedback() }} />
       </div>
       <button
         className={`floating-menu-trigger ${menuOpen ? 'is-open' : ''}`}
