@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minictf.challenge.Challenge;
 import com.minictf.challenge.ChallengeRepository;
 import com.minictf.common.RateLimitService;
+import com.minictf.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -31,6 +32,8 @@ public class AssistantService {
       "I cannot provide a FLAG or a complete solution. Check the goal and input in the brief, then ask about the exact step where you are stuck.";
 
   private final ChallengeRepository challenges;
+  private final UserRepository users;
+  private final AssistantFeedbackRepository feedback;
   private final RateLimitService rateLimits;
   private final ObjectMapper objectMapper;
   private final String apiKey;
@@ -40,12 +43,16 @@ public class AssistantService {
 
   public AssistantService(
       ChallengeRepository challenges,
+      UserRepository users,
+      AssistantFeedbackRepository feedback,
       RateLimitService rateLimits,
       ObjectMapper objectMapper,
       @Value("${GEMINI_API_KEY:}") String apiKey,
       @Value("${GEMINI_MODEL:gemini-3.7-flash}") String primaryModel,
       @Value("${GEMINI_FALLBACK_MODEL:gemini-3.5-flash-lite}") String fallbackModel) {
     this.challenges = challenges;
+    this.users = users;
+    this.feedback = feedback;
     this.rateLimits = rateLimits;
     this.objectMapper = objectMapper;
     this.apiKey = apiKey;
@@ -67,6 +74,20 @@ public class AssistantService {
       response = callModel(fallbackModel, systemPrompt(korean, challenge), request.message(), request.history());
     if (response == null || response.isBlank()) throw new AssistantUnavailableException();
     return new AssistantDtos.ChatReply(response.trim(), challenge == null ? null : challenge.getTitle());
+  }
+
+  public void saveFeedback(String username, AssistantDtos.FeedbackRequest request) {
+    AssistantFeedback item = new AssistantFeedback();
+    item.setUser(users.findByUsernameIgnoreCase(username).orElseThrow());
+    item.setRating(request.rating());
+    item.setComment(request.comment() == null || request.comment().isBlank() ? null : request.comment().trim());
+    feedback.save(item);
+  }
+
+  public List<AssistantDtos.FeedbackView> feedback() {
+    return feedback.findTop100ByOrderByCreatedAtDesc().stream()
+        .map(item -> new AssistantDtos.FeedbackView(item.getId(), item.getUser().getUsername(), item.getUser().getNickname(), item.getRating(), item.getComment(), item.getCreatedAt()))
+        .toList();
   }
 
   private Challenge findChallenge(Long id) {

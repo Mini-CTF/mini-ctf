@@ -75,6 +75,15 @@ export type AssistantReply = {
   contextLabel: string | null
 }
 
+export type AssistantFeedback = {
+  id: number
+  username: string
+  nickname: string
+  rating: number
+  comment: string | null
+  createdAt: string
+}
+
 export type CommunityCategory = 'FREE' | 'QUESTION' | 'CTF' | 'NOTICE'
 
 export type PostSummary = {

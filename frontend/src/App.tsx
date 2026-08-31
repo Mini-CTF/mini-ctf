@@ -12,7 +12,7 @@ import AetherFlowHero from './components/ui/aether-flow-hero'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import FloatingQuickMenu from './components/FloatingQuickMenu'
-import type { AdminComment, AdminDashboard, AdminPost, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
+import type { AdminComment, AdminDashboard, AdminPost, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-transparent.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
 import './App.css'
@@ -493,6 +493,7 @@ function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { use
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [feedbackNotice, setFeedbackNotice] = useState('')
   const listRef = useRef<HTMLDivElement>(null)
   const challengeId = /^\/challenges\/(\d+)$/.exec(path)?.[1]
   const ko = language === 'ko'
@@ -518,12 +519,23 @@ function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { use
     } finally { setBusy(false) }
   }
   const shortcuts = ko ? ['개념을 쉽게 설명해줘', '어디부터 봐야 해?', '다음 단계만 알려줘'] : ['Explain the concept simply', 'Where should I start?', 'Give me one next step']
+  const sendFeedback = async (rating: number) => {
+    if (!user) { onLogin(); return }
+    const comment = window.prompt(ko ? '도우미를 더 좋게 만들 의견이 있으면 적어 주세요. (선택)' : 'Tell us how to improve the helper. (Optional)')
+    try {
+      await api.submitAssistantFeedback({ rating, comment: comment?.trim() || undefined })
+      setFeedbackNotice(ko ? '피드백을 보내 주셔서 고마워요.' : 'Thanks for your feedback.')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : (ko ? '피드백을 보내지 못했어요.' : 'Could not send feedback.'))
+    }
+  }
   if (!open) return null
   return <section className="ai-chat" role="dialog" aria-modal="false" aria-label={ko ? 'FlagBox AI 도우미' : 'FlagBox AI helper'} data-no-specular>
     <header className="ai-chat-header"><div className="ai-chat-title"><span className="ai-chat-mark" aria-hidden="true">✦</span><div><strong>{ko ? 'AI 학습 도우미' : 'AI Learning Helper'}</strong><small>{challengeId ? (ko ? '현재 문제를 함께 보는 중' : 'Looking at this challenge') : (ko ? '초보자용 보안 가이드' : 'Beginner-friendly security guide')}</small></div></div><button className="ai-chat-close" type="button" onClick={() => setOpen(false)} aria-label={ko ? 'AI 도우미 닫기' : 'Close AI helper'}>×</button></header>
+    <div className="assistant-feedback-bar"><span>{ko ? '도움이 되었나요?' : 'Was this helpful?'}</span><button type="button" onClick={() => void sendFeedback(5)}>👍 {ko ? '도움 됨' : 'Helpful'}</button><button type="button" onClick={() => void sendFeedback(2)}>✎ {ko ? '개선 의견' : 'Improve'}</button></div>
     <div className="ai-chat-messages" ref={listRef}>{messages.map((message, index) => <article className={`ai-chat-message ${message.role}`} key={`${message.role}-${index}`}><span>{message.content}</span></article>)}{busy && <article className="ai-chat-message assistant"><span>{ko ? '답변을 준비하고 있어요…' : 'Preparing a reply…'}</span></article>}</div>
     {!user ? <button className="button primary" type="button" onClick={onLogin}>{ko ? '로그인하고 AI 도우미 사용하기' : 'Sign in to use the AI helper'}</button> : <><div className="assistant-shortcuts">{shortcuts.map((shortcut) => <button type="button" key={shortcut} onClick={() => setDraft(shortcut)}>{shortcut}</button>)}</div><form className="ai-chat-input" onSubmit={(event) => void send(event)}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1200} placeholder={ko ? '질문을 입력하세요' : 'Ask a question'} /><button type="submit" disabled={busy || !draft.trim()} aria-label={ko ? '보내기' : 'Send'}>↑</button></form></>}
-    <p className="assistant-note">{ko ? '정답 FLAG나 완성 풀이 대신, 이해를 돕는 다음 단계만 안내해요.' : 'It gives learning guidance, not FLAGS or complete solutions.'}</p>{error && <p className="assistant-error">{error}</p>}
+    <p className="assistant-note">{ko ? '정답 FLAG나 완성 풀이 대신, 이해를 돕는 다음 단계만 안내해요.' : 'It gives learning guidance, not FLAGS or complete solutions.'}</p>{feedbackNotice && <p className="assistant-feedback-notice">{feedbackNotice}</p>}{error && <p className="assistant-error">{error}</p>}
   </section>
 }
 
@@ -1214,26 +1226,29 @@ function CommentWriter({ postId, onCreated }: { postId: number; onCreated: (comm
   return <form className="comment-writer" onSubmit={(event) => void submit(event)}><textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Add a constructive comment" maxLength={2000} required /><button type="submit" className="button primary">Comment</button>{error && <p className="alert error">{error}</p>}</form>
 }
 
-type AdminTab = 'overview' | 'accounts' | 'content' | 'notices' | 'security' | 'logs'
+type AdminTab = 'overview' | 'accounts' | 'content' | 'notices' | 'security' | 'logs' | 'ai-feedback'
 
 function AdminConsole() {
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [comments, setComments] = useState<AdminComment[]>([])
+  const [assistantFeedback, setAssistantFeedback] = useState<AssistantFeedback[]>([])
   const [tab, setTab] = useState<AdminTab>('overview')
   const [error, setError] = useState('')
 
   const refresh = useCallback(async () => {
     setError('')
     try {
-      const [nextDashboard, nextPosts, nextComments] = await Promise.all([
+      const [nextDashboard, nextPosts, nextComments, nextAssistantFeedback] = await Promise.all([
         api.adminDashboard(),
         api.adminPosts(),
         api.adminComments(),
+        api.assistantFeedback(),
       ])
       setDashboard(nextDashboard)
       setPosts(nextPosts)
       setComments(nextComments)
+      setAssistantFeedback(nextAssistantFeedback)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load administrator data.')
     }
@@ -1302,6 +1317,7 @@ function AdminConsole() {
     { id: 'notices', label: 'Notices', count: notices.length },
     { id: 'security', label: 'Security', count: dashboard.antiCheatEvents.length },
     { id: 'logs', label: 'Audit logs', count: dashboard.auditLogs.length + dashboard.securityEvents.length },
+    { id: 'ai-feedback', label: 'AI feedback', count: assistantFeedback.length },
   ]
 
   return <div className="page admin-page admin-console">
@@ -1332,6 +1348,8 @@ function AdminConsole() {
     {tab === 'security' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ANTI-CHEAT</p><h2>Security events</h2></div><small>Latest {dashboard.antiCheatEvents.length}</small></div><AdminEventList items={dashboard.antiCheatEvents} /></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">CHALLENGE ACTIVITY</p><h2>Submission history</h2></div><small>Latest {dashboard.recentSubmissions.length}</small></div><AdminSubmissionList items={dashboard.recentSubmissions} /></section></div>}
 
     {tab === 'logs' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">SECURITY LOG</p><h2>Login and account events</h2></div></div><LogList items={dashboard.securityEvents.map((event) => ({ id: event.id, title: `${event.eventType} · ${event.username || event.subject || 'unknown'}`, detail: event.detail || '', date: event.createdAt }))} onControl={(id, hide) => void controlLog('security', id, hide)} /></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">AUDIT TRAIL</p><h2>Administrator activity</h2></div></div><LogList items={dashboard.auditLogs.map((log) => ({ id: log.id, title: `${log.action} · ${log.adminUsername}`, detail: log.detail, date: log.createdAt }))} onControl={(id, hide) => void controlLog('audit', id, hide)} /></section></div>}
+
+    {tab === 'ai-feedback' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">AI LEARNING HELPER</p><h2>AI feedback</h2></div><small>Only administrators can view these responses.</small></div><div className="admin-table">{assistantFeedback.length === 0 ? <p className="muted">No AI feedback yet.</p> : assistantFeedback.map((item) => <div className="admin-row" key={item.id}><div><strong>{'★'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)} · @{item.nickname || item.username}</strong><small>{item.comment || 'No written comment'} · {new Date(item.createdAt).toLocaleString()}</small></div></div>)}</div></section>}
   </div>
 }
 

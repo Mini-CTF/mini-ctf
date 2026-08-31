@@ -6,6 +6,7 @@ import type {
   AttendanceRankingRow,
   AttendanceSummary,
   AssistantReply,
+  AssistantFeedback,
   AdminDashboard,
   AdminPost,
   CommunityCategory,
@@ -82,6 +83,9 @@ async function request<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
 export const api = {
   assistantChat: (payload: { message: string; challengeId?: number; language: 'ko' | 'en'; history?: { role: 'assistant' | 'user'; content: string }[] }) =>
     request<AssistantReply>('/assistant/chat', { method: 'POST', body: JSON.stringify(payload), timeoutMs: 30_000 }),
+  submitAssistantFeedback: (payload: { rating: number; comment?: string }) =>
+    request<void>('/assistant/feedback', { method: 'POST', body: JSON.stringify(payload) }),
+  assistantFeedback: () => request<AssistantFeedback[]>('/assistant/feedback'),
   register: (payload: {
     username: string
     nickname: string
