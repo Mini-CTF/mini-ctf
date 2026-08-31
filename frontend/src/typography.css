@@ -912,9 +912,9 @@ html[data-theme='light'] .app-shell :is(.profile-title, .ranking-title, .communi
   .page-intro { padding-top: 54px; }
 }
 
-/* FlagBox polish: logo background blends into either theme and the home banner replaces the old emblem panel. */
-.brand img { background: transparent; mix-blend-mode: screen; }
-html[data-theme='light'] .brand img { mix-blend-mode: multiply; }
+/* Header mark uses a true transparent cutout: no square background or blend-mode seam in either theme. */
+.brand img { background: transparent !important; mix-blend-mode: normal; }
+html[data-theme='light'] .brand img { background: transparent !important; mix-blend-mode: normal; }
 .hero-visual { background: transparent !important; border-radius: 0; }
 .site-header { min-height: 82px; padding-top: 20px; padding-bottom: 20px; }
 .brand { gap: 13px; font-size: 24px; letter-spacing: -.025em; }
