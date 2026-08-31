@@ -15,11 +15,14 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AssistantService {
+  private static final Logger log = LoggerFactory.getLogger(AssistantService.class);
   private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/";
   private static final String SAFE_REPLY_KO =
       "정답 FLAG나 완성된 풀이를 직접 제공할 수는 없어요. 문제 설명에서 목표와 입력값을 다시 확인한 뒤, 막힌 지점을 한 단계씩 질문해 보세요.";
@@ -114,13 +117,18 @@ public class AssistantService {
               .build();
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-      if (response.statusCode() < 200 || response.statusCode() >= 300) return null;
+      if (response.statusCode() < 200 || response.statusCode() >= 300) {
+        log.warn("Gemini assistant request failed with HTTP status {} for model {}", response.statusCode(), model);
+        return null;
+      }
       JsonNode root = objectMapper.readTree(response.body());
       return root.path("candidates").path(0).path("content").path("parts").path(0).path("text").asText(null);
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
+      log.warn("Gemini assistant request was interrupted");
       return null;
     } catch (Exception exception) {
+      log.warn("Gemini assistant request failed: {}", exception.getClass().getSimpleName());
       return null;
     }
   }
