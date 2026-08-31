@@ -7,6 +7,8 @@ type Language = 'ko' | 'en'
 
 type FloatingQuickMenuProps = {
   language: Language
+  assistantOpen: boolean
+  onAssistantToggle: () => void
   onHome: () => void
   onCommunity: (category: CommunityCategory) => void
   onChallenges: () => void
@@ -26,6 +28,7 @@ const copy = {
     aiMode: 'AI Mode',
     feedback: '피드백',
     aiLabel: 'AI 학습 도우미 열기',
+    aiCloseLabel: 'AI 학습 도우미 닫기',
   },
   en: {
     menu: 'Quick menu',
@@ -38,10 +41,11 @@ const copy = {
     aiMode: 'AI Mode',
     feedback: 'Feedback',
     aiLabel: 'Open AI learning helper',
+    aiCloseLabel: 'Close AI learning helper',
   },
 } as const
 
-export default function FloatingQuickMenu({ language, onHome, onCommunity, onChallenges, onAiMode, onFeedback }: FloatingQuickMenuProps) {
+export default function FloatingQuickMenu({ language, assistantOpen, onAssistantToggle, onHome, onCommunity, onChallenges, onAiMode, onFeedback }: FloatingQuickMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const labels = copy[language]
 
@@ -66,8 +70,8 @@ export default function FloatingQuickMenu({ language, onHome, onCommunity, onCha
         type="button"
         aria-expanded={menuOpen}
         aria-controls="quick-menu"
-        aria-label={menuOpen ? labels.closeMenu : labels.openMenu}
-        onClick={() => setMenuOpen((open) => !open)}
+        aria-label={assistantOpen ? labels.aiCloseLabel : menuOpen ? labels.closeMenu : labels.openMenu}
+        onClick={() => assistantOpen ? (closeMenu(), onAssistantToggle()) : setMenuOpen((open) => !open)}
       >
         {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
       </button>

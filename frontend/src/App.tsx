@@ -171,7 +171,7 @@ function AppShell() {
   const [showIntro, setShowIntro] = useState(() => !isPasswordResetLink && sessionStorage.getItem('flagbox-intro-seen') !== 'true')
   const [showTutorial, setShowTutorial] = useState(false)
   const [showMemberTutorial, setShowMemberTutorial] = useState(false)
-  const [assistantOpenRequest, setAssistantOpenRequest] = useState(0)
+  const [assistantOpen, setAssistantOpen] = useState(false)
   const [assistantFeedbackOpen, setAssistantFeedbackOpen] = useState(false)
 
   useEffect(() => {
@@ -437,9 +437,9 @@ function AppShell() {
     </main>
     {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
     <PublicProfileDialog />
-    <FloatingAssistant key={assistantOpenRequest} initialOpen={assistantOpenRequest > 0} user={user} language={language} path={path} onLogin={() => go('/login')} />
+    <FloatingAssistant open={assistantOpen} onOpenChange={setAssistantOpen} user={user} language={language} path={path} onLogin={() => go('/login')} />
     {assistantFeedbackOpen && <AssistantFeedbackDialog user={user} language={language} onClose={() => setAssistantFeedbackOpen(false)} onLogin={() => go('/login')} />}
-    <FloatingQuickMenu language={language} onHome={() => go('/')} onCommunity={(nextCategory) => go(`/community?category=${nextCategory}`)} onChallenges={() => go('/challenges')} onAiMode={() => setAssistantOpenRequest((current) => current + 1)} onFeedback={() => setAssistantFeedbackOpen(true)} />
+    <FloatingQuickMenu language={language} assistantOpen={assistantOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onHome={() => go('/')} onCommunity={(nextCategory) => go(`/community?category=${nextCategory}`)} onChallenges={() => go('/challenges')} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} />
     <footer className="site-footer">
       <div className="footer-brand"><strong>FlagBox</strong><p>{language === 'ko' ? '보안을 처음 배우는 사람을 위한 쉽고 안전한 워게임 학습 플랫폼' : 'A safe, beginner-friendly wargame learning platform.'}</p></div>
       <div className="footer-links"><div><b>{language === 'ko' ? '서비스' : 'Services'}</b><nav className="footer-service-links" aria-label={language === 'ko' ? '서비스 바로가기' : 'Service shortcuts'}><button type="button" onClick={() => go('/challenges')}>{language === 'ko' ? '워게임' : 'Wargames'}</button><button type="button" onClick={() => go('/learn')}>{language === 'ko' ? '학습' : 'Learn'}</button><button type="button" onClick={() => go('/ranking')}>{language === 'ko' ? '랭킹' : 'Rankings'}</button><button type="button" onClick={() => go('/community')}>{language === 'ko' ? '커뮤니티' : 'Community'}</button><button type="button" onClick={() => user ? setVaultOpen(true) : go('/login')}>{language === 'ko' ? '상점' : 'Shop'}</button></nav></div><div><b>{language === 'ko' ? '도움말' : 'Help'}</b><span>{language === 'ko' ? '이용 안내 · 자주 묻는 질문 · 피드백' : 'Guide · FAQ · Feedback'}</span><a href="mailto:flagbox.contact@gmail.com">{language === 'ko' ? '문의하기: flagbox.contact@gmail.com' : 'Contact: flagbox.contact@gmail.com'}</a></div><div><b>{language === 'ko' ? '정책' : 'Policies'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '정책 바로가기' : 'Policy shortcuts'}><button type="button" onClick={() => go('/terms')}>{language === 'ko' ? '이용약관' : 'Terms'}</button><button type="button" onClick={() => go('/privacy')}>{language === 'ko' ? '개인정보처리방침' : 'Privacy'}</button><button type="button" onClick={() => go('/safe-learning')}>{language === 'ko' ? '안전한 학습 가이드' : 'Safe learning guide'}</button></nav></div></div>
@@ -508,8 +508,7 @@ function LegacyFloatingAssistant({ user, language, path, onLogin, initialOpen }:
 
 void LegacyFloatingAssistant
 
-function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { user: User | null; language: Language; path: string; onLogin: () => void; initialOpen: boolean }) {
-  const [open, setOpen] = useState(initialOpen)
+function FloatingAssistant({ user, language, path, onLogin, open, onOpenChange }: { user: User | null; language: Language; path: string; onLogin: () => void; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [messages, setMessages] = useState<AssistantMessage[]>([])
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
@@ -564,7 +563,7 @@ function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { use
   void sendFeedback
   if (!open) return null
   return <section className="ai-chat" role="dialog" aria-modal="false" aria-label={ko ? 'FlagBox AI 도우미' : 'FlagBox AI helper'} data-no-specular>
-    <header className="ai-chat-header"><div className="ai-chat-title"><span className="ai-chat-mark" aria-hidden="true">✦</span><div><strong>{ko ? 'AI 학습 도우미' : 'AI Learning Helper'}</strong><small>{challengeId ? (ko ? '현재 문제를 함께 보는 중' : 'Looking at this challenge') : (ko ? '초보자용 보안 가이드' : 'Beginner-friendly security guide')}</small></div></div><button className="ai-chat-close" type="button" onClick={() => setOpen(false)} aria-label={ko ? 'AI 도우미 닫기' : 'Close AI helper'}>×</button></header>
+    <header className="ai-chat-header"><div className="ai-chat-title"><span className="ai-chat-mark" aria-hidden="true">✦</span><div><strong>{ko ? 'AI 학습 도우미' : 'AI Learning Helper'}</strong><small>{challengeId ? (ko ? '현재 문제를 함께 보는 중' : 'Looking at this challenge') : (ko ? '초보자용 보안 가이드' : 'Beginner-friendly security guide')}</small></div></div><button className="ai-chat-close" type="button" onClick={() => onOpenChange(false)} aria-label={ko ? 'AI 도우미 닫기' : 'Close AI helper'}>×</button></header>
     <div className="ai-chat-messages" ref={listRef}>{messages.map((message, index) => <article className={`ai-chat-message ${message.role}`} key={`${message.role}-${index}`}><span>{message.content}</span></article>)}{busy && <article className="ai-chat-message assistant"><span>{ko ? '답변을 준비하고 있어요…' : 'Preparing a reply…'}</span></article>}</div>
     {!user ? <button className="button primary" type="button" onClick={onLogin}>{ko ? '로그인하고 AI 도우미 사용하기' : 'Sign in to use the AI helper'}</button> : <><div className="assistant-shortcuts" onWheel={scrollShortcutsHorizontally}>{shortcuts.map((shortcut) => <button type="button" key={shortcut} onClick={() => setDraft(shortcut)}>{shortcut}</button>)}</div><form className="ai-chat-input" onSubmit={(event) => void send(event)}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={submitOnEnter} maxLength={1200} placeholder={ko ? '질문을 입력하세요 (Enter 전송 · Shift+Enter 줄바꿈)' : 'Ask a question (Enter to send · Shift+Enter for a new line)'} /><button type="submit" disabled={busy || !draft.trim()} aria-label={ko ? '보내기' : 'Send'}>↑</button></form></>}
     <p className="assistant-note">{ko ? '정답 FLAG나 완성 풀이 대신, 이해를 돕는 다음 단계만 안내해요.' : 'It gives learning guidance, not FLAGS or complete solutions.'}</p>{feedbackNotice && <p className="assistant-feedback-notice">{feedbackNotice}</p>}{error && <p className="assistant-error">{error}</p>}
