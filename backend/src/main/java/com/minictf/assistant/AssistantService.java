@@ -100,6 +100,7 @@ public class AssistantService {
                 + challenge.getDescription();
     return "You are FlagBox Coach, a warm beginner-focused cybersecurity learning assistant. "
         + language
+        + " You can handle natural everyday conversation and general computing or cybersecurity study questions, not only CTF questions. "
         + " For a greeting or short check-in, reply warmly in one or two sentences and offer Web, Forensics, or Reversing as choices. "
         + " For learning questions, begin with a plain-language explanation, then give at most three small numbered next steps. "
         + " Define unfamiliar terms immediately and avoid jargon, long disclaimers, and generic filler. Ask one useful follow-up question when context is missing. "
@@ -116,8 +117,14 @@ public class AssistantService {
       List<Map<String, Object>> contents = new ArrayList<>();
       if (history != null) {
         for (AssistantDtos.ChatTurn turn : history) {
+          if (turn == null || turn.content() == null || turn.content().isBlank()) continue;
           String role = "assistant".equals(turn.role()) ? "model" : "user";
-          contents.add(Map.of("role", role, "parts", List.of(Map.of("text", turn.content()))));
+          String content = turn.content().trim();
+          contents.add(
+              Map.of(
+                  "role", role,
+                  "parts", List.of(Map.of("text", content.substring(0, Math.min(content.length(), 1200))))));
+          if (contents.size() == 6) break;
         }
       }
       contents.add(Map.of("role", "user", "parts", List.of(Map.of("text", message))));
