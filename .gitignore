@@ -6,6 +6,7 @@ challenges/mvp/
 profiles/
 backups/
 .gradle-user*/
+.gradle-cache/
 
 # Java / Gradle
 backend/.gradle/

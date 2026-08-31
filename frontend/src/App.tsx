@@ -810,7 +810,10 @@ function titleTone(id: string) { return ['beginner', 'rookie', 'junior', 'senior
 function ChallengeRow({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <button className="challenge-row" type="button" onClick={() => onOpen(item)}><span className={`category-mark ${item.category.toLowerCase()}`} /><span className="row-main"><strong>{item.title}</strong><small>{item.category} · {item.difficulty}</small></span><span className="row-meta"><b>{item.score} pts</b>{item.solved && <span className="solved">SOLVED</span>}</span></button> }
 
 function ChallengesView({ items, total, category, onCategory, difficulty, onDifficulty, onOpen }: { items: ChallengeSummary[]; total: number; category: Filter; onCategory: (value: Filter) => void; difficulty: DifficultyFilter; onDifficulty: (value: DifficultyFilter) => void; onOpen: (item: ChallengeSummary) => void }) {
-  return <div className="page"><PageIntro eyebrow="WARGAME" title="Pick your next challenge." description="Read the brief, then follow the guide one step at a time." /><section className="challenge-toolbar"><div className="filter-tabs" aria-label="카테고리">{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? 'All' : item}</button>)}</div><div className="filter-tabs difficulty-tabs" aria-label="난이도">{(['ALL', 'BEGINNER', 'EASY', 'NORMAL', 'ADVANCED', 'EXPERT'] as DifficultyFilter[]).map((item) => <button key={item} className={difficulty === item ? 'filter-tab active diff-' + item.toLowerCase() : 'filter-tab diff-' + item.toLowerCase()} type="button" onClick={() => onDifficulty(item)}>{item === 'ALL' ? 'All levels' : difficultyLabel(item)}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{items.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{items.length === 0 && <EmptyState />}</div>
+  const [visibleCount, setVisibleCount] = useState(24)
+  useEffect(() => setVisibleCount(24), [category, difficulty])
+  const visibleItems = items.slice(0, visibleCount)
+  return <div className="page"><PageIntro eyebrow="WARGAME" title="Pick your next challenge." description="Read the brief, then follow the guide one step at a time." /><section className="challenge-toolbar"><div className="filter-tabs" aria-label="카테고리">{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? 'All' : item}</button>)}</div><div className="filter-tabs difficulty-tabs" aria-label="난이도">{(['ALL', 'BEGINNER', 'EASY', 'NORMAL', 'ADVANCED', 'EXPERT'] as DifficultyFilter[]).map((item) => <button key={item} className={difficulty === item ? 'filter-tab active diff-' + item.toLowerCase() : 'filter-tab diff-' + item.toLowerCase()} type="button" onClick={() => onDifficulty(item)}>{item === 'ALL' ? 'All levels' : difficultyLabel(item)}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{visibleItems.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{visibleCount < items.length && <div className="progressive-list-action"><button className="button secondary" type="button" onClick={() => setVisibleCount((count) => count + 24)}>문제 더 보기 ({items.length - visibleCount})</button></div>}{items.length === 0 && <EmptyState />}</div>
 }
 
 function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h3>{item.title}</h3><p>Read each brief and hunt for clues step by step. Submit the FLAG when you find it.</p><div className="card-bottom"><strong>{item.score}<small>pts</small></strong>{item.solved && <span className="solved">Solved</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? 'Review' : 'Open'}</button></div></article> }
@@ -1273,24 +1276,39 @@ function AdminConsole() {
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [comments, setComments] = useState<AdminComment[]>([])
   const [assistantFeedback, setAssistantFeedback] = useState<AssistantFeedback[]>([])
+  const [contentLoaded, setContentLoaded] = useState(false)
+  const [feedbackLoaded, setFeedbackLoaded] = useState(false)
   const [tab, setTab] = useState<AdminTab>('overview')
   const [error, setError] = useState('')
 
   const refresh = useCallback(async () => {
     setError('')
     try {
-      const [nextDashboard, nextPosts, nextComments, nextAssistantFeedback] = await Promise.all([
-        api.adminDashboard(),
-        api.adminPosts(),
-        api.adminComments(),
-        api.assistantFeedback(),
-      ])
-      setDashboard(nextDashboard)
-      setPosts(nextPosts)
-      setComments(nextComments)
-      setAssistantFeedback(nextAssistantFeedback)
+      setDashboard(await api.adminDashboard())
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load administrator data.')
+    }
+  }, [])
+
+  const loadContent = useCallback(async () => {
+    try {
+      setError('')
+      const [nextPosts, nextComments] = await Promise.all([api.adminPosts(), api.adminComments()])
+      setPosts(nextPosts)
+      setComments(nextComments)
+      setContentLoaded(true)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not load moderation data.')
+    }
+  }, [])
+
+  const loadAssistantFeedback = useCallback(async () => {
+    try {
+      setError('')
+      setAssistantFeedback(await api.assistantFeedback())
+      setFeedbackLoaded(true)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not load AI feedback.')
     }
   }, [])
 
@@ -1298,6 +1316,11 @@ function AdminConsole() {
     const timer = window.setTimeout(() => void refresh(), 0)
     return () => window.clearTimeout(timer)
   }, [refresh])
+
+  useEffect(() => {
+    if (tab === 'content' || tab === 'notices') void loadContent()
+    if (tab === 'ai-feedback') void loadAssistantFeedback()
+  }, [tab, loadAssistantFeedback, loadContent])
 
   const editUser = async (id: number, nickname: string) => {
     const next = window.prompt('Display name', nickname)
@@ -1315,11 +1338,11 @@ function AdminConsole() {
   }
   const removePost = async (id: number, title: string) => {
     if (!window.confirm(`Delete “${title}”?`)) return
-    try { await api.deleteAdminPost(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the post.') }
+    try { await api.deleteAdminPost(id); await Promise.all([refresh(), loadContent()]) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the post.') }
   }
   const removeComment = async (id: number) => {
     if (!window.confirm('Delete this comment?')) return
-    try { await api.deleteAdminComment(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the comment.') }
+    try { await api.deleteAdminComment(id); await Promise.all([refresh(), loadContent()]) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the comment.') }
   }
   const publishNotice = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -1327,7 +1350,7 @@ function AdminConsole() {
     try {
       await api.publishNotice({ title: String(form.get('title')).trim(), content: String(form.get('content')).trim() })
       event.currentTarget.reset()
-      await refresh()
+      await Promise.all([refresh(), loadContent()])
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not publish the notice.')
     }
@@ -1353,11 +1376,11 @@ function AdminConsole() {
   const tabs: { id: AdminTab; label: string; count?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'accounts', label: 'Accounts', count: dashboard.users.length },
-    { id: 'content', label: 'Content', count: posts.length + comments.length },
-    { id: 'notices', label: 'Notices', count: notices.length },
+    { id: 'content', label: 'Content', count: contentLoaded ? posts.length + comments.length : undefined },
+    { id: 'notices', label: 'Notices', count: contentLoaded ? notices.length : undefined },
     { id: 'security', label: 'Security', count: dashboard.antiCheatEvents.length },
     { id: 'logs', label: 'Audit logs', count: dashboard.auditLogs.length + dashboard.securityEvents.length },
-    { id: 'ai-feedback', label: 'AI feedback', count: assistantFeedback.length },
+    { id: 'ai-feedback', label: 'AI feedback', count: feedbackLoaded ? assistantFeedback.length : undefined },
   ]
 
   return <div className="page admin-page admin-console">
@@ -1365,7 +1388,7 @@ function AdminConsole() {
     {error && <p className="alert error">{error}</p>}
     <div className="admin-summary-grid">
       <div><small>ACTIVE ACCOUNTS</small><strong>{dashboard.users.filter((item) => item.status === 'ACTIVE').length}</strong></div>
-      <div><small>CONTENT RECORDS</small><strong>{posts.length + comments.length}</strong></div>
+      <div><small>CONTENT RECORDS</small><strong>{contentLoaded ? posts.length + comments.length : '—'}</strong></div>
       <div><small>SECURITY EVENTS</small><strong>{dashboard.antiCheatEvents.length}</strong></div>
       <div><small>RECENT SUBMISSIONS</small><strong>{dashboard.recentSubmissions.length}</strong></div>
     </div>
@@ -1396,13 +1419,19 @@ function AdminConsole() {
 }
 
 function AdminSubmissionList({ items }: { items: AdminDashboard['recentSubmissions'] }) {
+  const [visibleCount, setVisibleCount] = useState(24)
+  useEffect(() => setVisibleCount(24), [items])
   if (items.length === 0) return <p className="muted">No records yet.</p>
-  return <div className="admin-table">{items.map((item, index) => <div className="admin-row" key={`${item.username}-${item.submittedAt}-${index}`}><div><strong>@{item.username}</strong><small>{item.challengeTitle} · {new Date(item.submittedAt).toLocaleString()}</small></div><span className={item.correct ? 'success-text' : 'danger-text'}>{item.correct ? 'Correct' : 'Incorrect'}</span></div>)}</div>
+  const visibleItems = items.slice(0, visibleCount)
+  return <><div className="admin-table">{visibleItems.map((item, index) => <div className="admin-row" key={`${item.username}-${item.submittedAt}-${index}`}><div><strong>@{item.username}</strong><small>{item.challengeTitle} · {new Date(item.submittedAt).toLocaleString()}</small></div><span className={item.correct ? 'success-text' : 'danger-text'}>{item.correct ? 'Correct' : 'Incorrect'}</span></div>)}</div><ProgressiveListAction remaining={items.length - visibleItems.length} onClick={() => setVisibleCount((count) => count + 24)} /></>
 }
 
 function AdminEventList({ items }: { items: AdminDashboard['antiCheatEvents'] }) {
+  const [visibleCount, setVisibleCount] = useState(24)
+  useEffect(() => setVisibleCount(24), [items])
   if (items.length === 0) return <p className="muted">No security events to review.</p>
-  return <div className="admin-table">{items.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.eventType} · @{item.username}</strong><small>{item.challengeTitle || 'Platform'} · {item.detail || 'No additional details'} · {new Date(item.createdAt).toLocaleString()}</small></div><span className={`severity ${item.severity.toLowerCase()}`}>{item.severity}</span></div>)}</div>
+  const visibleItems = items.slice(0, visibleCount)
+  return <><div className="admin-table">{visibleItems.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.eventType} · @{item.username}</strong><small>{item.challengeTitle || 'Platform'} · {item.detail || 'No additional details'} · {new Date(item.createdAt).toLocaleString()}</small></div><span className={`severity ${item.severity.toLowerCase()}`}>{item.severity}</span></div>)}</div><ProgressiveListAction remaining={items.length - visibleItems.length} onClick={() => setVisibleCount((count) => count + 24)} /></>
 }
 
 function AdminView() {
@@ -1419,8 +1448,16 @@ function AdminView() {
 void AdminView
 
 function LogList({ items, onControl }: { items: { id: number; title: string; detail: string; date: string }[]; onControl: (id: number, hide: boolean) => void }) {
+  const [visibleCount, setVisibleCount] = useState(24)
+  useEffect(() => setVisibleCount(24), [items])
   if (items.length === 0) return <p className="muted">No records yet.</p>
-  return <div className="admin-table">{items.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.title}</strong><small>{item.detail} · {new Date(item.date).toLocaleString()}</small></div><div className="inline-actions"><button className="button secondary" type="button" onClick={() => onControl(item.id, false)}>Redact</button><button className="button ghost danger-button" type="button" onClick={() => onControl(item.id, true)}>Hide</button></div></div>)}</div>
+  const visibleItems = items.slice(0, visibleCount)
+  return <><div className="admin-table">{visibleItems.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.title}</strong><small>{item.detail} · {new Date(item.date).toLocaleString()}</small></div><div className="inline-actions"><button className="button secondary" type="button" onClick={() => onControl(item.id, false)}>Redact</button><button className="button ghost danger-button" type="button" onClick={() => onControl(item.id, true)}>Hide</button></div></div>)}</div><ProgressiveListAction remaining={items.length - visibleItems.length} onClick={() => setVisibleCount((count) => count + 24)} /></>
+}
+
+function ProgressiveListAction({ remaining, onClick }: { remaining: number; onClick: () => void }) {
+  if (remaining <= 0) return null
+  return <div className="progressive-list-action"><button className="button secondary" type="button" onClick={onClick}>더 보기 ({remaining})</button></div>
 }
 
 function LegacyLoginView({ onBack, onAuth, language: _language }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {

@@ -2,6 +2,7 @@ package com.minictf.anticheat;
 
 import java.time.Instant;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,8 +14,8 @@ public interface AntiCheatEventRepository extends JpaRepository<AntiCheatEvent, 
   List<AntiCheatEvent> findTop100ByOrderByCreatedAtDesc();
 
   @Query(
-      "select e from AntiCheatEvent e join fetch e.user where e.user.status <> 'DELETED' order by e.createdAt desc")
-  List<AntiCheatEvent> findTop100WithActiveUsers();
+      "select e from AntiCheatEvent e join fetch e.user left join fetch e.challenge where e.user.status <> 'DELETED' order by e.createdAt desc")
+  List<AntiCheatEvent> findWithActiveUsers(Pageable pageable);
 
   @Modifying
   @Query("delete from AntiCheatEvent event where event.createdAt < :before")

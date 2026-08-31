@@ -223,6 +223,8 @@ html[data-theme="light"] .alert.success {
 .admin-card .admin-table { margin-top: 3px; border-top: 0; }
 .admin-card .admin-row { padding: 15px 0; }
 .admin-quick-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.progressive-list-action { display: flex; justify-content: center; padding: 22px 0 2px; }
+.progressive-list-action .button { min-width: 160px; }
 .text-button { border: 0; background: transparent; color: var(--accent); font: 600 13px var(--mono); padding: 6px 0; }
 .text-button:hover { text-decoration: underline; }
 .admin-notice-form { margin-top: 18px; border: 0; padding: 0; }

@@ -46,7 +46,7 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public AdminDtos.Dashboard dashboard() {
-    return new AdminDtos.Dashboard(users(), submissions(), events(), logs(), securityEvents());
+    return new AdminDtos.Dashboard(users(), submissions(40), events(40), logs(40), securityEvents(40));
   }
 
   @Transactional(readOnly = true)
@@ -124,7 +124,11 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public List<AdminDtos.SubmissionView> submissions() {
-    return submissions.findAllWithActiveUsers(PageRequest.of(0, 100)).stream()
+    return submissions(100);
+  }
+
+  private List<AdminDtos.SubmissionView> submissions(int limit) {
+    return submissions.findAllWithActiveUsers(page(limit)).stream()
         .map(
             s ->
                 new AdminDtos.SubmissionView(
@@ -137,7 +141,11 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public List<AdminDtos.AntiCheatEventView> events() {
-    return antiCheatEvents.findTop100WithActiveUsers().stream()
+    return events(100);
+  }
+
+  private List<AdminDtos.AntiCheatEventView> events(int limit) {
+    return antiCheatEvents.findWithActiveUsers(page(limit)).stream()
         .map(
             e ->
                 new AdminDtos.AntiCheatEventView(
@@ -153,7 +161,11 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public List<AdminDtos.AuditLogView> logs() {
-    return auditLogs.findTop100ByHiddenFalseOrderByCreatedAtDesc().stream()
+    return logs(100);
+  }
+
+  private List<AdminDtos.AuditLogView> logs(int limit) {
+    return auditLogs.findVisibleWithAdmin(page(limit)).stream()
         .map(
             log ->
                 new AdminDtos.AuditLogView(
@@ -169,7 +181,11 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public List<AdminDtos.SecurityEventView> securityEvents() {
-    return securityEvents.findTop100VisibleOrderByCreatedAtDesc().stream()
+    return securityEvents(100);
+  }
+
+  private List<AdminDtos.SecurityEventView> securityEvents(int limit) {
+    return securityEvents.findVisible(page(limit)).stream()
         .map(
             event ->
                 new AdminDtos.SecurityEventView(
@@ -181,6 +197,10 @@ public class AdminModerationService {
                     event.getCreatedAt(),
                     event.getRedactedAt()))
         .toList();
+  }
+
+  private PageRequest page(int limit) {
+    return PageRequest.of(0, Math.max(1, Math.min(limit, 100)));
   }
 
   @Transactional(readOnly = true)
