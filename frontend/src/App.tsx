@@ -549,7 +549,8 @@ function FloatingAssistant({ user, language, path, onLogin, initialOpen }: { use
 
 function AssistantFeedbackDialog({ user, language, onClose, onLogin }: { user: User | null; language: Language; onClose: () => void; onLogin: () => void }) {
   const ko = language === 'ko'
-  const [rating, setRating] = useState(5)
+  const [rating, setRating] = useState<number | null>(null)
+  const [hoverRating, setHoverRating] = useState<number | null>(null)
   const [comment, setComment] = useState('')
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
@@ -557,6 +558,7 @@ function AssistantFeedbackDialog({ user, language, onClose, onLogin }: { user: U
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!user) { onLogin(); return }
+    if (!rating) { setError(ko ? '별점을 선택해 주세요.' : 'Please choose a rating.'); return }
     if (!comment.trim()) { setError(ko ? '의견을 한 줄 이상 입력해 주세요.' : 'Please enter a short comment.'); return }
     try {
       setBusy(true); setError('')
@@ -567,9 +569,11 @@ function AssistantFeedbackDialog({ user, language, onClose, onLogin }: { user: U
       setError(cause instanceof Error ? cause.message : (ko ? '피드백을 보내지 못했어요.' : 'Could not send feedback.'))
     } finally { setBusy(false) }
   }
+  const visibleRating = hoverRating ?? rating
+  const ratingText = !visibleRating ? (ko ? '별점을 선택해 주세요' : 'Select a rating') : (ko ? ['아쉬워요', '조금 아쉬워요', '보통이에요', '만족해요', '매우 만족해요'][visibleRating - 1] : ['Very poor', 'Needs improvement', 'Okay', 'Good', 'Excellent'][visibleRating - 1])
   return <section className="assistant-feedback-dialog" role="dialog" aria-modal="false" aria-label={ko ? 'FlagBox 피드백' : 'FlagBox feedback'} data-no-specular>
     <header className="ai-chat-header"><div className="ai-chat-title"><span className="ai-chat-mark" aria-hidden="true">✎</span><div><strong>{ko ? 'FlagBox 피드백' : 'FlagBox feedback'}</strong><small>{ko ? 'AI 학습 도우미를 더 좋게 만들 의견을 들려주세요.' : 'Help us improve the AI learning helper.'}</small></div></div><button className="ai-chat-close" type="button" onClick={onClose} aria-label={ko ? '피드백 닫기' : 'Close feedback'}>×</button></header>
-    <form className="assistant-feedback-form" onSubmit={(event) => void submit(event)}><fieldset className="assistant-rating-field"><legend>{ko ? '만족도' : 'Rating'}</legend><div className="assistant-rating">{[1, 2, 3, 4, 5].map((value) => <label key={value} className={value <= rating ? 'selected' : ''} aria-label={`${value} stars`}><input type="radio" name="assistant-rating" value={value} checked={rating === value} onChange={() => setRating(value)} /><span aria-hidden="true">★</span></label>)}</div></fieldset><label>{ko ? '의견' : 'Comment'}<textarea value={comment} onChange={(event) => setComment(event.target.value)} maxLength={1000} placeholder={ko ? '좋았던 점이나 불편했던 점을 자유롭게 적어 주세요.' : 'Tell us what worked well or what felt inconvenient.'} /></label><button className="button primary" type="submit" disabled={busy}>{busy ? (ko ? '보내는 중…' : 'Sending…') : (ko ? '피드백 보내기' : 'Send feedback')}</button></form>
+    <form className="assistant-feedback-form" onSubmit={(event) => void submit(event)}><fieldset className="assistant-rating-field"><legend>{ko ? '만족도' : 'Rating'}</legend><div className="assistant-rating" onMouseLeave={() => setHoverRating(null)}>{[1, 2, 3, 4, 5].map((value) => <label key={value} className={value <= (visibleRating ?? 0) ? 'selected' : ''} onMouseEnter={() => setHoverRating(value)} aria-label={`${value} stars`}><input type="radio" name="assistant-rating" value={value} checked={rating === value} onChange={() => { setRating(value); setError('') }} /><span aria-hidden="true">★</span></label>)}</div><p className={visibleRating ? 'assistant-rating-caption selected' : 'assistant-rating-caption'}>{visibleRating ? `${visibleRating}/5 · ${ratingText}` : ratingText}</p></fieldset><label>{ko ? '의견' : 'Comment'}<textarea value={comment} onChange={(event) => setComment(event.target.value)} maxLength={1000} placeholder={ko ? '좋았던 점이나 불편했던 점을 자유롭게 적어 주세요.' : 'Tell us what worked well or what felt inconvenient.'} /></label><button className="button primary" type="submit" disabled={busy}>{busy ? (ko ? '보내는 중…' : 'Sending…') : (ko ? '피드백 보내기' : 'Send feedback')}</button></form>
     {notice && <p className="assistant-feedback-notice">{notice}</p>}{error && <p className="assistant-error">{error}</p>}
   </section>
 }
