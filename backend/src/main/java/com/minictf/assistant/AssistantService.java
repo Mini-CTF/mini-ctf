@@ -42,8 +42,8 @@ public class AssistantService {
       RateLimitService rateLimits,
       ObjectMapper objectMapper,
       @Value("${GEMINI_API_KEY:}") String apiKey,
-      @Value("${GEMINI_MODEL:gemini-2.5-flash}") String primaryModel,
-      @Value("${GEMINI_FALLBACK_MODEL:gemini-2.5-flash-lite}") String fallbackModel) {
+      @Value("${GEMINI_MODEL:gemini-3.7-flash}") String primaryModel,
+      @Value("${GEMINI_FALLBACK_MODEL:gemini-3.5-flash-lite}") String fallbackModel) {
     this.challenges = challenges;
     this.rateLimits = rateLimits;
     this.objectMapper = objectMapper;
