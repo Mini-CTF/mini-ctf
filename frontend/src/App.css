@@ -4028,23 +4028,25 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
   gap: 14px;
 }
 .assistant-fab {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 54px;
-  padding: 0 19px 0 15px;
+  position: relative;
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  padding: 0;
   border: 1px solid color-mix(in srgb, var(--accent) 78%, #fff 22%);
-  border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 14px 34px color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, color-mix(in srgb, #fff 34%, var(--accent)), var(--accent) 58%, color-mix(in srgb, var(--accent) 72%, #071427));
+  box-shadow: 0 14px 32px color-mix(in srgb, var(--accent) 27%, transparent), inset 0 1px 1px rgba(255,255,255,.26);
   color: #fff;
   font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: -.02em;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
 }
-.assistant-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 38px color-mix(in srgb, var(--accent) 42%, transparent); }
-.assistant-fab-spark { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 50%; background: rgba(255,255,255,.18); font-size: 16px; }
+.assistant-fab::after { content: ''; position: absolute; top: 11px; left: 15px; width: 19px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.24); filter: blur(1px); transform: rotate(-22deg); }
+.assistant-fab:hover, .assistant-fab:focus-visible { transform: translateY(-2px) scale(1.025); border-color: #fff; box-shadow: 0 18px 36px color-mix(in srgb, var(--accent) 38%, transparent), inset 0 1px 1px rgba(255,255,255,.3); }
+.assistant-fab-spark { position: relative; z-index: 1; display: grid; width: 31px; height: 31px; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; background: rgba(5, 20, 42, .18); font-size: 19px; font-weight: 500; line-height: 1; }
+.assistant-fab-tooltip { position: absolute; right: calc(100% + 12px); padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-strong); color: var(--text); font-size: 12px; font-weight: 800; line-height: 1; white-space: nowrap; opacity: 0; pointer-events: none; transform: translateX(4px); transition: opacity .14s ease, transform .14s ease; }
+.assistant-fab:hover .assistant-fab-tooltip, .assistant-fab:focus-visible .assistant-fab-tooltip { opacity: 1; transform: translateX(0); }
 .assistant-panel {
   width: min(390px, calc(100vw - 32px));
   overflow: hidden;
@@ -4052,7 +4054,9 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
   border-radius: 24px;
   background: color-mix(in srgb, var(--surface-strong) 97%, #07162c 3%);
   box-shadow: 0 24px 70px rgba(0,0,0,.36);
+  animation: assistant-panel-in .18s ease-out both;
 }
+@keyframes assistant-panel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .assistant-panel > header { display: flex; align-items: center; justify-content: space-between; padding: 17px 18px; border-bottom: 1px solid var(--line); }
 .assistant-panel > header > div { display: flex; align-items: center; gap: 10px; }
 .assistant-panel > header strong, .assistant-panel > header small { display: block; }
@@ -4082,4 +4086,5 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
 .assistant-note, .assistant-error { margin: 0; padding: 10px 16px 13px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; font-weight: 600; line-height: 1.55; }
 .assistant-error { border-top: 0; padding-top: 0; color: #f08080; }
 html[data-theme='light'] .assistant-panel { background: #fff; box-shadow: 0 22px 54px rgba(23, 37, 57, .18); }
-@media (max-width: 560px) { .assistant-widget { right: 16px; bottom: 16px; } .assistant-panel { width: min(390px, calc(100vw - 24px)); } .assistant-fab { min-height: 50px; padding-right: 17px; } }
+@media (prefers-reduced-motion: reduce) { .assistant-fab, .assistant-fab-tooltip { transition: none; } .assistant-panel { animation: none; } }
+@media (max-width: 560px) { .assistant-widget { right: 16px; bottom: 16px; } .assistant-panel { width: min(390px, calc(100vw - 24px)); } .assistant-fab { width: 54px; height: 54px; } .assistant-fab-tooltip { display: none; } }

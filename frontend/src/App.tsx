@@ -478,7 +478,7 @@ function FloatingAssistant({ user, language, path, onLogin }: { user: User | nul
       {!user ? <button className="assistant-login" type="button" onClick={onLogin}>{ko ? '로그인하고 AI 도우미 사용하기' : 'Sign in to use the AI helper'}</button> : <><div className="assistant-shortcuts">{shortcuts.map((shortcut) => <button type="button" key={shortcut} onClick={() => setDraft(shortcut)}>{shortcut}</button>)}</div><form onSubmit={(event) => void send(event)}><textarea value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1200} placeholder={ko ? '질문을 입력하세요' : 'Ask a question'} /><button type="submit" disabled={busy || !draft.trim()}>{ko ? '보내기' : 'Send'}</button></form></>}
       <p className="assistant-note">{ko ? '정답 FLAG나 완성 풀이 대신, 이해를 돕는 다음 단계만 안내해요.' : 'It gives learning guidance, not FLAGS or complete solutions.'}</p>{error && <p className="assistant-error">{error}</p>}
     </section>}
-    <button className="assistant-fab" type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={ko ? 'AI 학습 도우미 열기' : 'Open AI learning helper'}><span className="assistant-fab-spark">✦</span><span>{ko ? 'AI 도움' : 'AI Help'}</span></button>
+    <button className="assistant-fab" type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={ko ? 'AI 학습 도우미 열기' : 'Open AI learning helper'}><span className="assistant-fab-spark" aria-hidden="true">{open ? '×' : '✦'}</span><span className="assistant-fab-tooltip" aria-hidden="true">{ko ? 'AI 도움' : 'AI Help'}</span></button>
   </div>
 }
 
