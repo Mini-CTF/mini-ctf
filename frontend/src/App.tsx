@@ -916,7 +916,13 @@ function VaultItems({ items, gems = 0, fragments = 0, busy, action, actionLabel 
 
 function Stat({ value, label, detail }: { value: number; label: string; detail: string }) { return <div className="stat"><strong>{value}</strong><div><span>{label}</span><small>{detail}</small></div></div> }
 function cosmeticLabel(id: string) { return id.split('_').map((word) => word[0].toUpperCase() + word.slice(1)).join(' ') }
-function difficultyLabel(difficulty: string) { return ({ BEGINNER: '첫걸음', EASY: '쉬움', NORMAL: '보통', ADVANCED: '어려움', EXPERT: '도전' } as Record<string, string>)[difficulty] ?? difficulty }
+function difficultyLabel(difficulty: string) {
+  const ko = document.documentElement.lang !== 'en'
+  const labels = ko
+    ? { BEGINNER: '첫걸음', EASY: '쉬움', NORMAL: '보통', ADVANCED: '어려움', EXPERT: '도전' }
+    : { BEGINNER: 'Beginner', EASY: 'Easy', NORMAL: 'Normal', ADVANCED: 'Advanced', EXPERT: 'Expert' }
+  return (labels as Record<string, string>)[difficulty] ?? difficulty
+}
 function titleTone(id: string) { return ['beginner', 'rookie', 'junior', 'senior', 'veteran', 'master', 'root'].includes(id.toLowerCase()) ? `tier-title-${id.toLowerCase()}` : '' }
 function ChallengeRow({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <button className="challenge-row" type="button" onClick={() => onOpen(item)}><span className={`category-mark ${item.category.toLowerCase()}`} /><span className="row-main"><strong>{item.title}</strong><small>{item.category} · {item.difficulty}</small></span><span className="row-meta"><b>{item.score} pts</b>{item.solved && <span className="solved">SOLVED</span>}</span></button> }
 
