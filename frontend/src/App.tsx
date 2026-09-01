@@ -417,7 +417,7 @@ function AppShell() {
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       <Routes>
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onCommunity={() => go('/community')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
-        <Route path="/challenges" element={guarded(<ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
+        <Route path="/challenges" element={guarded(<><ChallengesProgress items={visibleChallenges} total={challenges.length} /><ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} /></>)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh(); void refreshWallet() }} />)} />
         <Route path="/learn" element={<LearnView lang={language} loggedIn={Boolean(user)} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
@@ -925,6 +925,12 @@ function difficultyLabel(difficulty: string) {
 }
 function titleTone(id: string) { return ['beginner', 'rookie', 'junior', 'senior', 'veteran', 'master', 'root'].includes(id.toLowerCase()) ? `tier-title-${id.toLowerCase()}` : '' }
 function ChallengeRow({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <button className="challenge-row" type="button" onClick={() => onOpen(item)}><span className={`category-mark ${item.category.toLowerCase()}`} /><span className="row-main"><strong>{item.title}</strong><small>{item.category} · {item.difficulty}</small></span><span className="row-meta"><b>{item.score} pts</b>{item.solved && <span className="solved">SOLVED</span>}</span></button> }
+
+function ChallengesProgress({ items, total }: { items: ChallengeSummary[]; total: number }) {
+  const solved = items.filter((item) => item.solved).length
+  const percent = items.length === 0 ? 0 : Math.round((solved / items.length) * 100)
+  return <section className="challenge-progress-overview"><div><span className="vault-kicker">YOUR PROGRESS</span><h2>문제 풀이 현황</h2><p>현재 선택한 분야와 난이도 기준이에요.</p></div><div className="challenge-progress-stats"><strong>{solved}<small> / {items.length} solved</small></strong><span>{percent}%</span></div><div className="challenge-progress-track" aria-label={`${solved} of ${items.length} challenges solved`}><i style={{ width: `${percent}%` }} /></div><small className="challenge-progress-total">전체 {total}문제 중 현재 조건 {items.length}문제</small></section>
+}
 
 function ChallengesView({ items, total, category, onCategory, difficulty, onDifficulty, onOpen }: { items: ChallengeSummary[]; total: number; category: Filter; onCategory: (value: Filter) => void; difficulty: DifficultyFilter; onDifficulty: (value: DifficultyFilter) => void; onOpen: (item: ChallengeSummary) => void }) {
   const [visibleCount, setVisibleCount] = useState(24)

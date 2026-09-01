@@ -478,6 +478,7 @@
   border: 1px solid #3b4250;
   color: #cbd1da;
 }
+.challenge-card .badge, .learn-card .badge, .detail-page .badge { font-family: var(--sans); letter-spacing: 0; font-weight: 750; }
 .badge.web {
   color: #53c7ff;
   border-color: rgba(83, 199, 255, 0.45);
@@ -593,6 +594,16 @@
 .progress-copy b {
   color: #fff;
 }
+.challenge-progress-overview { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 26px; align-items: center; max-width: 1176px; margin: 30px auto 0; padding: 20px 24px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); font-family: var(--sans); }
+.challenge-progress-overview h2 { margin: 5px 0 4px; color: var(--text); font-size: 20px; }
+.challenge-progress-overview p, .challenge-progress-total { margin: 0; color: var(--muted); font-size: 13px; }
+.challenge-progress-stats { display: flex; align-items: baseline; gap: 12px; }
+.challenge-progress-stats strong { color: var(--text); font-size: 24px; }
+.challenge-progress-stats strong small { color: var(--muted); font-size: 13px; }
+.challenge-progress-stats span { color: var(--accent); font-size: 24px; font-weight: 800; }
+.challenge-progress-track { grid-column: 1 / -1; height: 8px; overflow: hidden; border-radius: 999px; background: var(--line); }
+.challenge-progress-track i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .25s ease; }
+.challenge-progress-total { grid-column: 1 / -1; }
 .challenge-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -606,6 +617,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  cursor: pointer;
+  font-family: var(--sans);
 }
 .challenge-card:hover {
   border-color: #525b6c;
@@ -666,13 +679,19 @@
   margin-left: auto;
 }
 .card-open {
-  margin-left: auto;
-  color: var(--accent);
-  background: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
   border: 0;
-  font-family: var(--mono);
-  font-size: 10px;
+  background: transparent;
+  cursor: pointer;
 }
+.card-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; opacity: 1; background: color-mix(in srgb, var(--surface) 82%, var(--accent) 18%); color: var(--text); font: 750 14px var(--sans); }
 .empty-state {
   text-align: center;
   padding: 80px;
@@ -1326,6 +1345,8 @@
   font-size: 12px;
   line-height: 1.7;
 }
+.site-footer::before { content: 'FlagBox는 이윤을 목적으로 하지 않으며, 학생의 포트폴리오와 개발·보안 학습을 위해 제작된 교육 플랫폼입니다.'; display: block; margin-bottom: 22px; padding: 12px 14px; border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); color: var(--muted); font-family: var(--sans); font-size: 12px; font-weight: 650; }
+html[lang="en"] .site-footer::before { content: 'FlagBox is a non-profit educational platform created for student portfolios and safe development and security learning.'; }
 .footer-brand strong {
   display: block;
   color: var(--text);
@@ -3464,6 +3485,7 @@ html[data-theme="dark"] .challenge-bookmark[aria-pressed="true"] .bookmark-ribbo
   background: var(--surface);
   text-align: left;
   cursor: pointer;
+  font-family: var(--sans);
   transition:
     transform 0.15s ease,
     border-color 0.15s ease;
@@ -3487,7 +3509,7 @@ html[data-theme="light"] .learn-card small {
   color: #4b5568 !important;
 }
 .learn-minutes {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 11px;
   color: #7f8ba0;
 }
