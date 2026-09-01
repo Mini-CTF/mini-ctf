@@ -26,6 +26,9 @@ public final class AdminDtos {
   public record IpBanRequest(
       @NotBlank @Size(max = 45) String ipAddress, @NotBlank @Size(max = 500) String reason) {}
 
+  public record UsernameIpBanRequest(
+      @NotBlank @Size(max = 50) String username, @NotBlank @Size(max = 500) String reason) {}
+
   public record IpBanView(
       Long id, String ipAddress, String reason, String createdBy, Instant createdAt) {}
 

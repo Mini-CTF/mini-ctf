@@ -164,6 +164,8 @@ export const api = {
   ipBans: () => request<import('../types/api').IpBan[]>('/admin/ip-bans'),
   banIp: (ipAddress: string, reason: string) =>
     request<import('../types/api').IpBan>('/admin/ip-bans', { method: 'POST', body: JSON.stringify({ ipAddress, reason }) }),
+  banRegisteredIp: (username: string, reason: string) =>
+    request<import('../types/api').IpBan>('/admin/ip-bans/by-username', { method: 'POST', body: JSON.stringify({ username, reason }) }),
   unbanIp: (id: number) => request<void>(`/admin/ip-bans/${id}`, { method: 'DELETE' }),
   deactivateUser: async (id: number) => {
     await request<void>(`/admin/users/${id}`, { method: 'DELETE' })

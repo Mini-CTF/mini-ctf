@@ -1566,6 +1566,20 @@ function AdminConsole() {
     try { await api.banIp(ipAddress, reason); window.alert(`${ipAddress} IP를 차단했습니다.`) }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'IP를 차단하지 못했습니다.') }
   }
+  void banIp
+
+  const banRegisteredIp = async () => {
+    const username = window.prompt('차단할 사용자 아이디를 입력하세요.')?.trim()
+    if (!username) return
+    const reason = window.prompt('차단 사유를 입력하세요.')?.trim()
+    if (!reason) return
+    try {
+      await api.banRegisteredIp(username, reason)
+      window.alert(`${username} 계정의 가입 IP를 차단했습니다.`)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '계정의 가입 IP를 차단하지 못했습니다.')
+    }
+  }
   const manageIpBans = async () => {
     try {
       const bans = await api.ipBans()
@@ -1593,7 +1607,7 @@ function AdminConsole() {
 
   return <div className="page admin-page admin-console">
     <PageIntro eyebrow="ADMIN CONSOLE" title="Run the platform clearly." description="Manage accounts, community content, notices, and security records in focused workspaces." />
-    <div className="admin-quick-actions admin-ip-ban-actions"><button type="button" className="button ghost danger-button" onClick={() => void banIp()}>IP 차단</button><button type="button" className="button secondary" onClick={() => void manageIpBans()}>IP 차단 관리</button></div>
+    <div className="admin-quick-actions admin-ip-ban-actions"><button type="button" className="button ghost danger-button" onClick={() => void banRegisteredIp()}>계정 IP 차단</button><button type="button" className="button secondary" onClick={() => void manageIpBans()}>IP 차단 관리</button></div>
     {error && <p className="alert error">{error}</p>}
     <div className="admin-summary-grid">
       <div><small>ACTIVE ACCOUNTS</small><strong>{dashboard.users.filter((item) => item.status === 'ACTIVE').length}</strong></div>

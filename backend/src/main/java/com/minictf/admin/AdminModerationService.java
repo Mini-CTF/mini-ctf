@@ -11,6 +11,7 @@ import com.minictf.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
@@ -164,6 +165,35 @@ public class AdminModerationService {
         saved.getReason(),
         saved.getCreatedBy(),
         saved.getCreatedAt());
+  }
+
+  @Transactional
+  public AdminDtos.IpBanView banRegisteredIp(
+      AdminDtos.UsernameIpBanRequest request, String adminUsername) {
+    String username = request.username().trim();
+    User target =
+        users
+            .findByUsernameIgnoreCase(username)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    ensureNotAdmin(target);
+    SecurityEvent registration =
+        securityEvents
+            .findFirstByUserIdAndEventTypeInAndIpAddressIsNotNullOrderByCreatedAtAsc(
+                target.getId(), Set.of("ACCOUNT_REGISTERED", "OAUTH_LOGIN"))
+            .filter(event -> !event.getIpAddress().isBlank())
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "This account has no saved registration IP address"));
+    AdminDtos.IpBanView result =
+        banIp(new AdminDtos.IpBanRequest(registration.getIpAddress(), request.reason()), adminUsername);
+    audit(
+        adminUsername,
+        "BAN_USER_REGISTRATION_IP",
+        "USER",
+        target.getId(),
+        username + " -> " + registration.getIpAddress());
+    return result;
   }
 
   @Transactional

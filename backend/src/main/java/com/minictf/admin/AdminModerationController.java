@@ -65,6 +65,12 @@ public class AdminModerationController {
     return ApiResponse.ok(service.banIp(request, auth.getName()));
   }
 
+  @PostMapping("/ip-bans/by-username")
+  public ApiResponse<?> banRegisteredIp(
+      @Valid @RequestBody AdminDtos.UsernameIpBanRequest request, Authentication auth) {
+    return ApiResponse.ok(service.banRegisteredIp(request, auth.getName()));
+  }
+
   @DeleteMapping("/ip-bans/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void unbanIp(@PathVariable Long id, Authentication auth) {
