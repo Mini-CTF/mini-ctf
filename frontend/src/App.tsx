@@ -1289,6 +1289,11 @@ function FriendsView({ user, onLogin }: { user: User | null; onLogin: () => void
   useEffect(() => {
     if (messages.length) messageList.current?.scrollTo({ top: messageList.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
+  useLayoutEffect(() => {
+    document.querySelectorAll<HTMLSpanElement>('.friends-page .message-meta small').forEach((label) => {
+      label.classList.toggle('is-read', label.textContent === 'Read')
+    })
+  }, [messages])
   if (!user) return <div className="page"><PageIntro eyebrow="FRIENDS" title="Sign in to message your friends." description="Friend requests and private messages are available after sign-in." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
   const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = event.currentTarget; const username = String(new FormData(form).get('username')).trim(); try { await api.requestFriend(username); await refresh(); form.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!selectedFriend) return; const form = event.currentTarget; try { upsertMessage(await api.sendMessage(selectedFriend, String(new FormData(form).get('content')))); form.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send message.') } }

@@ -596,6 +596,11 @@ html[data-theme='light'] .submit-panel .submit-button { color: #102941 !importan
 .message-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 7px; }
 .message-meta { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 7px; }
 .message-meta small { color: var(--muted); font-size: 11px; font-weight: 700; }
+.friends-page .message-meta small { font-size: 0; }
+.friends-page .message-meta small::after { content: '보냄'; color: var(--muted); font: 700 11px/1 var(--sans); }
+.friends-page .message-meta small.is-read::after { content: '읽음'; color: var(--accent); }
+html[lang='en'] .friends-page .message-meta small::after { content: 'Sent'; }
+html[lang='en'] .friends-page .message-meta small.is-read::after { content: 'Read'; }
 .message-actions button { padding: 0; border: 0; background: transparent; color: inherit; font: 700 11px/1 var(--sans); opacity: .72; }
 .message-actions button:hover { opacity: 1; text-decoration: underline; }
 .message.sent { justify-self: end; background: #254161; }
