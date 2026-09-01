@@ -3414,6 +3414,9 @@ html[data-theme="light"] .guide-block li {
 .learning-snapshot-meta span { padding: 6px 9px; border-radius: 999px; background: var(--surface-strong); color: var(--muted); font-size: 12px; font-weight: 750; }
 .learning-snapshot-error { margin: 0 0 20px; color: #ef7373; font-size: 14px; font-weight: 700; }
 @media (max-width: 620px) { .learning-snapshot { grid-template-columns: 1fr; padding: 19px; } .learning-goal-control { justify-content: space-between; } }
+.challenge-bookmark { display: inline-flex; align-items: center; justify-content: center; margin-top: 12px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font: 750 12px var(--sans); cursor: pointer; }
+.challenge-bookmark[aria-pressed="true"] { border-color: color-mix(in srgb, #f2bd39 70%, var(--line)); color: #d99d0d; }
+.challenge-bookmark:disabled { cursor: wait; opacity: .65; }
 
 .learn-list {
   display: grid;

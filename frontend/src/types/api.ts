@@ -291,3 +291,13 @@ export type LearningOverview = {
   recentSolves: { challengeId: number; title: string; category: string; solvedAt: string }[]
   achievements: { code: string; name: string; description: string }[]
 }
+
+export type LearningBookmark = {
+  challengeId: number
+  title: string
+  category: string
+  difficulty: string
+  score: number
+  solved: boolean
+  createdAt: string
+}

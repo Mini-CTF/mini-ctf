@@ -12,7 +12,7 @@ import AetherFlowHero from './components/ui/aether-flow-hero'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import FloatingQuickMenu from './components/FloatingQuickMenu'
-import type { AdminComment, AdminDashboard, AdminPost, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, LearningOverview, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
+import type { AdminComment, AdminDashboard, AdminPost, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, LearningBookmark, LearningOverview, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-cutout.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
 import './App.css'
@@ -928,6 +928,8 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
   const [awardedGems, setAwardedGems] = useState<number | null>(null)
   const [hintCredits, setHintCredits] = useState<number | null>(null)
   const [guideOpen, setGuideOpen] = useState(false)
+  const [bookmarked, setBookmarked] = useState(false)
+  const [bookmarkBusy, setBookmarkBusy] = useState(false)
   useEffect(() => {
     let active = true
     api.challenge(id).then((next) => { if (active) setItem(next) }).catch((cause) => { if (active) setLoadError(cause instanceof Error ? cause.message : 'Could not load this challenge.') })
@@ -938,11 +940,45 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
     void api.challengeActivity(id, 'OPENED').catch(() => undefined)
   }, [id, loggedIn])
   useEffect(() => {
+    if (!loggedIn || !Number.isFinite(id)) return
+    let active = true
+    api.learningBookmarks()
+      .then((items: LearningBookmark[]) => { if (active) setBookmarked(items.some((bookmark) => bookmark.challengeId === id)) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [id, loggedIn])
+  useEffect(() => {
     if (!loggedIn || !item?.hintAvailable) return
     let active = true
     api.vault().then((summary) => { if (active) setHintCredits(summary.hintCredits) }).catch(() => undefined)
     return () => { active = false }
   }, [loggedIn, item?.hintAvailable])
+  useEffect(() => {
+    if (!loggedIn || !item) return
+    const target = document.querySelector('.detail-page .detail-score')
+    if (!(target instanceof HTMLElement)) return
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'challenge-bookmark'
+    button.disabled = bookmarkBusy
+    button.setAttribute('aria-pressed', String(bookmarked))
+    button.textContent = bookmarked ? '★ 저장됨' : '☆ 북마크'
+    const click = async () => {
+      try {
+        setBookmarkBusy(true)
+        if (bookmarked) await api.removeLearningBookmark(item.id)
+        else await api.addLearningBookmark(item.id)
+        setBookmarked((current) => !current)
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Could not update the bookmark.')
+      } finally {
+        setBookmarkBusy(false)
+      }
+    }
+    button.addEventListener('click', click)
+    target.append(button)
+    return () => { button.removeEventListener('click', click); button.remove() }
+  }, [bookmarkBusy, bookmarked, item, loggedIn])
   if (loadError) return <div className="page"><p className="alert error">{loadError}</p><button type="button" className="button secondary" onClick={onBack}>← Back to challenges</button></div>
   if (!item) return <div className="page"><LoadingState label="Opening challenge..." /></div>
   const guide = guideForChallenge(item.title, item.category, item.difficulty)
