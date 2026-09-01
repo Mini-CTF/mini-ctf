@@ -113,10 +113,29 @@ const englishToKorean: Record<string, string> = {
 }
 const koreanToEnglish = Object.fromEntries(Object.entries(englishToKorean).map(([english, korean]) => [korean, english])) as Record<string, string>
 
+const adminEnglishToKorean: Record<string, string> = {
+  'ACCOUNT POWERS': '계정 권한', 'QUICK ACTIONS': '빠른 작업', 'RECENT ACTIVITY': '최근 활동', 'ACTIVE ACCOUNTS': '활성 계정', 'CONTENT RECORDS': '콘텐츠 기록', 'SECURITY EVENTS': '보안 이벤트', 'RECENT SUBMISSIONS': '최근 제출',
+  'ADMINISTRATION': '관리자', 'ACCOUNT MANAGEMENT': '계정 관리', 'COMMUNITY POSTS': '커뮤니티 게시글', 'COMMENTS': '댓글', 'PUBLISH NOTICE': '공지 게시', 'PUBLISHED': '게시됨', 'ANTI-CHEAT': '부정행위 방지', 'CHALLENGE ACTIVITY': '문제 활동', 'SECURITY LOG': '보안 로그', 'AUDIT TRAIL': '관리 기록', 'AI LEARNING HELPER': 'AI 학습 도우미', 'ADMIN CONSOLE': '관리자 콘솔',
+  'Overview': '개요', 'Accounts': '계정', 'Content': '콘텐츠', 'Notices': '공지사항', 'Security': '보안', 'Audit logs': '관리 로그', 'AI feedback': 'AI 피드백',
+  'Account Powers': '계정 권한', 'Score and cosmetic controls': '점수 및 꾸미기 관리', 'Permanent deletion is available only after a reversible deletion.': '복구 가능한 삭제 후에만 영구 삭제할 수 있습니다.',
+  'Adjust score': '점수 조정', 'Grant cosmetic': '꾸미기 지급', 'Remove cosmetic': '꾸미기 회수', 'Permanent delete': '영구 삭제',
+  'Run the platform clearly.': '플랫폼을 한눈에 관리하세요.', 'Manage accounts, community content, notices, and security records in focused workspaces.': '계정, 커뮤니티, 공지사항, 보안 기록을 영역별로 관리할 수 있습니다.',
+  'Operations shortcuts': '빠른 작업', 'Review accounts': '계정 검토', 'Manage content': '콘텐츠 관리', 'Write a notice': '공지 작성', 'Events to review': '확인이 필요한 이벤트', 'Recent activity': '최근 활동',
+  'Account management': '계정 관리', 'Edit names, suspend, restore, or delete accounts. Deleted accounts keep a private restore snapshot.': '이름 수정, 정지, 복구, 계정 삭제를 관리합니다. 삭제된 계정은 복구용 정보를 보관합니다.',
+  'Edit name': '이름 수정', 'Restore account': '계정 복구', 'Restore': '복구', 'Delete account': '계정 삭제', 'Suspend': '정지',
+  'Post management': '게시글 관리', 'Comment management': '댓글 관리', 'Latest': '최근', 'Write a new notice': '새 공지 작성', 'Notice title': '공지 제목', 'Write the notice content': '공지 내용을 입력하세요.', 'Publish notice': '공지 게시', 'Published notices': '게시된 공지',
+  'Security events': '보안 이벤트', 'Submission history': '제출 기록', 'Login and account events': '로그인 및 계정 이벤트', 'Administrator activity': '관리자 활동', 'Only administrators can view these responses.': '관리자만 이 응답을 볼 수 있습니다.', 'No AI feedback yet.': '아직 AI 피드백이 없습니다.', 'No written comment': '작성된 의견 없음',
+  'No records yet.': '아직 기록이 없습니다.', 'No security events to review.': '확인할 보안 이벤트가 없습니다.', 'Platform': '플랫폼', 'No additional details': '추가 정보 없음', 'Correct': '정답', 'Incorrect': '오답', 'Redact': '민감정보 가리기', 'Hide': '숨기기',
+  'Loading administrator data...': '관리자 데이터를 불러오는 중입니다.', 'Could not load administrator data.': '관리자 데이터를 불러오지 못했습니다.', 'Could not load moderation data.': '관리 데이터를 불러오지 못했습니다.', 'Could not load AI feedback.': 'AI 피드백을 불러오지 못했습니다.',
+  'Display name': '표시 이름', 'Suspension reason (shown to the user)': '정지 사유(사용자에게 표시됨)', 'Reason for this point adjustment': '점수 조정 사유', 'Cosmetic ID to grant (for example: steady_solver)': '지급할 꾸미기 ID(예: steady_solver)', 'Cosmetic ID to remove': '회수할 꾸미기 ID',
+  'Point change (use a negative number to remove points)': '점수 변경량(차감하려면 음수 입력)', 'Delete this account?': '이 계정을 삭제할까요?', 'This cannot be undone and all account data will be removed.': '되돌릴 수 없으며 모든 계정 데이터가 삭제됩니다.',
+}
+const adminKoreanToEnglish = Object.fromEntries(Object.entries(adminEnglishToKorean).map(([english, korean]) => [korean, english])) as Record<string, string>
+
 function localizeSystemInterface(language: Language) {
   const root = document.querySelector('.app-shell')
   if (!root) return
-  const dictionary = language === 'ko' ? englishToKorean : koreanToEnglish
+  const dictionary = language === 'ko' ? { ...englishToKorean, ...adminEnglishToKorean } : { ...koreanToEnglish, ...adminKoreanToEnglish }
   const isProtected = (node: Node) => node.parentElement?.closest('code, pre, textarea, input, .community-content, .comment-content, .message, [data-i18n-skip]')
   const replace = (value: string) => {
     const key = value.trim().replace(/^[^A-Za-z0-9가-힣]+/, '').trim()
