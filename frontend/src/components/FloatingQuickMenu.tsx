@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { CircleHelp, Home, Megaphone, Menu, MessageSquarePlus, Sparkles, Swords, X } from 'lucide-react'
+import { Bookmark, CircleHelp, Home, Megaphone, Menu, MessageSquarePlus, Sparkles, Swords, X } from 'lucide-react'
 import './FloatingQuickMenu.css'
 
 type CommunityCategory = 'NOTICE' | 'QUESTION'
@@ -14,6 +14,7 @@ type FloatingQuickMenuProps = {
   onChallenges: () => void
   onAiMode: () => void
   onFeedback: () => void
+  onBookmarks: () => void
 }
 
 const copy = {
@@ -25,6 +26,7 @@ const copy = {
     notice: '공지사항',
     question: 'Q&A',
     challenges: 'Challenges',
+    bookmarks: 'Bookmarks',
     aiMode: 'AI Mode',
     feedback: '피드백',
     aiLabel: 'AI 학습 도우미 열기',
@@ -40,12 +42,13 @@ const copy = {
     challenges: 'Challenges',
     aiMode: 'AI Mode',
     feedback: 'Feedback',
+    bookmarks: 'Bookmarks',
     aiLabel: 'Open AI learning helper',
     aiCloseLabel: 'Close AI learning helper',
   },
 } as const
 
-export default function FloatingQuickMenu({ language, assistantOpen, onAssistantToggle, onHome, onCommunity, onChallenges, onAiMode, onFeedback }: FloatingQuickMenuProps) {
+export default function FloatingQuickMenu({ language, assistantOpen, onAssistantToggle, onHome, onCommunity, onChallenges, onAiMode, onFeedback, onBookmarks }: FloatingQuickMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const labels = copy[language]
 
@@ -62,6 +65,7 @@ export default function FloatingQuickMenu({ language, assistantOpen, onAssistant
         <QuickMenuButton label={labels.notice} icon={<Megaphone />} onClick={() => { closeMenu(); onCommunity('NOTICE') }} />
         <QuickMenuButton label={labels.question} icon={<CircleHelp />} onClick={() => { closeMenu(); onCommunity('QUESTION') }} />
         <QuickMenuButton label={labels.challenges} icon={<Swords />} onClick={() => { closeMenu(); onChallenges() }} />
+        <QuickMenuButton label={labels.bookmarks} icon={<Bookmark />} onClick={() => { closeMenu(); onBookmarks() }} />
         <QuickMenuButton label={labels.aiMode} icon={<Sparkles />} accent onClick={openAiMode} />
         <QuickMenuButton label={labels.feedback} icon={<MessageSquarePlus />} onClick={() => { closeMenu(); onFeedback() }} />
       </div>

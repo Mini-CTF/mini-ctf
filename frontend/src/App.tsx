@@ -421,6 +421,7 @@ function AppShell() {
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh(); void refreshWallet() }} />)} />
         <Route path="/learn" element={<LearnView lang={language} loggedIn={Boolean(user)} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
+        <Route path="/bookmarks" element={user ? guarded(<BookmarksView />) : <Navigate to="/login" replace />} />
         <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
         <Route path="/friends" element={guarded(<FriendsView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community" element={guarded(<EnhancedCommunityView key={location.search} user={user} onLogin={() => go('/login')} />)} />
@@ -441,7 +442,7 @@ function AppShell() {
     <PublicProfileDialog />
     <FloatingAssistant open={assistantOpen} onOpenChange={setAssistantOpen} user={user} language={language} path={path} onLogin={() => go('/login')} />
     {assistantFeedbackOpen && <AssistantFeedbackDialog user={user} language={language} onClose={() => setAssistantFeedbackOpen(false)} onLogin={() => go('/login')} />}
-    <FloatingQuickMenu language={language} assistantOpen={assistantOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onHome={() => go('/')} onCommunity={(nextCategory) => go(`/community?category=${nextCategory}`)} onChallenges={() => go('/challenges')} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} />
+    <FloatingQuickMenu language={language} assistantOpen={assistantOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onHome={() => go('/')} onCommunity={(nextCategory) => go(`/community?category=${nextCategory}`)} onChallenges={() => go('/challenges')} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} onBookmarks={() => go(user ? '/bookmarks' : '/login')} />
     <footer className="site-footer">
       <div className="footer-brand"><strong>FlagBox</strong><p>{language === 'ko' ? '보안을 처음 배우는 사람을 위한 쉽고 안전한 워게임 학습 플랫폼' : 'A safe, beginner-friendly wargame learning platform.'}</p></div>
       <div className="footer-links"><div><b>{language === 'ko' ? '서비스' : 'Services'}</b><nav className="footer-service-links" aria-label={language === 'ko' ? '서비스 바로가기' : 'Service shortcuts'}><button type="button" onClick={() => go('/challenges')}>{language === 'ko' ? '워게임' : 'Wargames'}</button><button type="button" onClick={() => go('/learn')}>{language === 'ko' ? '학습' : 'Learn'}</button><button type="button" onClick={() => go('/ranking')}>{language === 'ko' ? '랭킹' : 'Rankings'}</button><button type="button" onClick={() => go('/community')}>{language === 'ko' ? '커뮤니티' : 'Community'}</button><button type="button" onClick={() => user ? setVaultOpen(true) : go('/login')}>{language === 'ko' ? '상점' : 'Shop'}</button></nav></div><div><b>{language === 'ko' ? '도움말' : 'Help'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '도움말 바로가기' : 'Help shortcuts'}><a href="/guide">{language === 'ko' ? '이용 안내' : 'Guide'}</a><a href="/faq">{language === 'ko' ? '자주 묻는 질문' : 'FAQ'}</a><button className="footer-text-link" data-no-specular type="button" onClick={() => setAssistantFeedbackOpen(true)}>{language === 'ko' ? '피드백' : 'Feedback'}</button></nav><a href="mailto:flagbox.contact@gmail.com">{language === 'ko' ? '문의하기: flagbox.contact@gmail.com' : 'Contact: flagbox.contact@gmail.com'}</a></div><div><b>{language === 'ko' ? '정책' : 'Policies'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '정책 바로가기' : 'Policy shortcuts'}><a href="/terms">{language === 'ko' ? '이용약관' : 'Terms'}</a><a href="/privacy">{language === 'ko' ? '개인정보처리방침' : 'Privacy'}</a><a href="/safe-learning">{language === 'ko' ? '안전한 학습 가이드' : 'Safe learning guide'}</a></nav></div></div>
@@ -697,6 +698,38 @@ function LearningSnapshot({ lang, loggedIn }: { lang: 'ko' | 'en'; loggedIn: boo
     <div className="learning-goal-control">{editing ? <><input aria-label="Weekly solve target" type="number" min="1" max="20" value={target} onChange={(event) => setTarget(Math.max(1, Math.min(20, Number(event.target.value) || 1)))} /><button type="button" className="button secondary" onClick={() => void saveGoal()}>{ko ? '저장' : 'Save'}</button></> : <><strong>{overview.weeklySolved}/{overview.weeklyTarget}</strong><button type="button" className="text-link" onClick={() => setEditing(true)}>{ko ? '목표 변경' : 'Edit goal'}</button></>}</div>
     <div className="learning-snapshot-meta"><span>{ko ? `북마크 ${overview.bookmarkedCount}개` : `${overview.bookmarkedCount} bookmarks`}</span>{overview.achievements.map((achievement) => <span key={achievement.code} title={achievement.description}>✦ {achievement.name}</span>)}</div>
   </section>
+}
+
+function BookmarksView() {
+  const routerNavigate = useNavigate()
+  const [items, setItems] = useState<LearningBookmark[]>([])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const refresh = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError('')
+      setItems(await api.learningBookmarks())
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not load bookmarks.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+  useEffect(() => { void refresh() }, [refresh])
+  const remove = async (challengeId: number) => {
+    try {
+      await api.removeLearningBookmark(challengeId)
+      setItems((current) => current.filter((item) => item.challengeId !== challengeId))
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not remove the bookmark.')
+    }
+  }
+  return <div className="page bookmarks-page"><PageIntro eyebrow="BOOKMARKS" title="저장한 문제" description="나중에 다시 풀고 싶은 문제를 한곳에서 확인하세요." />{loading ? <LoadingState label="북마크를 불러오는 중…" /> : error ? <p className="alert error">{error}</p> : items.length === 0 ? <section className="bookmark-empty"><BookmarkOutlineIcon /><h2>저장한 문제가 없어요.</h2><p>문제 상세의 북마크 아이콘을 누르면 여기에 모입니다.</p><button type="button" className="button primary" onClick={() => routerNavigate('/challenges')}>문제 둘러보기</button></section> : <div className="bookmark-list">{items.map((item) => <article className="bookmark-card" key={item.challengeId}><BookmarkOutlineIcon filled /><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h2>{item.title}</h2><p>{item.score} points {item.solved ? '· Solved' : ''}</p></div><div className="bookmark-actions"><button type="button" className="button secondary" onClick={() => routerNavigate(`/challenges/${item.challengeId}`)}>열기</button><button type="button" className="text-link" onClick={() => void remove(item.challengeId)}>해제</button></div></article>)}</div>}</div>
+}
+
+function BookmarkOutlineIcon({ filled = false }: { filled?: boolean }) {
+  return <svg className={`bookmark-ribbon-icon ${filled ? 'is-filled' : ''}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17l-5.5-3.8-5.5 3.8z" /></svg>
 }
 
 function LearnArticleRoute({ lang }: { lang: 'ko' | 'en' }) {
@@ -962,7 +995,9 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
     button.className = 'challenge-bookmark'
     button.disabled = bookmarkBusy
     button.setAttribute('aria-pressed', String(bookmarked))
-    button.textContent = bookmarked ? '★ 저장됨' : '☆ 북마크'
+    button.setAttribute('aria-label', bookmarked ? '북마크 해제' : '북마크 저장')
+    button.title = bookmarked ? '북마크 해제' : '북마크 저장'
+    button.innerHTML = '<svg class="bookmark-ribbon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h11v17l-5.5-3.8-5.5 3.8z" /></svg>'
     const click = async () => {
       try {
         setBookmarkBusy(true)
