@@ -187,12 +187,16 @@ public class AdminModerationService {
                         "This account has no saved registration IP address"));
     AdminDtos.IpBanView result =
         banIp(new AdminDtos.IpBanRequest(registration.getIpAddress(), request.reason()), adminUsername);
+    target.setStatus("SUSPENDED");
+    target.setSuspensionReason("Account ban: " + request.reason().trim());
+    target.setSuspendedAt(Instant.now());
+    target.setAuthSessionVersion(target.getAuthSessionVersion() + 1);
     audit(
         adminUsername,
         "BAN_USER_REGISTRATION_IP",
         "USER",
         target.getId(),
-        username + " -> " + registration.getIpAddress());
+        username + " suspended and IP banned -> " + registration.getIpAddress());
     return result;
   }
 
