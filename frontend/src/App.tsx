@@ -1590,6 +1590,22 @@ function AdminConsole() {
     if (!window.confirm(`Delete @${username}? Their score, ranking, solves, profile, and community activity will be hidden. The account can be restored later.`)) return
     try { await api.deactivateUser(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the account.') }
   }
+  const permanentlyDelete = async (id: number, username: string) => {
+    if (!window.confirm(`Permanently delete @${username}? This cannot be undone and all account data will be removed.`)) return
+    try { await api.permanentlyDeleteUser(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not permanently delete the account.') }
+  }
+  const adjustScore = async (id: number) => {
+    const amount = Number(window.prompt('Point change (use a negative number to remove points)', '0'))
+    if (!Number.isInteger(amount) || amount === 0) return
+    const reason = window.prompt('Reason for this point adjustment')?.trim()
+    if (!reason) return
+    try { await api.adjustAdminUserScore(id, amount, reason); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not adjust score.') }
+  }
+  const setCosmetic = async (id: number, granted: boolean) => {
+    const cosmeticId = window.prompt(granted ? 'Cosmetic ID to grant (for example: steady_solver)' : 'Cosmetic ID to remove')?.trim()
+    if (!cosmeticId) return
+    try { await api.setAdminUserCosmetic(id, cosmeticId, granted); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update cosmetic ownership.') }
+  }
   const removePost = async (id: number, title: string) => {
     if (!window.confirm(`Delete “${title}”?`)) return
     try { await api.deleteAdminPost(id); await Promise.all([refresh(), loadContent()]) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the post.') }
@@ -1661,6 +1677,7 @@ function AdminConsole() {
   if (!dashboard) return <div className="page admin-page"><PageIntro eyebrow="ADMIN CONSOLE" title="Administrator console" description="Loading platform status and moderation controls." />{error && <p className="alert error">{error}</p>}<p className="muted">Loading administrator data...</p></div>
 
   const notices = posts.filter((post) => post.category === 'NOTICE')
+  const accountPowerTools = tab === 'accounts' && <section className="admin-section admin-card admin-account-power-tools"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT POWERS</p><h2>Score and cosmetic controls</h2></div><small>Permanent deletion is available only after a reversible deletion.</small></div><div className="admin-table">{dashboard.users.filter((item) => item.role !== 'ADMIN').map((item) => <div className="admin-row" key={`powers-${item.id}`}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.status}</small></div><div className="inline-actions">{item.status === 'DELETED' ? <button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(item.id, item.username)}>Permanent delete</button> : <><button type="button" className="button secondary" onClick={() => void adjustScore(item.id)}>Adjust score</button><button type="button" className="button secondary" onClick={() => void setCosmetic(item.id, true)}>Grant cosmetic</button><button type="button" className="button ghost" onClick={() => void setCosmetic(item.id, false)}>Remove cosmetic</button></>}</div></div>)}</div></section>
   const tabs: { id: AdminTab; label: string; count?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'accounts', label: 'Accounts', count: dashboard.users.length },
@@ -1674,6 +1691,7 @@ function AdminConsole() {
   return <div className="page admin-page admin-console">
     <PageIntro eyebrow="ADMIN CONSOLE" title="Run the platform clearly." description="Manage accounts, community content, notices, and security records in focused workspaces." />
     <div className="admin-quick-actions admin-ip-ban-actions"><button type="button" className="button ghost danger-button" onClick={() => void banRegisteredIp()}>계정 IP 차단</button><button type="button" className="button secondary" onClick={() => void manageIpBans()}>IP 차단 관리</button></div>
+    {accountPowerTools}
     {error && <p className="alert error">{error}</p>}
     <div className="admin-summary-grid">
       <div><small>ACTIVE ACCOUNTS</small><strong>{dashboard.users.filter((item) => item.status === 'ACTIVE').length}</strong></div>

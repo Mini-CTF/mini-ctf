@@ -1,7 +1,6 @@
 package com.minictf.admin;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import java.time.Instant;
 import java.util.List;
 
@@ -22,6 +21,13 @@ public final class AdminDtos {
   public record UserUpdateRequest(@NotBlank @Size(max = 80) String nickname) {}
 
   public record SuspensionRequest(@NotBlank @Size(max = 500) String reason) {}
+
+  public record ScoreAdjustmentRequest(
+      @Min(-1_000_000) @Max(1_000_000) int amount,
+      @NotBlank @Size(max = 500) String reason) {}
+
+  public record CosmeticGrantRequest(
+      @NotBlank @Size(max = 50) String cosmeticId, boolean granted) {}
 
   public record IpBanRequest(
       @NotBlank @Size(max = 45) String ipAddress, @NotBlank @Size(max = 500) String reason) {}

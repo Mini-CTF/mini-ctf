@@ -1,6 +1,7 @@
 package com.minictf.admin;
 
 import com.minictf.anticheat.AntiCheatEventRepository;
+import com.minictf.challenge.SolveRepository;
 import com.minictf.challenge.SubmissionRepository;
 import com.minictf.community.Post;
 import com.minictf.community.PostComment;
@@ -8,6 +9,7 @@ import com.minictf.community.PostCommentRepository;
 import com.minictf.community.PostRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
+import com.minictf.vault.CipherVaultService;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.util.List;
@@ -22,30 +24,36 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminModerationService {
   private final UserRepository users;
   private final SubmissionRepository submissions;
+  private final SolveRepository solves;
   private final AntiCheatEventRepository antiCheatEvents;
   private final AdminAuditLogRepository auditLogs;
   private final SecurityEventRepository securityEvents;
   private final PostRepository posts;
   private final PostCommentRepository postComments;
   private final IpBanRepository ipBans;
+  private final CipherVaultService vault;
 
   public AdminModerationService(
       UserRepository users,
       SubmissionRepository submissions,
+      SolveRepository solves,
       AntiCheatEventRepository antiCheatEvents,
       AdminAuditLogRepository auditLogs,
       SecurityEventRepository securityEvents,
       PostRepository posts,
       PostCommentRepository postComments,
-      IpBanRepository ipBans) {
+      IpBanRepository ipBans,
+      CipherVaultService vault) {
     this.users = users;
     this.submissions = submissions;
+    this.solves = solves;
     this.antiCheatEvents = antiCheatEvents;
     this.auditLogs = auditLogs;
     this.securityEvents = securityEvents;
     this.posts = posts;
     this.postComments = postComments;
     this.ipBans = ipBans;
+    this.vault = vault;
   }
 
   @Transactional(readOnly = true)
@@ -70,6 +78,44 @@ public class AdminModerationService {
       throw new IllegalArgumentException("Restore the account before editing it");
     target.setNickname(request.nickname().trim());
     audit(adminUsername, "UPDATE_USER", "USER", targetId, "Updated nickname");
+    return userView(target);
+  }
+
+  @Transactional
+  public AdminDtos.UserView adjustScore(
+      Long targetId, AdminDtos.ScoreAdjustmentRequest request, String adminUsername) {
+    User target = target(targetId);
+    ensureNotAdmin(target);
+    if (!"ACTIVE".equals(target.getStatus()))
+      throw new IllegalArgumentException("Restore the account before adjusting its score");
+    int previous = target.getScore();
+    long next = (long) previous + request.amount();
+    if (next < 0 || next > 1_000_000)
+      throw new IllegalArgumentException("The resulting score must be between 0 and 1,000,000");
+    target.setScore((int) next);
+    audit(
+        adminUsername,
+        "ADJUST_SCORE",
+        "USER",
+        targetId,
+        "Score " + previous + " -> " + next + "; " + request.reason().trim());
+    return userView(target);
+  }
+
+  @Transactional
+  public AdminDtos.UserView setCosmetic(
+      Long targetId, AdminDtos.CosmeticGrantRequest request, String adminUsername) {
+    User target = target(targetId);
+    ensureNotAdmin(target);
+    if (!"ACTIVE".equals(target.getStatus()))
+      throw new IllegalArgumentException("Restore the account before managing cosmetics");
+    vault.setAdminGrant(target, request.cosmeticId().trim(), request.granted());
+    audit(
+        adminUsername,
+        request.granted() ? "GRANT_COSMETIC" : "REVOKE_COSMETIC",
+        "USER",
+        targetId,
+        request.cosmeticId().trim());
     return userView(target);
   }
 
@@ -127,6 +173,20 @@ public class AdminModerationService {
         "USER",
         targetId,
         "Account data hidden and progress reset; reversible restore is available");
+  }
+
+  @Transactional
+  public void permanentlyDelete(Long targetId, String adminUsername) {
+    User target = target(targetId);
+    ensureNotAdmin(target);
+    if (!"DELETED".equals(target.getStatus()))
+      throw new IllegalArgumentException("Only a soft-deleted account can be permanently deleted");
+    Long id = target.getId();
+    // Submissions and solves intentionally keep strict foreign keys; remove them explicitly.
+    submissions.deleteByUserId(id);
+    solves.deleteByUserId(id);
+    users.delete(target);
+    audit(adminUsername, "PERMANENTLY_DELETE_USER", "USER", id, "Irreversible account purge");
   }
 
   @Transactional(readOnly = true)

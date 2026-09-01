@@ -7,8 +7,16 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
-  long countByUserIdAndChallengeIdAndCorrectFalseAndSubmittedAtGreaterThanEqual(
-      Long userId, Long challengeId, Instant since);
+  @Query(
+      "select count(submission) from Submission submission where submission.user.id = :userId and submission.challenge.id = :challengeId and submission.correct = false and submission.submittedAt >= :since")
+  long countRecentIncorrectByUserAndChallenge(
+      @Param("userId") Long userId,
+      @Param("challengeId") Long challengeId,
+      @Param("since") Instant since);
+
+  @Modifying
+  @Query("delete from Submission submission where submission.user.id = :userId")
+  int deleteByUserId(@Param("userId") Long userId);
   @Query(
       "select s from Submission s join fetch s.challenge where s.user.id=:userId order by s.submittedAt desc")
   List<Submission> findByUserId(@Param("userId") Long userId, Pageable pageable);

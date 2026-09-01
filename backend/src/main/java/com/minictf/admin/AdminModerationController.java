@@ -35,6 +35,22 @@ public class AdminModerationController {
     return ApiResponse.ok(service.updateNickname(id, request, auth.getName()));
   }
 
+  @PostMapping("/users/{id}/score")
+  public ApiResponse<?> adjustScore(
+      @PathVariable Long id,
+      @Valid @RequestBody AdminDtos.ScoreAdjustmentRequest request,
+      Authentication auth) {
+    return ApiResponse.ok(service.adjustScore(id, request, auth.getName()));
+  }
+
+  @PostMapping("/users/{id}/cosmetics")
+  public ApiResponse<?> setCosmetic(
+      @PathVariable Long id,
+      @Valid @RequestBody AdminDtos.CosmeticGrantRequest request,
+      Authentication auth) {
+    return ApiResponse.ok(service.setCosmetic(id, request, auth.getName()));
+  }
+
   @PostMapping("/users/{id}/suspend")
   public ApiResponse<?> suspend(
       @PathVariable Long id,
@@ -52,6 +68,12 @@ public class AdminModerationController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deactivate(@PathVariable Long id, Authentication auth) {
     service.deactivate(id, auth.getName());
+  }
+
+  @DeleteMapping("/users/{id}/permanent")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void permanentlyDelete(@PathVariable Long id, Authentication auth) {
+    service.permanentlyDelete(id, auth.getName());
   }
 
   @GetMapping("/ip-bans")

@@ -32,4 +32,8 @@ public interface SolveRepository extends JpaRepository<Solve, Long> {
   Set<Long> findChallengeIdsByUserId(@Param("userId") Long userId);
 
   boolean existsByUserIdAndSolvedAtGreaterThanEqual(Long userId, Instant since);
+
+  @Modifying
+  @Query("delete from Solve solve where solve.user.id = :userId")
+  int deleteByUserId(@Param("userId") Long userId);
 }

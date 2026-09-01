@@ -66,12 +66,29 @@ public class AntiCheatService {
               + elapsedSeconds
               + " seconds after the first recorded activity.");
     }
+    activities
+        .findTopByUserIdAndChallengeIdAndActivityTypeOrderByOccurredAtDesc(
+            user.getId(), challenge.getId(), "ARTIFACT_DOWNLOADED")
+        .ifPresent(
+            download -> {
+              long afterDownload =
+                  Duration.between(download.getOccurredAt(), java.time.Instant.now()).toSeconds();
+              if (afterDownload < Math.max(8, minimumSeconds / 3))
+                recordOnce(
+                    user,
+                    challenge,
+                    "ARTIFACT_TO_FLAG_RUSH",
+                    "MEDIUM",
+                    "Correct FLAG submitted "
+                        + afterDownload
+                        + " seconds after downloading the challenge file.");
+            });
   }
 
   @Transactional
   public void assessIncorrectSubmission(User user, Challenge challenge) {
     long attempts =
-        submissions.countByUserIdAndChallengeIdAndCorrectFalseAndSubmittedAtGreaterThanEqual(
+        submissions.countRecentIncorrectByUserAndChallenge(
             user.getId(), challenge.getId(), java.time.Instant.now().minus(Duration.ofMinutes(5)));
     if (attempts >= 10)
       recordOnce(

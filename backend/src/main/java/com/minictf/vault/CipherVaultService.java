@@ -527,6 +527,22 @@ public class CipherVaultService {
     owned.save(cosmetic);
   }
 
+  /** Administrator-only inventory adjustment. Kept here so the catalog remains the single source of truth. */
+  @Transactional
+  public void setAdminGrant(User user, String cosmeticId, boolean granted) {
+    Item item = item(cosmeticId);
+    if ("CREDIT".equals(item.type()) || "ADMIN".equals(item.source()))
+      throw new IllegalArgumentException("This item cannot be granted to a regular account");
+    if (granted) {
+      grant(user, item.id(), "ADMIN_GRANT");
+      return;
+    }
+    owned.deleteByUserIdAndCosmeticId(user.getId(), item.id());
+    if (item.id().equals(user.getEquippedFrame())) user.setEquippedFrame(null);
+    if (item.id().equals(user.getEquippedAccessory())) user.setEquippedAccessory(null);
+    if (item.id().equals(user.getEquippedVaultTitle())) user.setEquippedVaultTitle(null);
+  }
+
   private Item item(String id) {
     return ITEMS.stream()
         .filter(item -> item.id().equals(id))

@@ -155,6 +155,10 @@ export const api = {
   deleteAdminComment: (id: number) => request<void>(`/admin/community/comments/${id}`, { method: 'DELETE' }),
   updateAdminUser: (id: number, nickname: string) =>
     request(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ nickname }) }),
+  adjustAdminUserScore: (id: number, amount: number, reason: string) =>
+    request(`/admin/users/${id}/score`, { method: 'POST', body: JSON.stringify({ amount, reason }) }),
+  setAdminUserCosmetic: (id: number, cosmeticId: string, granted: boolean) =>
+    request(`/admin/users/${id}/cosmetics`, { method: 'POST', body: JSON.stringify({ cosmeticId, granted }) }),
   suspendUser: (id: number, reason: string) =>
     request(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) }),
   reinstateUser: async (id: number) => {
@@ -170,6 +174,10 @@ export const api = {
   unbanIp: (id: number) => request<void>(`/admin/ip-bans/${id}`, { method: 'DELETE' }),
   deactivateUser: async (id: number) => {
     await request<void>(`/admin/users/${id}`, { method: 'DELETE' })
+    window.dispatchEvent(new Event(rankingChangedEvent))
+  },
+  permanentlyDeleteUser: async (id: number) => {
+    await request<void>(`/admin/users/${id}/permanent`, { method: 'DELETE' })
     window.dispatchEvent(new Event(rankingChangedEvent))
   },
   redactAuditLog: (id: number, reason: string) =>

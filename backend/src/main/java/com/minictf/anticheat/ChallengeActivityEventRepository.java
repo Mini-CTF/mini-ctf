@@ -12,6 +12,10 @@ public interface ChallengeActivityEventRepository
   Optional<ChallengeActivityEvent> findTopByUserIdAndChallengeIdOrderByOccurredAtAsc(
       Long userId, Long challengeId);
 
+  Optional<ChallengeActivityEvent>
+      findTopByUserIdAndChallengeIdAndActivityTypeOrderByOccurredAtDesc(
+          Long userId, Long challengeId, String activityType);
+
   boolean existsByUserIdAndActivityTypeAndOccurredAtGreaterThanEqual(
       Long userId, String activityType, Instant since);
 

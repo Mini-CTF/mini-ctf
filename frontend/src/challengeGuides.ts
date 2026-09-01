@@ -354,9 +354,8 @@ export const challengeGuides: Record<string, ChallengeGuide> = {
 }
 
 /** 카탈로그로 추가되는 연습 문제도 개념 → 도구 → 순서 안내를 빠짐없이 제공한다. */
-export function guideForChallenge(title: string, category: string, difficulty: string): ChallengeGuide {
-  const exact = challengeGuides[title]
-  if (exact) return exact
+export function guideForChallenge(_title: string, category: string, difficulty: string): ChallengeGuide {
+  // Guides teach a reusable approach; they must not reproduce a challenge answer or secret.
   const categoryCopy: Record<string, { concept: string; tools: string[] }> = {
     WEB: {
       concept: '웹 자료는 브라우저에 전달되는 순간 사용자가 확인할 수 있습니다. 소스·요청·저장소의 작은 단서를 차례대로 읽는 습관이 중요해요.',
