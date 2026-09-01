@@ -1345,7 +1345,8 @@
   font-size: 12px;
   line-height: 1.7;
 }
-.site-footer::before { content: 'FlagBox는 이윤을 목적으로 하지 않으며, 학생의 포트폴리오와 개발·보안 학습을 위해 제작된 교육 플랫폼입니다.'; display: block; margin-bottom: 22px; padding: 14px 16px; border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); color: var(--text); font-family: var(--sans); font-size: 14px; font-weight: 700; line-height: 1.75; }
+.site-footer::before { content: 'FlagBox는 이윤을 목적으로 하지 않으며, 학생의 포트폴리오와 개발·보안 학습을 위해 제작된 교육 플랫폼입니다.'; display: block; margin-bottom: 22px; padding: 14px 16px; border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 700; line-height: 1.75; }
+html[data-theme="light"] .site-footer::before { color: #111; }
 html[lang="en"] .site-footer::before { content: 'FlagBox is a non-profit educational platform created for student portfolios and safe development and security learning.'; }
 .footer-brand strong {
   display: block;
