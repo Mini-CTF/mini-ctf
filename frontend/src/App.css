@@ -551,6 +551,26 @@
   padding: 24px 0;
   border-bottom: 1px solid var(--line);
 }
+.challenges-page {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.challenges-view {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.challenges-view .page-intro {
+  margin-bottom: 0;
+}
+.challenges-view .challenge-toolbar {
+  margin-top: 0;
+}
+.challenges-view .challenge-count {
+  margin-top: -4px;
+  margin-bottom: -4px;
+}
 .filter-tabs {
   display: flex;
   gap: 4px;
