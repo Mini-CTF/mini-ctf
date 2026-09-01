@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface SecurityEventRepository extends JpaRepository<SecurityEvent, Long> {
+  long countByEventTypeAndIpAddress(String eventType, String ipAddress);
   @Query(
       "select event from SecurityEvent event left join fetch event.user where event.hidden = false and (event.user is null or event.user.status <> 'DELETED') order by event.createdAt desc")
   List<SecurityEvent> findVisible(Pageable pageable);

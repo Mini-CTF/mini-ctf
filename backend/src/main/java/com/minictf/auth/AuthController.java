@@ -2,6 +2,7 @@ package com.minictf.auth;
 
 import com.minictf.common.ApiResponse;
 import com.minictf.common.RateLimitService;
+import com.minictf.config.IpBanFilter;
 import com.minictf.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -36,9 +37,10 @@ public class AuthController {
   @PostMapping("/register")
   public ResponseEntity<ApiResponse<AuthDtos.AuthResponse>> register(
       @Valid @RequestBody AuthDtos.RegisterRequest req, HttpServletRequest http) {
-    rateLimits.check("register", http.getRemoteAddr(), 10, 60);
+    String ip = IpBanFilter.clientIp(http);
+    rateLimits.check("register", ip, 10, 60);
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.ok(service.register(req, http.getRemoteAddr())));
+        .body(ApiResponse.ok(service.register(req, ip)));
   }
 
   @PostMapping("/login")

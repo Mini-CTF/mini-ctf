@@ -1,6 +1,7 @@
 package com.minictf.auth;
 
 import com.minictf.admin.SecurityEventService;
+import com.minictf.admin.SecurityEventRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import java.net.URI;
@@ -28,6 +29,7 @@ public class AuthService {
   private final PasswordEncoder encoder;
   private final JwtService jwt;
   private final SecurityEventService securityEvents;
+  private final SecurityEventRepository securityEventRepository;
   private final PasswordResetTokenRepository resetTokens;
   private final ObjectProvider<JavaMailSender> mailSender;
   private final String resetUrl;
@@ -41,6 +43,7 @@ public class AuthService {
       PasswordEncoder encoder,
       JwtService jwt,
       SecurityEventService securityEvents,
+      SecurityEventRepository securityEventRepository,
       PasswordResetTokenRepository resetTokens,
       ObjectProvider<JavaMailSender> mailSender,
       @Value("${app.account-recovery.reset-url:http://localhost:5173/login}") String resetUrl,
@@ -51,6 +54,7 @@ public class AuthService {
     this.encoder = encoder;
     this.jwt = jwt;
     this.securityEvents = securityEvents;
+    this.securityEventRepository = securityEventRepository;
     this.resetTokens = resetTokens;
     this.mailSender = mailSender;
     this.resetUrl = resetUrl;
@@ -64,6 +68,8 @@ public class AuthService {
     if (!request.password().equals(request.passwordConfirmation()))
       throw new IllegalArgumentException("비밀번호 확인이 일치하지 않습니다.");
     String username = request.username().trim();
+    if (securityEventRepository.countByEventTypeAndIpAddress("ACCOUNT_REGISTERED", ip) >= 3)
+      throw new AccountRegistrationLimitException();
     if (users.existsByUsernameIgnoreCase(username)
         || users.existsByDeletedOriginalUsernameIgnoreCase(username))
       throw new DuplicateUsernameException();
@@ -244,6 +250,8 @@ public class AuthService {
   public static class AccountSuspendedException extends RuntimeException {}
 
   public static class DuplicateUsernameException extends RuntimeException {}
+
+  public static class AccountRegistrationLimitException extends RuntimeException {}
 
   /** The recovery feature is enabled only after a production mail sender is configured. */
   public static class AccountRecoveryUnavailableException extends RuntimeException {
