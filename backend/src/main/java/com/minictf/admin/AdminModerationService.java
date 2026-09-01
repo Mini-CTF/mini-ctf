@@ -26,6 +26,7 @@ public class AdminModerationService {
   private final SecurityEventRepository securityEvents;
   private final PostRepository posts;
   private final PostCommentRepository postComments;
+  private final IpBanRepository ipBans;
 
   public AdminModerationService(
       UserRepository users,
@@ -34,7 +35,8 @@ public class AdminModerationService {
       AdminAuditLogRepository auditLogs,
       SecurityEventRepository securityEvents,
       PostRepository posts,
-      PostCommentRepository postComments) {
+      PostCommentRepository postComments,
+      IpBanRepository ipBans) {
     this.users = users;
     this.submissions = submissions;
     this.antiCheatEvents = antiCheatEvents;
@@ -42,6 +44,7 @@ public class AdminModerationService {
     this.securityEvents = securityEvents;
     this.posts = posts;
     this.postComments = postComments;
+    this.ipBans = ipBans;
   }
 
   @Transactional(readOnly = true)
@@ -76,6 +79,7 @@ public class AdminModerationService {
     target.setStatus("SUSPENDED");
     target.setSuspensionReason(request.reason().trim());
     target.setSuspendedAt(Instant.now());
+    target.setAuthSessionVersion(target.getAuthSessionVersion() + 1);
     audit(adminUsername, "SUSPEND_USER", "USER", targetId, target.getSuspensionReason());
     return userView(target);
   }
@@ -111,6 +115,7 @@ public class AdminModerationService {
     target.setStatus("DELETED");
     target.setSuspensionReason("Account removed by an administrator");
     target.setSuspendedAt(target.getDeletedAt());
+    target.setAuthSessionVersion(target.getAuthSessionVersion() + 1);
     target.setScore(0);
     target.setNickname("Deleted user");
     target.setUsername("deleted_" + target.getId());
@@ -125,6 +130,34 @@ public class AdminModerationService {
   @Transactional(readOnly = true)
   public List<AdminDtos.SubmissionView> submissions() {
     return submissions(100);
+  }
+
+  @Transactional(readOnly = true)
+  public List<AdminDtos.IpBanView> ipBans() {
+    return ipBans.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+        .map(ban -> new AdminDtos.IpBanView(ban.getId(), ban.getIpAddress(), ban.getReason(), ban.getCreatedBy(), ban.getCreatedAt()))
+        .toList();
+  }
+
+  @Transactional
+  public AdminDtos.IpBanView banIp(AdminDtos.IpBanRequest request, String adminUsername) {
+    String ip = request.ipAddress().trim();
+    if (!ip.matches("[0-9a-fA-F:.]{3,45}")) throw new IllegalArgumentException("유효한 IP 주소를 입력해 주세요.");
+    IpBan ban = ipBans.findByIpAddress(ip).orElseGet(IpBan::new);
+    ban.setIpAddress(ip);
+    ban.setReason(request.reason().trim());
+    ban.setCreatedBy(adminUsername);
+    IpBan saved = ipBans.save(ban);
+    audit(adminUsername, "BAN_IP", "IP", saved.getId(), ip + ": " + saved.getReason());
+    return new AdminDtos.IpBanView(saved.getId(), saved.getIpAddress(), saved.getReason(), saved.getCreatedBy(), saved.getCreatedAt());
+  }
+
+  @Transactional
+  public void unbanIp(Long id, String adminUsername) {
+    IpBan ban = ipBans.findById(id).orElseThrow(() -> new EntityNotFoundException("IP ban not found"));
+    String ip = ban.getIpAddress();
+    ipBans.delete(ban);
+    audit(adminUsername, "UNBAN_IP", "IP", id, ip);
   }
 
   private List<AdminDtos.SubmissionView> submissions(int limit) {

@@ -43,7 +43,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             .findById(userId)
             .ifPresent(
                 user -> {
-                  if (tokenSessionVersion != user.getAuthSessionVersion()) {
+                  if ("DELETED".equals(user.getStatus())) {
+                    try {
+                      SecurityContextHolder.clearContext();
+                      handlers.accountDeleted(response);
+                    } catch (IOException exception) {
+                      throw new SessionInvalidatedException(exception);
+                    }
+                    throw new SessionInvalidatedException();
+                  } else if ("SUSPENDED".equals(user.getStatus())) {
+                    try {
+                      SecurityContextHolder.clearContext();
+                      handlers.accountSuspended(response);
+                    } catch (IOException exception) {
+                      throw new SessionInvalidatedException(exception);
+                    }
+                    throw new SessionInvalidatedException();
+                  } else if (tokenSessionVersion != user.getAuthSessionVersion()) {
                     try {
                       SecurityContextHolder.clearContext();
                       handlers.sessionExpiredByOtherLogin(response);

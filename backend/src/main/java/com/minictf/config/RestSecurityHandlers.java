@@ -27,6 +27,18 @@ public class RestSecurityHandlers {
         "다른 기기에서 로그인되어 세션이 만료되었습니다.");
   }
 
+  public void accountDeleted(HttpServletResponse response) throws IOException {
+    write(response, HttpServletResponse.SC_UNAUTHORIZED, "ACCOUNT_DELETED", "계정이 삭제되었습니다.");
+  }
+
+  public void accountSuspended(HttpServletResponse response) throws IOException {
+    write(response, HttpServletResponse.SC_UNAUTHORIZED, "ACCOUNT_SUSPENDED", "계정이 정지되었습니다.");
+  }
+
+  public void ipBanned(HttpServletResponse response) throws IOException {
+    write(response, HttpServletResponse.SC_FORBIDDEN, "IP_BANNED", "이 IP 주소는 이용이 제한되었습니다.");
+  }
+
   public void forbidden(HttpServletResponse response) throws IOException {
     write(response, HttpServletResponse.SC_FORBIDDEN, "FORBIDDEN", "접근 권한이 없습니다.");
   }

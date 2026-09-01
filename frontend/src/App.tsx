@@ -273,15 +273,21 @@ function AppShell() {
   }, [user?.username, refreshWallet])
 
   useEffect(() => {
-    const expireSession = () => {
+    const expireSession = (event: Event) => {
+      const message = event instanceof CustomEvent && typeof event.detail === 'string' ? event.detail : sessionExpiredMessage
       clearAuthToken()
       setUser(null)
-      setError(sessionExpiredMessage)
+      setError(message)
       routerNavigate('/login?sessionExpired=1', { replace: true })
     }
     window.addEventListener(sessionExpiredEvent, expireSession)
     return () => window.removeEventListener(sessionExpiredEvent, expireSession)
   }, [routerNavigate])
+  useEffect(() => {
+    if (!user || !getAuthToken()) return
+    const timer = window.setInterval(() => { void api.me().catch(() => undefined) }, 10_000)
+    return () => window.clearInterval(timer)
+  }, [user])
 
   useEffect(() => {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('token')
@@ -1552,6 +1558,26 @@ function AdminConsole() {
     }
   }
 
+  const banIp = async () => {
+    const ipAddress = window.prompt('차단할 IP 주소를 입력하세요.')?.trim()
+    if (!ipAddress) return
+    const reason = window.prompt('차단 사유를 입력하세요.')?.trim()
+    if (!reason) return
+    try { await api.banIp(ipAddress, reason); window.alert(`${ipAddress} IP를 차단했습니다.`) }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'IP를 차단하지 못했습니다.') }
+  }
+  const manageIpBans = async () => {
+    try {
+      const bans = await api.ipBans()
+      if (bans.length === 0) { window.alert('현재 차단된 IP가 없습니다.'); return }
+      const selected = window.prompt(`차단 목록\n${bans.map((ban) => `${ban.id}. ${ban.ipAddress} — ${ban.reason}`).join('\n')}\n\n해제할 번호를 입력하세요.`)?.trim()
+      if (!selected) return
+      const id = Number(selected)
+      if (!Number.isInteger(id) || !bans.some((ban) => ban.id === id)) { setError('목록에 있는 번호를 입력해 주세요.'); return }
+      await api.unbanIp(id)
+      window.alert('IP 차단을 해제했습니다.')
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'IP 차단 목록을 불러오지 못했습니다.') }
+  }
   if (!dashboard) return <div className="page admin-page"><PageIntro eyebrow="ADMIN CONSOLE" title="Administrator console" description="Loading platform status and moderation controls." />{error && <p className="alert error">{error}</p>}<p className="muted">Loading administrator data...</p></div>
 
   const notices = posts.filter((post) => post.category === 'NOTICE')
@@ -1567,6 +1593,7 @@ function AdminConsole() {
 
   return <div className="page admin-page admin-console">
     <PageIntro eyebrow="ADMIN CONSOLE" title="Run the platform clearly." description="Manage accounts, community content, notices, and security records in focused workspaces." />
+    <div className="admin-quick-actions admin-ip-ban-actions"><button type="button" className="button ghost danger-button" onClick={() => void banIp()}>IP 차단</button><button type="button" className="button secondary" onClick={() => void manageIpBans()}>IP 차단 관리</button></div>
     {error && <p className="alert error">{error}</p>}
     <div className="admin-summary-grid">
       <div><small>ACTIVE ACCOUNTS</small><strong>{dashboard.users.filter((item) => item.status === 'ACTIVE').length}</strong></div>

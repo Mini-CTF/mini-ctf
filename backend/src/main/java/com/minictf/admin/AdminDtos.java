@@ -23,6 +23,10 @@ public final class AdminDtos {
 
   public record SuspensionRequest(@NotBlank @Size(max = 500) String reason) {}
 
+  public record IpBanRequest(@NotBlank @Size(max = 45) String ipAddress, @NotBlank @Size(max = 500) String reason) {}
+
+  public record IpBanView(Long id, String ipAddress, String reason, String createdBy, Instant createdAt) {}
+
   public record SubmissionView(
       String username, String challengeTitle, boolean correct, Instant submittedAt) {}
 

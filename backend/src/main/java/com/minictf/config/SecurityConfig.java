@@ -120,6 +120,7 @@ public class SecurityConfig {
   @Bean
   SecurityFilterChain securityFilterChain(
       HttpSecurity http,
+      IpBanFilter ipBanFilter,
       JwtAuthenticationFilter jwtFilter,
       OAuth2LoginSuccessHandler oauthHandler,
       OAuth2LoginFailureHandler oauthFailureHandler,
@@ -178,6 +179,7 @@ public class SecurityConfig {
                     .userInfoEndpoint(endpoint -> endpoint.userService(oauth2UserService))
                     .successHandler(oauthHandler)
                     .failureHandler(oauthFailureHandler))
+        .addFilterBefore(ipBanFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
   }

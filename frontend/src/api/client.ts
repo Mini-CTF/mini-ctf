@@ -34,6 +34,11 @@ const GET_RETRY_DELAYS_MS = [500, 1_250]
 export const rankingChangedEvent = 'flagbox:ranking-changed'
 export const sessionExpiredEvent = 'flagbox:session-expired'
 export const sessionExpiredMessage = '다른 기기에서 로그인되어 세션이 만료되었습니다.'
+export const accountAccessMessages: Record<string, string> = {
+  ACCOUNT_DELETED: '계정이 삭제되었습니다.',
+  ACCOUNT_SUSPENDED: '계정이 정지되었습니다.',
+  IP_BANNED: '이 IP 주소는 이용이 제한되었습니다.',
+}
 
 function normalizeUsername(username: string): string {
   return username.trim().replace(/^@\s*/, '')
@@ -61,6 +66,10 @@ async function request<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
       if (body?.error?.code === 'SESSION_EXPIRED_OTHER_LOGIN') {
         clearAuthToken()
         window.dispatchEvent(new CustomEvent(sessionExpiredEvent, { detail: sessionExpiredMessage }))
+      }
+      if (body?.error?.code && accountAccessMessages[body.error.code]) {
+        clearAuthToken()
+        window.dispatchEvent(new CustomEvent(sessionExpiredEvent, { detail: accountAccessMessages[body.error.code] }))
       }
       if (response.ok) return (body?.data ?? body) as T
       const error = new Error(body?.error?.message ?? 'Request failed. Please try again.')
@@ -152,6 +161,10 @@ export const api = {
     window.dispatchEvent(new Event(rankingChangedEvent))
     return result
   },
+  ipBans: () => request<import('../types/api').IpBan[]>('/admin/ip-bans'),
+  banIp: (ipAddress: string, reason: string) =>
+    request<import('../types/api').IpBan>('/admin/ip-bans', { method: 'POST', body: JSON.stringify({ ipAddress, reason }) }),
+  unbanIp: (id: number) => request<void>(`/admin/ip-bans/${id}`, { method: 'DELETE' }),
   deactivateUser: async (id: number) => {
     await request<void>(`/admin/users/${id}`, { method: 'DELETE' })
     window.dispatchEvent(new Event(rankingChangedEvent))

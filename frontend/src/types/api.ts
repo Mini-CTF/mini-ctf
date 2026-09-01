@@ -139,6 +139,14 @@ export type AdminUser = {
   suspendedAt: string | null
 }
 
+export type IpBan = {
+  id: number
+  ipAddress: string
+  reason: string
+  createdBy: string
+  createdAt: string
+}
+
 export type AdminDashboard = {
   users: AdminUser[]
   recentSubmissions: { username: string; challengeTitle: string; correct: boolean; submittedAt: string }[]
