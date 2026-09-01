@@ -12,6 +12,8 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,7 +41,10 @@ public class MvpChallengeInitializer {
       Files.createDirectories(mvpRoot);
       boolean hasFlagStore = Files.isRegularFile(root.resolve(".mvp-flags.properties"));
       Properties flags = loadOrCreateFlags(root);
-      if (!hasFlagStore && hasPersistedMvpArtifacts(challenges)) return;
+      if (!hasFlagStore && hasPersistedMvpArtifacts(challenges)) {
+        reconcilePersistedSignalFlag(challenges, encoder);
+        return;
+      }
 
       seed(
           challenges,
@@ -226,6 +231,33 @@ public class MvpChallengeInitializer {
         .stream()
         .map(challenges::findByTitle)
         .allMatch(challenge -> challenge.isPresent() && challenge.get().getArtifactData() != null);
+  }
+
+  /**
+   * If Render loses the local flag properties file, keep the database-backed artifact and repair
+   * the verifier from that same artifact instead of accepting a stale hash.
+   */
+  private static void reconcilePersistedSignalFlag(
+      ChallengeRepository challenges, PasswordEncoder encoder) {
+    var challenge = challenges.findByTitle("Signal in Plain Sight").orElse(null);
+    if (challenge == null || challenge.getArtifactData() == null) return;
+
+    String artifact = new String(challenge.getArtifactData(), StandardCharsets.UTF_8);
+    Matcher matcher = Pattern.compile("(?m)^Payload:\\s*([A-Za-z0-9+/=]+)\\s*$")
+        .matcher(artifact);
+    if (!matcher.find()) return;
+
+    try {
+      String flag = new String(Base64.getDecoder().decode(matcher.group(1)), StandardCharsets.UTF_8);
+      if (flag.startsWith("CTF{") && flag.endsWith("}")
+          && !encoder.matches(flag, challenge.getFlagHash())) {
+        challenge.setFlagHash(encoder.encode(flag));
+        challenges.save(challenge);
+        challenges.flush();
+      }
+    } catch (IllegalArgumentException ignored) {
+      // Keep startup resilient if an administrator uploaded a non-standard artifact.
+    }
   }
 
   private static void writeVerifier(Path zipPath, String flag) throws IOException {
