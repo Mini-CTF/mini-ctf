@@ -38,6 +38,22 @@ public class SocialRealtimeService {
     }
   }
 
+  public void publishMessageDeletedAfterCommit(
+      String recipientUsername, SocialDtos.MessageDeletedView message) {
+    Runnable publish = () -> send(recipientUsername, "direct-message-deleted", message);
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(
+          new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              publish.run();
+            }
+          });
+    } else {
+      publish.run();
+    }
+  }
+
   public void publishFriendshipAfterCommit(String username, SocialDtos.FriendView friendship) {
     Runnable publish = () -> send(username, "friendship", friendship);
     if (TransactionSynchronizationManager.isSynchronizationActive()) {

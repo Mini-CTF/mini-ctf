@@ -20,4 +20,6 @@ public final class SocialDtos {
 
   public record MessageView(
       Long id, String sender, String recipient, String content, Instant createdAt, boolean read) {}
+
+  public record MessageDeletedView(Long id, String sender, String recipient) {}
 }

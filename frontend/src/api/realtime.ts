@@ -1,9 +1,9 @@
-import type { DirectMessage, Friend } from '../types/api'
+import type { DeletedDirectMessage, DirectMessage, Friend } from '../types/api'
 import { getAuthToken } from './session'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
-export function subscribeToSocialUpdates({ onMessage, onFriendship }: { onMessage: (message: DirectMessage) => void; onFriendship: (friendship: Friend) => void }): () => void {
+export function subscribeToSocialUpdates({ onMessage, onMessageDeleted, onFriendship }: { onMessage: (message: DirectMessage) => void; onMessageDeleted: (message: DeletedDirectMessage) => void; onFriendship: (friendship: Friend) => void }): () => void {
   const token = getAuthToken()
   if (!token) return () => undefined
   const controller = new AbortController()
@@ -29,6 +29,7 @@ export function subscribeToSocialUpdates({ onMessage, onFriendship }: { onMessag
           const data = event.split('\n').find((line) => line.startsWith('data:'))?.slice(5)
           if (!data) continue
           if (eventName === 'direct-message') onMessage(JSON.parse(data) as DirectMessage)
+          if (eventName === 'direct-message-deleted') onMessageDeleted(JSON.parse(data) as DeletedDirectMessage)
           if (eventName === 'friendship') onFriendship(JSON.parse(data) as Friend)
         }
       }

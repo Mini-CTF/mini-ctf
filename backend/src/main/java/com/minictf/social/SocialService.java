@@ -128,12 +128,19 @@ public class SocialService {
       User current, Long messageId, SocialDtos.MessageRequest request) {
     DirectMessage message = ownedMessage(current, messageId);
     message.setContent(request.content().trim());
-    return messageView(message);
+    SocialDtos.MessageView view = messageView(message);
+    realtime.publishAfterCommit(message.getRecipient().getUsername(), view);
+    return view;
   }
 
   @Transactional
   public void deleteMessage(User current, Long messageId) {
-    messages.delete(ownedMessage(current, messageId));
+    DirectMessage message = ownedMessage(current, messageId);
+    SocialDtos.MessageDeletedView view =
+        new SocialDtos.MessageDeletedView(
+            message.getId(), message.getSender().getUsername(), message.getRecipient().getUsername());
+    messages.delete(message);
+    realtime.publishMessageDeletedAfterCommit(message.getRecipient().getUsername(), view);
   }
 
   private Friendship relationship(User current, User other) {

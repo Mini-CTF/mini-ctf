@@ -283,6 +283,12 @@ export type DirectMessage = {
   read: boolean
 }
 
+export type DeletedDirectMessage = {
+  id: number
+  sender: string
+  recipient: string
+}
+
 export type LearningOverview = {
   weeklyTarget: number
   weeklySolved: number

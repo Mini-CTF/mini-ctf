@@ -1179,8 +1179,15 @@ function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged
     if (!user) return
     return subscribeToSocialUpdates({
       onMessage: (message) => {
-        if (message.sender !== selectedFriend) return
-        setMessages((currentMessages) => currentMessages.some((item) => item.id === message.id) ? currentMessages : [...currentMessages, message])
+        const other = message.sender === user.username ? message.recipient : message.sender
+        if (other !== selectedFriend) return
+        setMessages((currentMessages) => currentMessages.some((item) => item.id === message.id)
+          ? currentMessages.map((item) => item.id === message.id ? message : item)
+          : [...currentMessages, message])
+      },
+      onMessageDeleted: (message) => {
+        const other = message.sender === user.username ? message.recipient : message.sender
+        if (other === selectedFriend) setMessages((currentMessages) => currentMessages.filter((item) => item.id !== message.id))
       },
       onFriendship: (friendship) => {
         setFriends((currentFriends) => {
@@ -1268,6 +1275,10 @@ function FriendsView({ user, onLogin }: { user: User | null; onLogin: () => void
       onMessage: (message) => {
         const other = message.sender === user.username ? message.recipient : message.sender
         if (other === selectedFriend) upsertMessage(message)
+      },
+      onMessageDeleted: (message) => {
+        const other = message.sender === user.username ? message.recipient : message.sender
+        if (other === selectedFriend) setMessages((current) => current.filter((item) => item.id !== message.id))
       },
       onFriendship: (friendship) => setFriends((current) => {
         const exists = current.some((item) => item.username === friendship.username)
