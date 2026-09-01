@@ -2,6 +2,7 @@ package com.minictf.challenge;
 
 import com.minictf.anticheat.AntiCheatService;
 import com.minictf.common.RateLimitService;
+import com.minictf.learning.ChallengeLikeRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -27,6 +28,7 @@ public class ChallengeService {
   private final PasswordEncoder encoder;
   private final RateLimitService rateLimits;
   private final AntiCheatService antiCheat;
+  private final ChallengeLikeRepository likes;
   private final Path artifactRoot;
 
   public ChallengeService(
@@ -38,6 +40,7 @@ public class ChallengeService {
       PasswordEncoder encoder,
       RateLimitService rateLimits,
       AntiCheatService antiCheat,
+      ChallengeLikeRepository likes,
       @Value("${app.artifact.storage-root}") String root) {
     this.challenges = challenges;
     this.users = users;
@@ -47,14 +50,26 @@ public class ChallengeService {
     this.encoder = encoder;
     this.rateLimits = rateLimits;
     this.antiCheat = antiCheat;
+    this.likes = likes;
     this.artifactRoot = Paths.get(root).toAbsolutePath().normalize();
   }
 
   @Transactional(readOnly = true)
   public List<ChallengeDtos.Summary> list(String username) {
     Set<Long> solvedIds = solvedIds(username);
-    return challenges.findByActiveTrueOrderByIdAsc().stream()
-        .map(c -> summary(c, solvedIds.contains(c.getId()), solves.countByChallengeId(c.getId())))
+    List<Challenge> active = challenges.findByActiveTrueOrderByIdAsc();
+    Set<Long> ids = active.stream().map(Challenge::getId).collect(java.util.stream.Collectors.toSet());
+    Map<Long, Long> likeCounts = likeCounts(ids);
+    Set<Long> likedIds = username == null ? Set.of() : likes.findChallengeIdsByUserId(userId(username));
+    return active.stream()
+        .map(
+            c ->
+                summary(
+                    c,
+                    solvedIds.contains(c.getId()),
+                    solves.countByChallengeId(c.getId()),
+                    likeCounts.getOrDefault(c.getId(), 0L),
+                    likedIds.contains(c.getId())))
         .toList();
   }
 
@@ -62,6 +77,7 @@ public class ChallengeService {
   public ChallengeDtos.Detail detail(Long id, String username) {
     Challenge c = getActive(id);
     Set<Long> solvedIds = solvedIds(username);
+    long likeCount = likes.countByChallengeIds(Set.of(id)).stream().mapToLong(row -> ((Number) row[1]).longValue()).findFirst().orElse(0L);
     return new ChallengeDtos.Detail(
         c.getId(),
         c.getTitle(),
@@ -73,7 +89,9 @@ public class ChallengeService {
         hasArtifact(c),
         c.getHintText() != null && !c.getHintText().isBlank(),
         c.getHintCost(),
-        solves.countByChallengeId(id));
+        solves.countByChallengeId(id),
+        likeCount,
+        username != null && likes.existsByUserIdAndChallengeId(userId(username), id));
   }
 
   @Transactional
@@ -96,6 +114,7 @@ public class ChallengeService {
     String normalizedFlag = flag == null ? "" : flag.trim();
     if (!encoder.matches(normalizedFlag, c.getFlagHash())) {
       recorder.record(initialUser.getId(), c.getId(), false);
+      antiCheat.assessIncorrectSubmission(initialUser, c);
       throw new InvalidFlagException();
     }
     User u = users.findByUsernameForUpdate(username).orElseThrow();
@@ -305,7 +324,8 @@ public class ChallengeService {
     return c.getArtifactPath() != null && !c.getArtifactPath().isBlank();
   }
 
-  private ChallengeDtos.Summary summary(Challenge c, boolean solved, long solveCount) {
+  private ChallengeDtos.Summary summary(
+      Challenge c, boolean solved, long solveCount, long likeCount, boolean liked) {
     return new ChallengeDtos.Summary(
         c.getId(),
         c.getTitle(),
@@ -314,7 +334,21 @@ public class ChallengeService {
         c.getScore(),
         solved,
         hasArtifact(c),
-        solveCount);
+        solveCount,
+        likeCount,
+        liked);
+  }
+
+  private Map<Long, Long> likeCounts(Set<Long> challengeIds) {
+    if (challengeIds.isEmpty()) return Map.of();
+    Map<Long, Long> result = new HashMap<>();
+    for (Object[] row : likes.countByChallengeIds(challengeIds))
+      result.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+    return result;
+  }
+
+  private Long userId(String username) {
+    return users.findByUsernameIgnoreCase(username).orElseThrow().getId();
   }
 
   private ChallengeDtos.AdminView adminView(Challenge c) {

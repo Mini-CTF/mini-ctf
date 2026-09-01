@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Bookmark, Flame, Menu, MessageSquarePlus, Sparkles, X } from 'lucide-react'
+import { Bookmark, Heart, Menu, MessageSquarePlus, Sparkles, X } from 'lucide-react'
 import './FloatingQuickMenu.css'
 
 type Language = 'ko' | 'en'
@@ -61,7 +61,7 @@ export default function FloatingQuickMenu({ language, assistantOpen, onAssistant
     <div className="floating-tools">
       <div id="quick-menu" className={`quick-menu ${menuOpen ? 'is-open' : ''}`} aria-label={labels.menu}>
         <QuickMenuButton label={labels.bookmarks} icon={<Bookmark />} onClick={() => { closeMenu(); onBookmarks() }} />
-        <QuickMenuButton label={labels.popular} icon={<Flame />} accent onClick={() => { closeMenu(); onPopular() }} />
+        <QuickMenuButton label={labels.popular} icon={<Heart />} accent onClick={() => { closeMenu(); onPopular() }} />
         <QuickMenuButton label={labels.aiMode} icon={<Sparkles />} accent onClick={openAiMode} />
         <QuickMenuButton label={labels.feedback} icon={<MessageSquarePlus />} onClick={() => { closeMenu(); onFeedback() }} />
       </div>

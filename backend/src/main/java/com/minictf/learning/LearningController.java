@@ -37,6 +37,23 @@ public class LearningController {
     service.removeBookmark(auth.getName(), challengeId);
   }
 
+  @GetMapping("/popular-challenges")
+  public ApiResponse<?> popularChallenges(Authentication auth) {
+    return ApiResponse.ok(service.popular(auth.getName()));
+  }
+
+  @PutMapping("/likes/{challengeId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void like(@PathVariable Long challengeId, Authentication auth) {
+    service.like(auth.getName(), challengeId);
+  }
+
+  @DeleteMapping("/likes/{challengeId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void removeLike(@PathVariable Long challengeId, Authentication auth) {
+    service.removeLike(auth.getName(), challengeId);
+  }
+
   @PutMapping("/goal")
   public ApiResponse<?> updateGoal(
       @Valid @RequestBody LearningDtos.GoalRequest request, Authentication auth) {

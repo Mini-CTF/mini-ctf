@@ -1,6 +1,7 @@
 package com.minictf.anticheat;
 
 import com.minictf.challenge.Challenge;
+import com.minictf.challenge.SubmissionRepository;
 import com.minictf.user.User;
 import java.time.Duration;
 import org.springframework.stereotype.Service;
@@ -10,11 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class AntiCheatService {
   private final ChallengeActivityEventRepository activities;
   private final AntiCheatEventRepository events;
+  private final SubmissionRepository submissions;
 
   public AntiCheatService(
-      ChallengeActivityEventRepository activities, AntiCheatEventRepository events) {
+      ChallengeActivityEventRepository activities,
+      AntiCheatEventRepository events,
+      SubmissionRepository submissions) {
     this.activities = activities;
     this.events = events;
+    this.submissions = submissions;
   }
 
   @Transactional
@@ -61,6 +66,20 @@ public class AntiCheatService {
               + elapsedSeconds
               + " seconds after the first recorded activity.");
     }
+  }
+
+  @Transactional
+  public void assessIncorrectSubmission(User user, Challenge challenge) {
+    long attempts =
+        submissions.countByUserIdAndChallengeIdAndCorrectFalseAndSubmittedAtGreaterThanEqual(
+            user.getId(), challenge.getId(), java.time.Instant.now().minus(Duration.ofMinutes(5)));
+    if (attempts >= 10)
+      recordOnce(
+          user,
+          challenge,
+          "REPEATED_INVALID_FLAGS",
+          "MEDIUM",
+          "Ten or more incorrect FLAG submissions were recorded within five minutes.");
   }
 
   private void recordOnce(

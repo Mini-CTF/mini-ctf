@@ -12,6 +12,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Service;
@@ -24,18 +27,21 @@ public class LearningService {
   private final SolveRepository solves;
   private final ChallengeBookmarkRepository bookmarks;
   private final LearningGoalRepository goals;
+  private final ChallengeLikeRepository likes;
 
   public LearningService(
       UserRepository users,
       ChallengeRepository challenges,
       SolveRepository solves,
       ChallengeBookmarkRepository bookmarks,
-      LearningGoalRepository goals) {
+      LearningGoalRepository goals,
+      ChallengeLikeRepository likes) {
     this.users = users;
     this.challenges = challenges;
     this.solves = solves;
     this.bookmarks = bookmarks;
     this.goals = goals;
+    this.likes = likes;
   }
 
   @Transactional(readOnly = true)
@@ -108,6 +114,55 @@ public class LearningService {
   @Transactional
   public void removeBookmark(String username, Long challengeId) {
     bookmarks.deleteByUserIdAndChallengeId(user(username).getId(), challengeId);
+  }
+
+  @Transactional
+  public void like(String username, Long challengeId) {
+    User user = user(username);
+    Challenge challenge =
+        challenges
+            .findById(challengeId)
+            .filter(Challenge::isActive)
+            .orElseThrow(() -> new EntityNotFoundException("Challenge not found"));
+    if (likes.existsByUserIdAndChallengeId(user.getId(), challengeId)) return;
+    ChallengeLike entry = new ChallengeLike();
+    entry.setUser(user);
+    entry.setChallenge(challenge);
+    likes.save(entry);
+  }
+
+  @Transactional
+  public void removeLike(String username, Long challengeId) {
+    likes.deleteByUserIdAndChallengeId(user(username).getId(), challengeId);
+  }
+
+  @Transactional(readOnly = true)
+  public List<LearningDtos.PopularChallenge> popular(String username) {
+    User user = user(username);
+    List<Challenge> active = challenges.findByActiveTrueOrderByIdAsc();
+    Set<Long> ids = active.stream().map(Challenge::getId).collect(java.util.stream.Collectors.toSet());
+    Map<Long, Long> counts = new HashMap<>();
+    if (!ids.isEmpty())
+      for (Object[] row : likes.countByChallengeIds(ids))
+        counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+    Set<Long> solvedIds = solves.findChallengeIdsByUserId(user.getId());
+    return active.stream()
+        .filter(challenge -> counts.getOrDefault(challenge.getId(), 0L) >= 3)
+        .sorted(
+            Comparator.comparingLong((Challenge challenge) -> counts.get(challenge.getId()))
+                .reversed()
+                .thenComparing(Challenge::getId))
+        .map(
+            challenge ->
+                new LearningDtos.PopularChallenge(
+                    challenge.getId(),
+                    challenge.getTitle(),
+                    challenge.getCategory(),
+                    challenge.getDifficulty(),
+                    challenge.getScore(),
+                    solvedIds.contains(challenge.getId()),
+                    counts.get(challenge.getId())))
+        .toList();
   }
 
   @Transactional

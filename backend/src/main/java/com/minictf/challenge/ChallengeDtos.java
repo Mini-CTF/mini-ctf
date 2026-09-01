@@ -14,7 +14,9 @@ public final class ChallengeDtos {
       int score,
       boolean solved,
       boolean artifactAvailable,
-      long solveCount) {}
+      long solveCount,
+      long likeCount,
+      boolean liked) {}
 
   public record Detail(
       Long id,
@@ -27,7 +29,9 @@ public final class ChallengeDtos {
       boolean artifactAvailable,
       boolean hintAvailable,
       int hintCost,
-      long solveCount) {}
+      long solveCount,
+      long likeCount,
+      boolean liked) {}
 
   public record HintView(String hint, int remainingCredits) {}
 

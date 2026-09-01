@@ -25,6 +25,7 @@ import type {
   HiddenSummary,
   LearningOverview,
   LearningBookmark,
+  PopularChallenge,
 } from '../types/api'
 import { clearAuthToken, getAuthToken } from './session'
 
@@ -206,6 +207,9 @@ export const api = {
   learningBookmarks: () => request<LearningBookmark[]>('/learning/bookmarks'),
   addLearningBookmark: (challengeId: number) => request<void>(`/learning/bookmarks/${challengeId}`, { method: 'PUT' }),
   removeLearningBookmark: (challengeId: number) => request<void>(`/learning/bookmarks/${challengeId}`, { method: 'DELETE' }),
+  popularChallenges: () => request<PopularChallenge[]>('/learning/popular-challenges'),
+  addChallengeLike: (challengeId: number) => request<void>(`/learning/likes/${challengeId}`, { method: 'PUT' }),
+  removeChallengeLike: (challengeId: number) => request<void>(`/learning/likes/${challengeId}`, { method: 'DELETE' }),
   claimHiddenMission: (id: string) => request<HiddenSummary>(`/vault/hidden/missions/${encodeURIComponent(id)}/claim`, { method: 'POST' }),
   friends: () => request<Friend[]>('/social/friends'),
   requestFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(normalizeUsername(username))}`, { method: 'POST' }),

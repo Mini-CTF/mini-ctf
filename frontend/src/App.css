@@ -3664,6 +3664,76 @@ html[data-theme="dark"] .bookmark-ribbon-icon.is-filled {
   cursor: wait;
   opacity: 0.65;
 }
+.challenge-heart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 40px;
+  margin-top: 5px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.challenge-heart-icon {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+.challenge-heart[aria-pressed="true"] .challenge-heart-icon,
+.challenge-heart-icon.is-filled {
+  fill: #e34c5b;
+  stroke: #e34c5b;
+}
+.challenge-heart small { font-size: 11px; font-weight: 800; }
+.challenge-heart:disabled { cursor: wait; opacity: .65; }
+.challenge-search {
+  display: grid;
+  gap: 7px;
+  max-width: 460px;
+  margin: 0 0 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+.challenge-search input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.challenge-toolbar .popular-filter { display: none; }
+.category-progress-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin: 0 0 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.category-progress-panel h2, .category-progress-panel p { margin: 0; }
+.category-progress-panel h2 { color: var(--text); font-size: 20px; }
+.category-progress-panel p { margin-top: 5px; color: var(--muted); font-size: 14px; }
+.category-progress-chart { grid-column: 1 / -1; display: grid; gap: 12px; }
+.category-progress-row { display: grid; gap: 7px; }
+.category-progress-row > div:first-child { display: flex; justify-content: space-between; gap: 14px; color: var(--text); font-size: 14px; }
+.category-progress-row span { color: var(--muted); font-weight: 700; }
+.category-progress-bar { height: 9px; overflow: hidden; border-radius: 999px; background: var(--surface-strong); }
+.category-progress-bar i { display: block; height: 100%; border-radius: inherit; background: #3d8cff; transition: width .28s ease; }
+@media (max-width: 620px) { .category-progress-panel { grid-template-columns: 1fr; } .category-progress-panel > .button { justify-self: start; } }
 .bookmarks-page {
   max-width: 960px;
 }

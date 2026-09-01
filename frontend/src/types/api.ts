@@ -17,9 +17,21 @@ export type ChallengeSummary = {
   solved: boolean
   artifactAvailable: boolean
   solveCount: number
+  likeCount: number
+  liked: boolean
 }
 
 export type ChallengeDetail = ChallengeSummary & { description: string; hintAvailable: boolean; hintCost: number }
+
+export type PopularChallenge = {
+  challengeId: number
+  title: string
+  category: string
+  difficulty: string
+  score: number
+  solved: boolean
+  likeCount: number
+}
 
 export type RankingRow = {
   rank: number

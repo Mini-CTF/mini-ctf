@@ -27,6 +27,15 @@ public final class LearningDtos {
       boolean solved,
       Instant createdAt) {}
 
+  public record PopularChallenge(
+      Long challengeId,
+      String title,
+      String category,
+      String difficulty,
+      int score,
+      boolean solved,
+      long likeCount) {}
+
   public record Achievement(String code, String name, String description) {}
 
   public record GoalRequest(@Min(1) @Max(20) int weeklyTarget) {}
