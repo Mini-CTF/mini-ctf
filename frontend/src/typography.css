@@ -626,8 +626,21 @@ html[lang='en'] .friends-page .message-meta small.is-read::after { content: 'Rea
 .tier-emblem-veteran { --tier-ink: #ffd0a4; --tier-edge: #ffbd82; --tier-glow: rgba(255,189,130,.3); }
 .tier-emblem-master { --tier-ink: #ffc6ef; --tier-edge: #ffb4e8; --tier-glow: rgba(255,180,232,.3); }
 .tier-emblem-root { --tier-ink: #ffe9eb; --tier-edge: #f23c52; --tier-glow: rgba(242,60,82,.38); }
-.public-profile-trigger { border: 0; background: transparent; padding: 5px; text-align: left; cursor: pointer; }
+.public-profile-trigger,
+.public-profile-trigger:hover,
+.public-profile-trigger:focus,
+.public-profile-trigger:active {
+  appearance: none;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 5px;
+  text-align: left;
+  cursor: pointer;
+}
 .public-profile-trigger:hover strong { color: var(--accent); }
+.public-profile-trigger:focus-visible { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
 .community-post-row > span, .threaded-comment .comment > strong, .comment.reply > strong { cursor: pointer; }
 .public-profile-backdrop { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, .66); backdrop-filter: blur(8px); }
 .public-profile-card { width: min(560px, 100%); max-height: min(760px, calc(100vh - 40px)); overflow: auto; position: relative; padding: 30px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); box-shadow: 0 28px 90px rgba(0, 0, 0, .45); }
