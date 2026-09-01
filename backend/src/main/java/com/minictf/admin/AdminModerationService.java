@@ -85,7 +85,6 @@ public class AdminModerationService {
   public AdminDtos.UserView adjustScore(
       Long targetId, AdminDtos.ScoreAdjustmentRequest request, String adminUsername) {
     User target = targetForUpdate(targetId);
-    ensureNotAdmin(target);
     if (!"ACTIVE".equals(target.getStatus()))
       throw new IllegalArgumentException("Restore the account before adjusting its score");
     int previous = target.getScore();
