@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent, type ReactNode, type WheelEvent } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { api, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
+import { adminAccountChangedEvent, api, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
 import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
 import { subscribeToSocialUpdates } from './api/realtime'
 import GettingStartedTutorial from './onboarding'
@@ -12,7 +12,7 @@ import AetherFlowHero from './components/ui/aether-flow-hero'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import FloatingQuickMenu from './components/FloatingQuickMenu'
-import type { AdminComment, AdminDashboard, AdminPost, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, LearningBookmark, LearningOverview, PopularChallenge, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
+import type { AdminComment, AdminDashboard, AdminPost, AdminUser, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, LearningBookmark, LearningOverview, PopularChallenge, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-cutout.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
 import './App.css'
@@ -342,6 +342,21 @@ function AppShell() {
     }
     window.addEventListener(rankingChangedEvent, refreshRankings)
     return () => window.removeEventListener(rankingChangedEvent, refreshRankings)
+  }, [])
+
+  useEffect(() => {
+    const refreshAccount = () => {
+      void api.me().then(setUser).catch(() => undefined)
+    }
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === 'flagbox-admin-account-change') refreshAccount()
+    }
+    window.addEventListener(adminAccountChangedEvent, refreshAccount)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener(adminAccountChangedEvent, refreshAccount)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [])
 
   useEffect(() => {
@@ -1596,35 +1611,48 @@ function AdminConsole({ language }: { language: Language }) {
     if (tab === 'ai-feedback') void loadAssistantFeedback()
   }, [tab, loadAssistantFeedback, loadContent])
 
+  const applyAccountChange = (next: AdminUser) => {
+    setDashboard((current) => current
+      ? { ...current, users: current.users.map((item) => item.id === next.id ? next : item) }
+      : current)
+  }
+
   const editUser = async (id: number, nickname: string) => {
     const next = window.prompt('Display name', nickname)
     if (!next) return
-    try { await api.updateAdminUser(id, next); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update the account.') }
+    try { applyAccountChange(await api.updateAdminUser(id, next)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update the account.') }
   }
   const suspend = async (id: number) => {
     const reason = window.prompt('Suspension reason (shown to the user)')
     if (!reason) return
-    try { await api.suspendUser(id, reason); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not suspend the account.') }
+    try { applyAccountChange(await api.suspendUser(id, reason)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not suspend the account.') }
+  }
+  const reinstate = async (id: number) => {
+    try { applyAccountChange(await api.reinstateUser(id)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not restore the account.') }
   }
   const deactivate = async (id: number, username: string) => {
     if (!window.confirm(`Delete @${username}? Their score, ranking, solves, profile, and community activity will be hidden. The account can be restored later.`)) return
-    try { await api.deactivateUser(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the account.') }
+    try { applyAccountChange(await api.deactivateUser(id)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the account.') }
   }
   const permanentlyDelete = async (id: number, username: string) => {
     if (!window.confirm(`Permanently delete @${username}? This cannot be undone and all account data will be removed.`)) return
-    try { await api.permanentlyDeleteUser(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not permanently delete the account.') }
+    try { await api.permanentlyDeleteUser(id); setDashboard((current) => current ? { ...current, users: current.users.filter((item) => item.id !== id) } : current); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not permanently delete the account.') }
   }
   const adjustScore = async (id: number) => {
-    const amount = Number(window.prompt(ko ? '변경할 점수를 입력하세요. 차감하려면 음수로 입력하세요.' : 'Point change (use a negative number to remove points)', '0'))
-    if (!Number.isInteger(amount) || amount === 0) return
+    const rawAmount = window.prompt(ko ? '조정할 점수를 입력하세요. 차감하려면 마이너스(-)로 입력하세요.' : 'Point change (use a negative number to remove points)', '0')
+    if (rawAmount === null) return
+    const normalizedAmount = rawAmount.trim().replaceAll(',', '')
+    if (!/^[+-]?\d+$/.test(normalizedAmount)) { setError(ko ? '점수는 정수로 입력해 주세요.' : 'Enter a whole number for the point change.'); return }
+    const amount = Number(normalizedAmount)
+    if (!Number.isSafeInteger(amount) || amount === 0) return
     const reason = window.prompt(ko ? '점수 조정 사유를 입력하세요.' : 'Reason for this point adjustment')?.trim()
     if (!reason) return
-    try { await api.adjustAdminUserScore(id, amount, reason); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not adjust score.') }
+    try { applyAccountChange(await api.adjustAdminUserScore(id, amount, reason)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not adjust score.') }
   }
   const setCosmetic = async (id: number, granted: boolean) => {
     const cosmeticId = window.prompt(granted ? 'Cosmetic ID to grant (for example: steady_solver)' : 'Cosmetic ID to remove')?.trim()
     if (!cosmeticId) return
-    try { await api.setAdminUserCosmetic(id, cosmeticId, granted); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update cosmetic ownership.') }
+    try { applyAccountChange(await api.setAdminUserCosmetic(id, cosmeticId, granted)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update cosmetic ownership.') }
   }
   const removePost = async (id: number, title: string) => {
     if (!window.confirm(`Delete “${title}”?`)) return
@@ -1731,7 +1759,7 @@ function AdminConsole({ language }: { language: Language }) {
       <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">RECENT ACTIVITY</p><h2>Recent submissions</h2></div><button type="button" className="text-button" onClick={() => setTab('security')}>View all</button></div><AdminSubmissionList items={dashboard.recentSubmissions.slice(0, 5)} /></section>
     </div>}
 
-    {tab === 'accounts' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>Account management</h2></div><small>Edit names, suspend, restore, or delete accounts. Deleted accounts keep a private restore snapshot.</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.role} · {item.status}</small>{item.suspensionReason && <small className="danger-text">Suspension reason: {item.suspensionReason}</small>}</div>{item.role !== 'ADMIN' && <div className="inline-actions">{item.status !== 'DELETED' && <button type="button" className="button secondary" onClick={() => void editUser(item.id, item.nickname)}>Edit name</button>}{item.status === 'ACTIVE' ? <button type="button" className="button ghost danger-button" onClick={() => void suspend(item.id)}>Suspend</button> : <button type="button" className="button secondary" onClick={() => void api.reinstateUser(item.id).then(refresh).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not restore the account.'))}>{item.status === 'DELETED' ? 'Restore account' : 'Restore'}</button>}{item.status !== 'DELETED' && <button type="button" className="text-button danger-text" onClick={() => void deactivate(item.id, item.username)}>Delete account</button>}</div>}</div>)}</div></section>}
+    {tab === 'accounts' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>Account management</h2></div><small>Edit names, suspend, restore, or delete accounts. Deleted accounts keep a private restore snapshot.</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.role} · {item.status}</small>{item.suspensionReason && <small className="danger-text">Suspension reason: {item.suspensionReason}</small>}</div>{item.role !== 'ADMIN' && <div className="inline-actions">{item.status !== 'DELETED' && <button type="button" className="button secondary" onClick={() => void editUser(item.id, item.nickname)}>Edit name</button>}{item.status === 'ACTIVE' ? <button type="button" className="button ghost danger-button" onClick={() => void suspend(item.id)}>Suspend</button> : <button type="button" className="button secondary" onClick={() => void reinstate(item.id)}>{item.status === 'DELETED' ? 'Restore account' : 'Restore'}</button>}{item.status !== 'DELETED' && <button type="button" className="text-button danger-text" onClick={() => void deactivate(item.id, item.username)}>Delete account</button>}</div>}</div>)}</div></section>}
 
     {tab === 'content' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMUNITY POSTS</p><h2>Post management</h2></div><small>Latest {posts.length}</small></div><div className="admin-table">{posts.filter((post) => post.category !== 'NOTICE').map((post) => <div className="admin-row" key={post.id}><div><strong>{post.title}</strong><small><Badge tone={post.category}>{post.category}</Badge> @{post.authorNickname || post.author} · {post.commentCount} comments · {new Date(post.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removePost(post.id, post.title)}>Delete</button></div>)}</div></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMENTS</p><h2>Comment management</h2></div><small>Latest {comments.length}</small></div><div className="admin-table">{comments.map((comment) => <div className="admin-row" key={comment.id}><div><strong>{comment.content}</strong><small>“{comment.postTitle}” · @{comment.authorNickname || comment.author} · {new Date(comment.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removeComment(comment.id)}>Delete</button></div>)}</div></section></div>}
 

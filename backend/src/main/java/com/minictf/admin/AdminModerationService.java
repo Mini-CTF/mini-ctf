@@ -149,10 +149,10 @@ public class AdminModerationService {
   }
 
   @Transactional
-  public void deactivate(Long targetId, String adminUsername) {
+  public AdminDtos.UserView deactivate(Long targetId, String adminUsername) {
     User target = target(targetId);
     ensureNotAdmin(target);
-    if ("DELETED".equals(target.getStatus())) return;
+    if ("DELETED".equals(target.getStatus())) return userView(target);
     target.setDeletedOriginalUsername(target.getUsername());
     target.setDeletedOriginalNickname(target.getNickname());
     target.setDeletedOriginalScore(target.getScore());
@@ -173,6 +173,7 @@ public class AdminModerationService {
         "USER",
         targetId,
         "Account data hidden and progress reset; reversible restore is available");
+    return userView(target);
   }
 
   @Transactional

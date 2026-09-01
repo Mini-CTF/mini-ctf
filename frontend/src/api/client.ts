@@ -8,6 +8,7 @@ import type {
   AssistantReply,
   AssistantFeedback,
   AdminDashboard,
+  AdminUser,
   AdminPost,
   CommunityCategory,
   PageView,
@@ -33,6 +34,7 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 const REQUEST_TIMEOUT_MS = 12_000
 const GET_RETRY_DELAYS_MS = [500, 1_250]
 export const rankingChangedEvent = 'flagbox:ranking-changed'
+export const adminAccountChangedEvent = 'flagbox:admin-account-changed'
 export const sessionExpiredEvent = 'flagbox:session-expired'
 export const sessionExpiredMessage = '다른 기기에서 로그인되어 세션이 만료되었습니다.'
 export const accountAccessMessages: Record<string, string> = {
@@ -46,6 +48,16 @@ function normalizeUsername(username: string): string {
 }
 
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms))
+
+function notifyAdminAccountChanged(user?: AdminUser): void {
+  window.dispatchEvent(new Event(rankingChangedEvent))
+  if (user) window.dispatchEvent(new CustomEvent(adminAccountChangedEvent, { detail: user }))
+  try {
+    window.localStorage.setItem('flagbox-admin-account-change', `${Date.now()}:${user?.id ?? 'unknown'}`)
+  } catch {
+    // Storage may be unavailable in private browsing; the in-tab event still works.
+  }
+}
 
 type ApiRequestInit = RequestInit & { timeoutMs?: number }
 
@@ -153,17 +165,29 @@ export const api = {
     request<AdminPost>('/admin/notices', { method: 'POST', body: JSON.stringify(payload) }),
   deleteAdminPost: (id: number) => request<void>(`/admin/community/posts/${id}`, { method: 'DELETE' }),
   deleteAdminComment: (id: number) => request<void>(`/admin/community/comments/${id}`, { method: 'DELETE' }),
-  updateAdminUser: (id: number, nickname: string) =>
-    request(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ nickname }) }),
-  adjustAdminUserScore: (id: number, amount: number, reason: string) =>
-    request(`/admin/users/${id}/score`, { method: 'POST', body: JSON.stringify({ amount, reason }) }),
-  setAdminUserCosmetic: (id: number, cosmeticId: string, granted: boolean) =>
-    request(`/admin/users/${id}/cosmetics`, { method: 'POST', body: JSON.stringify({ cosmeticId, granted }) }),
-  suspendUser: (id: number, reason: string) =>
-    request(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  updateAdminUser: async (id: number, nickname: string) => {
+    const result = await request<AdminUser>(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ nickname }) })
+    notifyAdminAccountChanged(result)
+    return result
+  },
+  adjustAdminUserScore: async (id: number, amount: number, reason: string) => {
+    const result = await request<AdminUser>(`/admin/users/${id}/score`, { method: 'POST', body: JSON.stringify({ amount, reason }) })
+    notifyAdminAccountChanged(result)
+    return result
+  },
+  setAdminUserCosmetic: async (id: number, cosmeticId: string, granted: boolean) => {
+    const result = await request<AdminUser>(`/admin/users/${id}/cosmetics`, { method: 'POST', body: JSON.stringify({ cosmeticId, granted }) })
+    notifyAdminAccountChanged(result)
+    return result
+  },
+  suspendUser: async (id: number, reason: string) => {
+    const result = await request<AdminUser>(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) })
+    notifyAdminAccountChanged(result)
+    return result
+  },
   reinstateUser: async (id: number) => {
-    const result = await request(`/admin/users/${id}/reinstate`, { method: 'POST' })
-    window.dispatchEvent(new Event(rankingChangedEvent))
+    const result = await request<AdminUser>(`/admin/users/${id}/reinstate`, { method: 'POST' })
+    notifyAdminAccountChanged(result)
     return result
   },
   ipBans: () => request<import('../types/api').IpBan[]>('/admin/ip-bans'),
@@ -173,12 +197,13 @@ export const api = {
     request<import('../types/api').IpBan>('/admin/ip-bans/by-username', { method: 'POST', body: JSON.stringify({ username, reason }) }),
   unbanIp: (id: number) => request<void>(`/admin/ip-bans/${id}`, { method: 'DELETE' }),
   deactivateUser: async (id: number) => {
-    await request<void>(`/admin/users/${id}`, { method: 'DELETE' })
-    window.dispatchEvent(new Event(rankingChangedEvent))
+    const result = await request<AdminUser>(`/admin/users/${id}`, { method: 'DELETE' })
+    notifyAdminAccountChanged(result)
+    return result
   },
   permanentlyDeleteUser: async (id: number) => {
     await request<void>(`/admin/users/${id}/permanent`, { method: 'DELETE' })
-    window.dispatchEvent(new Event(rankingChangedEvent))
+    notifyAdminAccountChanged()
   },
   redactAuditLog: (id: number, reason: string) =>
     request<void>(`/admin/audit-logs/${id}/redact`, { method: 'PATCH', body: JSON.stringify({ reason }) }),

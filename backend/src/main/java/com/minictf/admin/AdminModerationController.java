@@ -65,9 +65,8 @@ public class AdminModerationController {
   }
 
   @DeleteMapping("/users/{id}")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void deactivate(@PathVariable Long id, Authentication auth) {
-    service.deactivate(id, auth.getName());
+  public ApiResponse<?> deactivate(@PathVariable Long id, Authentication auth) {
+    return ApiResponse.ok(service.deactivate(id, auth.getName()));
   }
 
   @DeleteMapping("/users/{id}/permanent")
