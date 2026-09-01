@@ -49,7 +49,8 @@ public class AdminModerationService {
 
   @Transactional(readOnly = true)
   public AdminDtos.Dashboard dashboard() {
-    return new AdminDtos.Dashboard(users(), submissions(40), events(40), logs(40), securityEvents(40));
+    return new AdminDtos.Dashboard(
+        users(), submissions(40), events(40), logs(40), securityEvents(40));
   }
 
   @Transactional(readOnly = true)
@@ -135,26 +136,40 @@ public class AdminModerationService {
   @Transactional(readOnly = true)
   public List<AdminDtos.IpBanView> ipBans() {
     return ipBans.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
-        .map(ban -> new AdminDtos.IpBanView(ban.getId(), ban.getIpAddress(), ban.getReason(), ban.getCreatedBy(), ban.getCreatedAt()))
+        .map(
+            ban ->
+                new AdminDtos.IpBanView(
+                    ban.getId(),
+                    ban.getIpAddress(),
+                    ban.getReason(),
+                    ban.getCreatedBy(),
+                    ban.getCreatedAt()))
         .toList();
   }
 
   @Transactional
   public AdminDtos.IpBanView banIp(AdminDtos.IpBanRequest request, String adminUsername) {
     String ip = request.ipAddress().trim();
-    if (!ip.matches("[0-9a-fA-F:.]{3,45}")) throw new IllegalArgumentException("유효한 IP 주소를 입력해 주세요.");
+    if (!ip.matches("[0-9a-fA-F:.]{3,45}"))
+      throw new IllegalArgumentException("유효한 IP 주소를 입력해 주세요.");
     IpBan ban = ipBans.findByIpAddress(ip).orElseGet(IpBan::new);
     ban.setIpAddress(ip);
     ban.setReason(request.reason().trim());
     ban.setCreatedBy(adminUsername);
     IpBan saved = ipBans.save(ban);
     audit(adminUsername, "BAN_IP", "IP", saved.getId(), ip + ": " + saved.getReason());
-    return new AdminDtos.IpBanView(saved.getId(), saved.getIpAddress(), saved.getReason(), saved.getCreatedBy(), saved.getCreatedAt());
+    return new AdminDtos.IpBanView(
+        saved.getId(),
+        saved.getIpAddress(),
+        saved.getReason(),
+        saved.getCreatedBy(),
+        saved.getCreatedAt());
   }
 
   @Transactional
   public void unbanIp(Long id, String adminUsername) {
-    IpBan ban = ipBans.findById(id).orElseThrow(() -> new EntityNotFoundException("IP ban not found"));
+    IpBan ban =
+        ipBans.findById(id).orElseThrow(() -> new EntityNotFoundException("IP ban not found"));
     String ip = ban.getIpAddress();
     ipBans.delete(ban);
     audit(adminUsername, "UNBAN_IP", "IP", id, ip);

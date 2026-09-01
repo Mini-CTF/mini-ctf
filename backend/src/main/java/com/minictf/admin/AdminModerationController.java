@@ -60,7 +60,8 @@ public class AdminModerationController {
   }
 
   @PostMapping("/ip-bans")
-  public ApiResponse<?> banIp(@Valid @RequestBody AdminDtos.IpBanRequest request, Authentication auth) {
+  public ApiResponse<?> banIp(
+      @Valid @RequestBody AdminDtos.IpBanRequest request, Authentication auth) {
     return ApiResponse.ok(service.banIp(request, auth.getName()));
   }
 

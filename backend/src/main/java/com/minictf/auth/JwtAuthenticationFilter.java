@@ -39,42 +39,46 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Object rawSessionVersion = claims.get("sessionVersion");
         long tokenSessionVersion =
             rawSessionVersion instanceof Number number ? number.longValue() : Long.MIN_VALUE;
-        users
-            .findById(userId)
-            .ifPresent(
-                user -> {
-                  if ("DELETED".equals(user.getStatus())) {
-                    try {
-                      SecurityContextHolder.clearContext();
-                      handlers.accountDeleted(response);
-                    } catch (IOException exception) {
-                      throw new SessionInvalidatedException(exception);
-                    }
-                    throw new SessionInvalidatedException();
-                  } else if ("SUSPENDED".equals(user.getStatus())) {
-                    try {
-                      SecurityContextHolder.clearContext();
-                      handlers.accountSuspended(response);
-                    } catch (IOException exception) {
-                      throw new SessionInvalidatedException(exception);
-                    }
-                    throw new SessionInvalidatedException();
-                  } else if (tokenSessionVersion != user.getAuthSessionVersion()) {
-                    try {
-                      SecurityContextHolder.clearContext();
-                      handlers.sessionExpiredByOtherLogin(response);
-                    } catch (IOException exception) {
-                      throw new SessionInvalidatedException(exception);
-                    }
-                    throw new SessionInvalidatedException();
-                  } else if ("ACTIVE".equals(user.getStatus()))
-                    SecurityContextHolder.getContext()
-                        .setAuthentication(
-                            new UsernamePasswordAuthenticationToken(
-                                user.getUsername(),
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))));
-                });
+        var user = users.findById(userId);
+        if (user.isEmpty()) {
+          SecurityContextHolder.clearContext();
+          handlers.accountDeleted(response);
+          return;
+        }
+        user.ifPresent(
+            currentUser -> {
+              if ("DELETED".equals(currentUser.getStatus())) {
+                try {
+                  SecurityContextHolder.clearContext();
+                  handlers.accountDeleted(response);
+                } catch (IOException exception) {
+                  throw new SessionInvalidatedException(exception);
+                }
+                throw new SessionInvalidatedException();
+              } else if ("SUSPENDED".equals(currentUser.getStatus())) {
+                try {
+                  SecurityContextHolder.clearContext();
+                  handlers.accountSuspended(response);
+                } catch (IOException exception) {
+                  throw new SessionInvalidatedException(exception);
+                }
+                throw new SessionInvalidatedException();
+              } else if (tokenSessionVersion != currentUser.getAuthSessionVersion()) {
+                try {
+                  SecurityContextHolder.clearContext();
+                  handlers.sessionExpiredByOtherLogin(response);
+                } catch (IOException exception) {
+                  throw new SessionInvalidatedException(exception);
+                }
+                throw new SessionInvalidatedException();
+              } else if ("ACTIVE".equals(currentUser.getStatus()))
+                SecurityContextHolder.getContext()
+                    .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(
+                            currentUser.getUsername(),
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + currentUser.getRole()))));
+            });
       } catch (SessionInvalidatedException exception) {
         return;
       } catch (RuntimeException ignored) {

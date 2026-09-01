@@ -22,9 +22,19 @@ public class LearningGoal {
 
   @PrePersist
   @PreUpdate
-  void stamp() { updatedAt = Instant.now(); }
+  void stamp() {
+    updatedAt = Instant.now();
+  }
 
-  public void setUser(User user) { this.user = user; }
-  public int getWeeklySolveTarget() { return weeklySolveTarget; }
-  public void setWeeklySolveTarget(int weeklySolveTarget) { this.weeklySolveTarget = weeklySolveTarget; }
+  public void setUser(User user) {
+    this.user = user;
+  }
+
+  public int getWeeklySolveTarget() {
+    return weeklySolveTarget;
+  }
+
+  public void setWeeklySolveTarget(int weeklySolveTarget) {
+    this.weeklySolveTarget = weeklySolveTarget;
+  }
 }

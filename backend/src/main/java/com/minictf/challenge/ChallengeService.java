@@ -93,7 +93,8 @@ public class ChallengeService {
     Challenge c = getActive(id);
     User initialUser = users.findByUsernameIgnoreCase(username).orElseThrow();
     rateLimits.check("flag", initialUser.getId() + ":" + ip + ":" + id, 20, 60);
-    if (!encoder.matches(flag, c.getFlagHash())) {
+    String normalizedFlag = flag == null ? "" : flag.trim();
+    if (!encoder.matches(normalizedFlag, c.getFlagHash())) {
       recorder.record(initialUser.getId(), c.getId(), false);
       throw new InvalidFlagException();
     }
@@ -199,8 +200,7 @@ public class ChallengeService {
     if (c.getArtifactPath() == null || c.getArtifactPath().isBlank())
       throw new EntityNotFoundException("Artifact not found");
     Path file = artifactRoot.resolve(c.getArtifactPath()).normalize();
-    if (!file.startsWith(artifactRoot))
-      throw new EntityNotFoundException("Artifact not found");
+    if (!file.startsWith(artifactRoot)) throw new EntityNotFoundException("Artifact not found");
     if (!Files.isRegularFile(file) && c.getArtifactData() != null) {
       try {
         Files.createDirectories(file.getParent());
@@ -231,7 +231,7 @@ public class ChallengeService {
     c.setDifficulty(r.difficulty().toUpperCase(Locale.ROOT));
     c.setScore(r.score());
     if (creating || (r.flag() != null && !r.flag().isBlank()))
-      c.setFlagHash(encoder.encode(r.flag()));
+      c.setFlagHash(encoder.encode(r.flag().trim()));
     c.setArtifactPath(normalizeArtifactPath(r.artifactPath()));
     c.setHintText(r.hintText() == null || r.hintText().isBlank() ? null : r.hintText().trim());
     c.setHintCost(r.hintCost());

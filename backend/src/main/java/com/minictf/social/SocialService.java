@@ -138,7 +138,9 @@ public class SocialService {
     DirectMessage message = ownedMessage(current, messageId);
     SocialDtos.MessageDeletedView view =
         new SocialDtos.MessageDeletedView(
-            message.getId(), message.getSender().getUsername(), message.getRecipient().getUsername());
+            message.getId(),
+            message.getSender().getUsername(),
+            message.getRecipient().getUsername());
     messages.delete(message);
     realtime.publishMessageDeletedAfterCommit(message.getRecipient().getUsername(), view);
   }

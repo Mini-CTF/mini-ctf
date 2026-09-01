@@ -2,8 +2,8 @@ package com.minictf.assistant;
 
 import com.minictf.common.ApiResponse;
 import jakarta.validation.Valid;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -1,7 +1,7 @@
 package com.minictf.auth;
 
-import com.minictf.admin.SecurityEventService;
 import com.minictf.admin.SecurityEventRepository;
+import com.minictf.admin.SecurityEventService;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import java.net.URI;
@@ -36,7 +36,8 @@ public class AuthService {
   private final String mailFrom;
   private final String resendApiKey;
   private final String resendFrom;
-  private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+  private final HttpClient httpClient =
+      HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
   public AuthService(
       UserRepository users,
@@ -92,26 +93,38 @@ public class AuthService {
   @Transactional
   public AuthDtos.RecoveryMessage recoverUsername(AuthDtos.UsernameRecoveryRequest request) {
     String email = request.email().trim().toLowerCase();
-    users.findByEmailIgnoreCase(email).filter(user -> user.getPasswordHash() != null).ifPresent(user ->
-        sendMail(email, "FlagBox 아이디 안내", "FlagBox에서 사용하는 아이디는 @" + user.getUsername() + " 입니다."));
+    users
+        .findByEmailIgnoreCase(email)
+        .filter(user -> user.getPasswordHash() != null)
+        .ifPresent(
+            user ->
+                sendMail(
+                    email,
+                    "FlagBox 아이디 안내",
+                    "FlagBox에서 사용하는 아이디는 @" + user.getUsername() + " 입니다."));
     return new AuthDtos.RecoveryMessage("아이디 안내를 이메일로 보냈습니다. 이메일을 확인해 주세요.");
   }
 
   @Transactional
   public AuthDtos.RecoveryMessage requestPasswordReset(AuthDtos.PasswordRecoveryRequest request) {
     String email = request.email().trim().toLowerCase();
-    users.findByUsernameIgnoreCase(request.username().trim())
+    users
+        .findByUsernameIgnoreCase(request.username().trim())
         .filter(user -> user.getPasswordHash() != null && email.equalsIgnoreCase(user.getEmail()))
-        .ifPresent(user -> {
-          resetTokens.deleteByUserId(user.getId());
-          String raw = newResetToken();
-          PasswordResetToken token = new PasswordResetToken();
-          token.setUser(user);
-          token.setTokenHash(sha256(raw));
-          token.setExpiresAt(Instant.now().plus(20, ChronoUnit.MINUTES));
-          resetTokens.save(token);
-          sendMail(email, "FlagBox 비밀번호 재설정", "아래 링크는 20분 동안만 유효합니다.\n" + resetUrl + "?resetToken=" + raw);
-        });
+        .ifPresent(
+            user -> {
+              resetTokens.deleteByUserId(user.getId());
+              String raw = newResetToken();
+              PasswordResetToken token = new PasswordResetToken();
+              token.setUser(user);
+              token.setTokenHash(sha256(raw));
+              token.setExpiresAt(Instant.now().plus(20, ChronoUnit.MINUTES));
+              resetTokens.save(token);
+              sendMail(
+                  email,
+                  "FlagBox 비밀번호 재설정",
+                  "아래 링크는 20분 동안만 유효합니다.\n" + resetUrl + "?resetToken=" + raw);
+            });
     return new AuthDtos.RecoveryMessage("비밀번호 재설정 링크를 이메일로 보냈습니다. 이메일을 확인해 주세요.");
   }
 
@@ -119,13 +132,18 @@ public class AuthService {
   public AuthDtos.RecoveryMessage resetPassword(AuthDtos.PasswordResetRequest request) {
     if (!request.password().equals(request.passwordConfirmation()))
       throw new IllegalArgumentException("비밀번호 확인이 일치하지 않습니다.");
-    PasswordResetToken token = resetTokens.findByTokenHashAndUsedAtIsNull(sha256(request.token())).orElseThrow(() -> new IllegalArgumentException("재설정 링크가 유효하지 않습니다."));
-    if (token.getExpiresAt().isBefore(Instant.now())) throw new IllegalArgumentException("재설정 링크가 만료되었습니다.");
+    PasswordResetToken token =
+        resetTokens
+            .findByTokenHashAndUsedAtIsNull(sha256(request.token()))
+            .orElseThrow(() -> new IllegalArgumentException("재설정 링크가 유효하지 않습니다."));
+    if (token.getExpiresAt().isBefore(Instant.now()))
+      throw new IllegalArgumentException("재설정 링크가 만료되었습니다.");
     User user = users.findByIdForUpdate(token.getUser().getId()).orElseThrow();
     user.setPasswordHash(encoder.encode(request.password()));
     user.setAuthSessionVersion(user.getAuthSessionVersion() + 1);
     token.setUsedAt(Instant.now());
-    securityEvents.record(user, "PASSWORD_RESET", user.getUsername(), null, "Password reset by email token");
+    securityEvents.record(
+        user, "PASSWORD_RESET", user.getUsername(), null, "Password reset by email token");
     return new AuthDtos.RecoveryMessage("비밀번호를 변경했습니다. 새 비밀번호로 로그인해 주세요.");
   }
 
@@ -176,7 +194,8 @@ public class AuthService {
             .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
             .build();
     try {
-      HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+      HttpResponse<Void> response =
+          httpClient.send(request, HttpResponse.BodyHandlers.discarding());
       if (response.statusCode() < 200 || response.statusCode() >= 300)
         throw new AccountRecoveryUnavailableException();
     } catch (InterruptedException exception) {
@@ -203,8 +222,13 @@ public class AuthService {
   }
 
   private static String sha256(String value) {
-    try { return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))); }
-    catch (java.security.NoSuchAlgorithmException exception) { throw new IllegalStateException(exception); }
+    try {
+      return java.util.HexFormat.of()
+          .formatHex(
+              MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));
+    } catch (java.security.NoSuchAlgorithmException exception) {
+      throw new IllegalStateException(exception);
+    }
   }
 
   @Transactional

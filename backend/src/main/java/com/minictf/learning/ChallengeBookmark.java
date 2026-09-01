@@ -27,9 +27,23 @@ public class ChallengeBookmark {
     if (createdAt == null) createdAt = Instant.now();
   }
 
-  public User getUser() { return user; }
-  public void setUser(User user) { this.user = user; }
-  public Challenge getChallenge() { return challenge; }
-  public void setChallenge(Challenge challenge) { this.challenge = challenge; }
-  public Instant getCreatedAt() { return createdAt; }
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User user) {
+    this.user = user;
+  }
+
+  public Challenge getChallenge() {
+    return challenge;
+  }
+
+  public void setChallenge(Challenge challenge) {
+    this.challenge = challenge;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
 }

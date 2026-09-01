@@ -70,17 +70,17 @@ public class FlagboxChallengeInitializer {
         Files.write(file, artifact);
         var created =
             service.create(
-            new ChallengeDtos.AdminRequest(
-                seed.title(),
-                seed.description(),
-                seed.category(),
-                seed.difficulty(),
-                seed.score(),
-                flag,
-                artifactPath,
-                true,
-                seed.hint(),
-                1));
+                new ChallengeDtos.AdminRequest(
+                    seed.title(),
+                    seed.description(),
+                    seed.category(),
+                    seed.difficulty(),
+                    seed.score(),
+                    flag,
+                    artifactPath,
+                    true,
+                    seed.hint(),
+                    1));
         var challenge = challenges.findById(created.id()).orElseThrow();
         challenge.setArtifactData(artifact);
         challenges.save(challenge);

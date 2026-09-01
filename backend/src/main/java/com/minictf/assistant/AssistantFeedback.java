@@ -7,7 +7,8 @@ import java.time.Instant;
 @Entity
 @Table(name = "assistant_feedback")
 public class AssistantFeedback {
-  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -23,12 +24,35 @@ public class AssistantFeedback {
   @Column(nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
 
-  public Long getId() { return id; }
-  public User getUser() { return user; }
-  public void setUser(User value) { user = value; }
-  public int getRating() { return rating; }
-  public void setRating(int value) { rating = value; }
-  public String getComment() { return comment; }
-  public void setComment(String value) { comment = value; }
-  public Instant getCreatedAt() { return createdAt; }
+  public Long getId() {
+    return id;
+  }
+
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User value) {
+    user = value;
+  }
+
+  public int getRating() {
+    return rating;
+  }
+
+  public void setRating(int value) {
+    rating = value;
+  }
+
+  public String getComment() {
+    return comment;
+  }
+
+  public void setComment(String value) {
+    comment = value;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
 }

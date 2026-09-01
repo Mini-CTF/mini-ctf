@@ -23,14 +23,39 @@ public class IpBan {
   private Instant createdAt;
 
   @PrePersist
-  void onCreate() { if (createdAt == null) createdAt = Instant.now(); }
+  void onCreate() {
+    if (createdAt == null) createdAt = Instant.now();
+  }
 
-  public Long getId() { return id; }
-  public String getIpAddress() { return ipAddress; }
-  public String getReason() { return reason; }
-  public String getCreatedBy() { return createdBy; }
-  public Instant getCreatedAt() { return createdAt; }
-  public void setIpAddress(String value) { ipAddress = value; }
-  public void setReason(String value) { reason = value; }
-  public void setCreatedBy(String value) { createdBy = value; }
+  public Long getId() {
+    return id;
+  }
+
+  public String getIpAddress() {
+    return ipAddress;
+  }
+
+  public String getReason() {
+    return reason;
+  }
+
+  public String getCreatedBy() {
+    return createdBy;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setIpAddress(String value) {
+    ipAddress = value;
+  }
+
+  public void setReason(String value) {
+    reason = value;
+  }
+
+  public void setCreatedBy(String value) {
+    createdBy = value;
+  }
 }

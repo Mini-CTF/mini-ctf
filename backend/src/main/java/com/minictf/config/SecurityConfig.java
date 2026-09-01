@@ -41,8 +41,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @EnableScheduling
 public class SecurityConfig {
-  private static final String DISCORD_USER_AGENT =
-      "FlagBox (https://flagbox.vercel.app, 0.1)";
+  private static final String DISCORD_USER_AGENT = "FlagBox (https://flagbox.vercel.app, 0.1)";
 
   @Bean
   PasswordEncoder passwordEncoder() {

@@ -65,7 +65,10 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(AuthService.AccountRegistrationLimitException.class)
   ResponseEntity<ErrorResponse> accountRegistrationLimit() {
-    return response(HttpStatus.TOO_MANY_REQUESTS, "ACCOUNT_REGISTRATION_LIMIT", "같은 접속 환경에서는 계정을 최대 3개까지 만들 수 있습니다.");
+    return response(
+        HttpStatus.TOO_MANY_REQUESTS,
+        "ACCOUNT_REGISTRATION_LIMIT",
+        "같은 접속 환경에서는 계정을 최대 3개까지 만들 수 있습니다.");
   }
 
   @ExceptionHandler(AuthService.DuplicateUsernameException.class)

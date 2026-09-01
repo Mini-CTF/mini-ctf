@@ -24,12 +24,35 @@ public class PasswordResetToken {
   @Column(name = "used_at")
   private Instant usedAt;
 
-  public User getUser() { return user; }
-  public void setUser(User value) { user = value; }
-  public String getTokenHash() { return tokenHash; }
-  public void setTokenHash(String value) { tokenHash = value; }
-  public Instant getExpiresAt() { return expiresAt; }
-  public void setExpiresAt(Instant value) { expiresAt = value; }
-  public Instant getUsedAt() { return usedAt; }
-  public void setUsedAt(Instant value) { usedAt = value; }
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User value) {
+    user = value;
+  }
+
+  public String getTokenHash() {
+    return tokenHash;
+  }
+
+  public void setTokenHash(String value) {
+    tokenHash = value;
+  }
+
+  public Instant getExpiresAt() {
+    return expiresAt;
+  }
+
+  public void setExpiresAt(Instant value) {
+    expiresAt = value;
+  }
+
+  public Instant getUsedAt() {
+    return usedAt;
+  }
+
+  public void setUsedAt(Instant value) {
+    usedAt = value;
+  }
 }

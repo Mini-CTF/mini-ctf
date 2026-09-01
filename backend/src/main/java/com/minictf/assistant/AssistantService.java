@@ -67,37 +67,57 @@ public class AssistantService {
     rateLimits.check("assistant-chat", username, 12, 600);
     if (apiKey.isBlank()) throw new AssistantUnavailableException();
     if (asksForRestrictedAnswer(request.message()))
-      return new AssistantDtos.ChatReply(korean ? SAFE_REPLY_KO : SAFE_REPLY_EN, contextLabel(request.challengeId()));
+      return new AssistantDtos.ChatReply(
+          korean ? SAFE_REPLY_KO : SAFE_REPLY_EN, contextLabel(request.challengeId()));
 
-    Challenge challenge = request.challengeId() == null ? null : findChallenge(request.challengeId());
-    String response = callModel(primaryModel, systemPrompt(korean, challenge), request.message(), request.history());
+    Challenge challenge =
+        request.challengeId() == null ? null : findChallenge(request.challengeId());
+    String response =
+        callModel(
+            primaryModel, systemPrompt(korean, challenge), request.message(), request.history());
     if (response == null && !fallbackModel.equals(primaryModel))
-      response = callModel(fallbackModel, systemPrompt(korean, challenge), request.message(), request.history());
+      response =
+          callModel(
+              fallbackModel, systemPrompt(korean, challenge), request.message(), request.history());
     if (response == null || response.isBlank()) throw new AssistantUnavailableException();
-    return new AssistantDtos.ChatReply(response.trim(), challenge == null ? null : challenge.getTitle());
+    return new AssistantDtos.ChatReply(
+        response.trim(), challenge == null ? null : challenge.getTitle());
   }
 
   public void saveFeedback(String username, AssistantDtos.FeedbackRequest request) {
     AssistantFeedback item = new AssistantFeedback();
     item.setUser(users.findByUsernameIgnoreCase(username).orElseThrow());
     item.setRating(request.rating());
-    item.setComment(request.comment() == null || request.comment().isBlank() ? null : request.comment().trim());
+    item.setComment(
+        request.comment() == null || request.comment().isBlank() ? null : request.comment().trim());
     feedback.save(item);
   }
 
   @Transactional(readOnly = true)
   public List<AssistantDtos.FeedbackView> feedback() {
     return feedback.findTop100ByOrderByCreatedAtDesc().stream()
-        .map(item -> new AssistantDtos.FeedbackView(item.getId(), item.getUser().getUsername(), item.getUser().getNickname(), item.getRating(), item.getComment(), item.getCreatedAt()))
+        .map(
+            item ->
+                new AssistantDtos.FeedbackView(
+                    item.getId(),
+                    item.getUser().getUsername(),
+                    item.getUser().getNickname(),
+                    item.getRating(),
+                    item.getComment(),
+                    item.getCreatedAt()))
         .toList();
   }
 
   private Challenge findChallenge(Long id) {
-    return challenges.findById(id).orElseThrow(() -> new EntityNotFoundException("Challenge not found"));
+    return challenges
+        .findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("Challenge not found"));
   }
 
   private String contextLabel(Long challengeId) {
-    return challengeId == null ? null : challenges.findById(challengeId).map(Challenge::getTitle).orElse(null);
+    return challengeId == null
+        ? null
+        : challenges.findById(challengeId).map(Challenge::getTitle).orElse(null);
   }
 
   private static String normalizeModel(String model) {
@@ -147,8 +167,10 @@ public class AssistantService {
           String content = turn.content().trim();
           contents.add(
               Map.of(
-                  "role", role,
-                  "parts", List.of(Map.of("text", content.substring(0, Math.min(content.length(), 1200))))));
+                  "role",
+                  role,
+                  "parts",
+                  List.of(Map.of("text", content.substring(0, Math.min(content.length(), 1200))))));
           // Keep enough context for a natural conversation without making every
           // request unnecessarily slow.
           if (contents.size() == 4) break;
@@ -172,7 +194,10 @@ public class AssistantService {
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
       if (response.statusCode() < 200 || response.statusCode() >= 300) {
-        log.warn("Gemini assistant request failed with HTTP status {} for model {}", response.statusCode(), model);
+        log.warn(
+            "Gemini assistant request failed with HTTP status {} for model {}",
+            response.statusCode(),
+            model);
         return null;
       }
       JsonNode root = objectMapper.readTree(response.body());

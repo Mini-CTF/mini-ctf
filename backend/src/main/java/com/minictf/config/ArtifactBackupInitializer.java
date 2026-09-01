@@ -2,7 +2,6 @@ package com.minictf.config;
 
 import com.minictf.challenge.Challenge;
 import com.minictf.challenge.ChallengeRepository;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;

@@ -26,7 +26,8 @@ public class IpBanFilter extends OncePerRequestFilter {
   }
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+  protected void doFilterInternal(
+      HttpServletRequest request, HttpServletResponse response, FilterChain chain)
       throws ServletException, IOException {
     if (bans.findByIpAddress(clientIp(request)).isPresent()) {
       handlers.ipBanned(response);
