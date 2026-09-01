@@ -1405,9 +1405,14 @@
   text-underline-offset: 4px;
 }
 .footer-policy-links button {
+  appearance: none;
+  display: inline;
+  width: fit-content;
   padding: 0;
   border: 0;
+  border-radius: 0;
   background: transparent;
+  box-shadow: none;
   color: inherit;
   font: inherit;
   text-align: left;
