@@ -23,6 +23,7 @@ import type {
   User,
   VaultSummary,
   HiddenSummary,
+  LearningOverview,
 } from '../types/api'
 import { clearAuthToken, getAuthToken } from './session'
 
@@ -184,6 +185,8 @@ export const api = {
   equipVaultItem: (id: string) => request<VaultSummary>('/vault/equip', { method: 'PUT', body: JSON.stringify({ id }) }),
   discoverHiddenVault: () => request<HiddenSummary>('/vault/hidden/discover', { method: 'POST' }),
   hiddenVault: () => request<HiddenSummary>('/vault/hidden'),
+  learningOverview: () => request<LearningOverview>('/learning/overview'),
+  updateLearningGoal: (weeklyTarget: number) => request<LearningOverview>('/learning/goal', { method: 'PUT', body: JSON.stringify({ weeklyTarget }) }),
   claimHiddenMission: (id: string) => request<HiddenSummary>(`/vault/hidden/missions/${encodeURIComponent(id)}/claim`, { method: 'POST' }),
   friends: () => request<Friend[]>('/social/friends'),
   requestFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(normalizeUsername(username))}`, { method: 'POST' }),

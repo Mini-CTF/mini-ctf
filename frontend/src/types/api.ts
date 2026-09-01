@@ -282,3 +282,12 @@ export type DirectMessage = {
   createdAt: string
   read: boolean
 }
+
+export type LearningOverview = {
+  weeklyTarget: number
+  weeklySolved: number
+  totalSolved: number
+  bookmarkedCount: number
+  recentSolves: { challengeId: number; title: string; category: string; solvedAt: string }[]
+  achievements: { code: string; name: string; description: string }[]
+}

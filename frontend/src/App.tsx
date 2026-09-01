@@ -12,7 +12,7 @@ import AetherFlowHero from './components/ui/aether-flow-hero'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import FloatingQuickMenu from './components/FloatingQuickMenu'
-import type { AdminComment, AdminDashboard, AdminPost, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
+import type { AdminComment, AdminDashboard, AdminPost, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, LearningOverview, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-cutout.png'
 import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
 import './App.css'
@@ -419,7 +419,7 @@ function AppShell() {
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onCommunity={() => go('/community')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges" element={guarded(<ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh(); void refreshWallet() }} />)} />
-        <Route path="/learn" element={<LearnView lang={language} />} />
+        <Route path="/learn" element={<LearnView lang={language} loggedIn={Boolean(user)} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
         <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
         <Route path="/friends" element={guarded(<FriendsView user={user} onLogin={() => go('/login')} />)} />
@@ -631,12 +631,13 @@ function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
 }
 
 
-function LearnView({ lang }: { lang: 'ko' | 'en' }) {
+function LearnView({ lang, loggedIn }: { lang: 'ko' | 'en'; loggedIn: boolean }) {
   const routerNavigate = useNavigate()
   const [field, setField] = useState<'ALL' | 'WEB' | 'FORENSIC' | 'REVERSING'>('ALL')
   const list = learnArticles.filter((article) => field === 'ALL' || article.field === field)
   return (
     <div className="page">
+      {loggedIn && <LearningSnapshot lang={lang} />}
       <PageIntro eyebrow="LEARN" title={lang === 'ko' ? '개념부터 차근차근' : 'Concepts first.'} description={lang === 'ko' ? '문제를 풀기 전에 읽으면 이해가 달라져요. 각 글은 5~9분이면 읽혀요.' : 'Read before you solve — each article is a 5–9 minute read.'} />
       <div className="filter-tabs" aria-label="학습 분야">
         {LEARN_FIELDS.map((item) => (
@@ -657,6 +658,43 @@ function LearnView({ lang }: { lang: 'ko' | 'en' }) {
       </div>
     </div>
   )
+}
+
+function LearningSnapshot({ lang }: { lang: 'ko' | 'en' }) {
+  const [overview, setOverview] = useState<LearningOverview | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [target, setTarget] = useState(3)
+  const [error, setError] = useState('')
+  const ko = lang === 'ko'
+  const refresh = useCallback(async () => {
+    try {
+      const next = await api.learningOverview()
+      setOverview(next)
+      setTarget(next.weeklyTarget)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not load your learning progress.')
+    }
+  }, [])
+  useEffect(() => { void refresh() }, [refresh])
+  const saveGoal = async () => {
+    try {
+      setError('')
+      const next = await api.updateLearningGoal(target)
+      setOverview(next)
+      setEditing(false)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not save the weekly goal.')
+    }
+  }
+  if (!overview && !error) return <div className="learning-snapshot loading"><span className="loading-mark" />{ko ? '학습 기록을 불러오는 중…' : 'Loading your learning progress…'}</div>
+  if (error) return <p className="learning-snapshot-error">{error}</p>
+  if (!overview) return null
+  const progress = Math.min(100, Math.round((overview.weeklySolved / overview.weeklyTarget) * 100))
+  return <section className="learning-snapshot" aria-label={ko ? '내 학습 현황' : 'My learning progress'}>
+    <div className="learning-snapshot-main"><span className="vault-kicker">MY LEARNING</span><h2>{ko ? '이번 주 학습 목표' : 'This week’s goal'}</h2><p>{ko ? `${overview.weeklySolved}문제 해결 · 전체 ${overview.totalSolved}문제 완료` : `${overview.weeklySolved} solved this week · ${overview.totalSolved} total solved`}</p><div className="learning-progress"><span style={{ width: `${progress}%` }} /></div></div>
+    <div className="learning-goal-control">{editing ? <><input aria-label="Weekly solve target" type="number" min="1" max="20" value={target} onChange={(event) => setTarget(Math.max(1, Math.min(20, Number(event.target.value) || 1)))} /><button type="button" className="button secondary" onClick={() => void saveGoal()}>{ko ? '저장' : 'Save'}</button></> : <><strong>{overview.weeklySolved}/{overview.weeklyTarget}</strong><button type="button" className="text-link" onClick={() => setEditing(true)}>{ko ? '목표 변경' : 'Edit goal'}</button></>}</div>
+    <div className="learning-snapshot-meta"><span>{ko ? `북마크 ${overview.bookmarkedCount}개` : `${overview.bookmarkedCount} bookmarks`}</span>{overview.achievements.map((achievement) => <span key={achievement.code} title={achievement.description}>✦ {achievement.name}</span>)}</div>
+  </section>
 }
 
 function LearnArticleRoute({ lang }: { lang: 'ko' | 'en' }) {

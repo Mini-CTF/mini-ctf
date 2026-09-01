@@ -48,6 +48,10 @@ public class Solve {
     return challenge.getTitle();
   }
 
+  public Challenge getChallenge() {
+    return challenge;
+  }
+
   public int getScore() {
     return challenge.getScore();
   }
