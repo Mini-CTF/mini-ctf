@@ -118,7 +118,7 @@ const adminEnglishToKorean: Record<string, string> = {
   'ADMINISTRATION': '관리자', 'ACCOUNT MANAGEMENT': '계정 관리', 'COMMUNITY POSTS': '커뮤니티 게시글', 'COMMENTS': '댓글', 'PUBLISH NOTICE': '공지 게시', 'PUBLISHED': '게시됨', 'ANTI-CHEAT': '부정행위 방지', 'CHALLENGE ACTIVITY': '문제 활동', 'SECURITY LOG': '보안 로그', 'AUDIT TRAIL': '관리 기록', 'AI LEARNING HELPER': 'AI 학습 도우미', 'ADMIN CONSOLE': '관리자 콘솔',
   'Overview': '개요', 'Accounts': '계정', 'Content': '콘텐츠', 'Notices': '공지사항', 'Security': '보안', 'Audit logs': '관리 로그', 'AI feedback': 'AI 피드백',
   'Account Powers': '계정 권한', 'Score and cosmetic controls': '점수 및 꾸미기 관리', 'Permanent deletion is available only after a reversible deletion.': '복구 가능한 삭제 후에만 영구 삭제할 수 있습니다.',
-  'Adjust score': '점수 조정', 'Grant cosmetic': '꾸미기 지급', 'Remove cosmetic': '꾸미기 회수', 'Permanent delete': '영구 삭제',
+  'Adjust score': '점수 조정', 'Add points': '점수 추가', 'Deduct points': '점수 차감', 'Grant cosmetic': '꾸미기 지급', 'Remove cosmetic': '꾸미기 회수', 'Permanent delete': '영구 삭제',
   'Run the platform clearly.': '플랫폼을 한눈에 관리하세요.', 'Manage accounts, community content, notices, and security records in focused workspaces.': '계정, 커뮤니티, 공지사항, 보안 기록을 영역별로 관리할 수 있습니다.',
   'Operations shortcuts': '빠른 작업', 'Review accounts': '계정 검토', 'Manage content': '콘텐츠 관리', 'Write a notice': '공지 작성', 'Events to review': '확인이 필요한 이벤트', 'Recent activity': '최근 활동',
   'Account management': '계정 관리', 'Edit names, suspend, restore, or delete accounts. Deleted accounts keep a private restore snapshot.': '이름 수정, 정지, 복구, 계정 삭제를 관리합니다. 삭제된 계정은 복구용 정보를 보관합니다.',
@@ -1638,13 +1638,19 @@ function AdminConsole({ language }: { language: Language }) {
     if (!window.confirm(`Permanently delete @${username}? This cannot be undone and all account data will be removed.`)) return
     try { await api.permanentlyDeleteUser(id); setDashboard((current) => current ? { ...current, users: current.users.filter((item) => item.id !== id) } : current); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not permanently delete the account.') }
   }
-  const adjustScore = async (id: number) => {
-    const rawAmount = window.prompt(ko ? '조정할 점수를 입력하세요. 차감하려면 마이너스(-)로 입력하세요.' : 'Point change (use a negative number to remove points)', '0')
+  const adjustScore = async (id: number, direction: 1 | -1) => {
+    const rawAmount = window.prompt(
+      ko
+        ? direction < 0 ? '차감할 점수를 입력하세요. 숫자만 입력하면 자동으로 차감됩니다.' : '추가할 점수를 입력하세요. 숫자만 입력해 주세요.'
+        : direction < 0 ? 'Points to deduct (enter a positive number)' : 'Points to add (enter a positive number)',
+      '0',
+    )
     if (rawAmount === null) return
     const normalizedAmount = rawAmount.trim().replaceAll(',', '')
-    if (!/^[+-]?\d+$/.test(normalizedAmount)) { setError(ko ? '점수는 정수로 입력해 주세요.' : 'Enter a whole number for the point change.'); return }
-    const amount = Number(normalizedAmount)
-    if (!Number.isSafeInteger(amount) || amount === 0) return
+    if (!/^\d+$/.test(normalizedAmount)) { setError(ko ? '점수는 0보다 큰 정수로 입력해 주세요.' : 'Enter a positive whole number.'); return }
+    const magnitude = Number(normalizedAmount)
+    if (!Number.isSafeInteger(magnitude) || magnitude === 0) return
+    const amount = direction * magnitude
     const reason = window.prompt(ko ? '점수 조정 사유를 입력하세요.' : 'Reason for this point adjustment')?.trim()
     if (!reason) return
     try { applyAccountChange(await api.adjustAdminUserScore(id, amount, reason)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not adjust score.') }
@@ -1725,7 +1731,7 @@ function AdminConsole({ language }: { language: Language }) {
   if (!dashboard) return <div className="page admin-page"><PageIntro eyebrow="ADMIN CONSOLE" title="Administrator console" description="Loading platform status and moderation controls." />{error && <p className="alert error">{error}</p>}<p className="muted">Loading administrator data...</p></div>
 
   const notices = posts.filter((post) => post.category === 'NOTICE')
-  const accountPowerTools = tab === 'accounts' && <section className="admin-section admin-card admin-account-power-tools"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT POWERS</p><h2>Score and cosmetic controls</h2></div><small>Permanent deletion is available only after a reversible deletion.</small></div><div className="admin-table">{dashboard.users.filter((item) => item.role !== 'ADMIN').map((item) => <div className="admin-row" key={`powers-${item.id}`}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.status}</small></div><div className="inline-actions">{item.status === 'DELETED' ? <button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(item.id, item.username)}>Permanent delete</button> : <><button type="button" className="button secondary" onClick={() => void adjustScore(item.id)}>Adjust score</button><button type="button" className="button secondary" onClick={() => void setCosmetic(item.id, true)}>Grant cosmetic</button><button type="button" className="button ghost" onClick={() => void setCosmetic(item.id, false)}>Remove cosmetic</button></>}</div></div>)}</div></section>
+  const accountPowerTools = tab === 'accounts' && <section className="admin-section admin-card admin-account-power-tools"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT POWERS</p><h2>Score and cosmetic controls</h2></div><small>Permanent deletion is available only after a reversible deletion.</small></div><div className="admin-table">{dashboard.users.filter((item) => item.role !== 'ADMIN').map((item) => <div className="admin-row" key={`powers-${item.id}`}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.status}</small></div><div className="inline-actions">{item.status === 'DELETED' ? <button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(item.id, item.username)}>Permanent delete</button> : <><button type="button" className="button secondary" onClick={() => void adjustScore(item.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost danger-button" onClick={() => void adjustScore(item.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button><button type="button" className="button secondary" onClick={() => void setCosmetic(item.id, true)}>Grant cosmetic</button><button type="button" className="button ghost" onClick={() => void setCosmetic(item.id, false)}>Remove cosmetic</button></>}</div></div>)}</div></section>
   const tabs: { id: AdminTab; label: string; count?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'accounts', label: 'Accounts', count: dashboard.users.length },

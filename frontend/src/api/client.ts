@@ -158,7 +158,7 @@ export const api = {
   deletePostComment: (id: number) => request<void>(`/community/comments/${id}`, { method: 'DELETE' }),
   pinPostReply: (postId: number, commentId: number) =>
     request<PostComment>(`/community/posts/${postId}/comments/${commentId}/pin`, { method: 'PATCH' }),
-  adminDashboard: () => request<AdminDashboard>('/admin/dashboard'),
+  adminDashboard: () => request<AdminDashboard>('/admin/dashboard', { cache: 'no-store' }),
   adminPosts: () => request<AdminPost[]>('/admin/community/posts'),
   adminComments: () => request<AdminComment[]>('/admin/community/comments'),
   publishNotice: (payload: { title: string; content: string }) =>

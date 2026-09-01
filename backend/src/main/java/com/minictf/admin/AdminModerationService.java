@@ -84,7 +84,7 @@ public class AdminModerationService {
   @Transactional
   public AdminDtos.UserView adjustScore(
       Long targetId, AdminDtos.ScoreAdjustmentRequest request, String adminUsername) {
-    User target = target(targetId);
+    User target = targetForUpdate(targetId);
     ensureNotAdmin(target);
     if (!"ACTIVE".equals(target.getStatus()))
       throw new IllegalArgumentException("Restore the account before adjusting its score");
@@ -93,6 +93,7 @@ public class AdminModerationService {
     if (next < 0 || next > 1_000_000)
       throw new IllegalArgumentException("The resulting score must be between 0 and 1,000,000");
     target.setScore((int) next);
+    users.saveAndFlush(target);
     audit(
         adminUsername,
         "ADJUST_SCORE",
@@ -454,6 +455,12 @@ public class AdminModerationService {
 
   private User target(Long id) {
     return users.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+  }
+
+  private User targetForUpdate(Long id) {
+    return users
+        .findByIdForUpdate(id)
+        .orElseThrow(() -> new EntityNotFoundException("User not found"));
   }
 
   private void restoreDeletedAccount(User target) {
