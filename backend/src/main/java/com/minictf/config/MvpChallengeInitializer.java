@@ -132,7 +132,40 @@ public class MvpChallengeInitializer {
                       .formatHex(flags.getProperty("expert").getBytes(StandardCharsets.UTF_8))
                       .getBytes(StandardCharsets.UTF_8)),
           StandardCharsets.UTF_8);
+      persistMvpArtifacts(challenges, mvpRoot);
     };
+  }
+
+  /**
+   * Render처럼 로컬 디스크가 초기화될 수 있는 환경에서도 MVP 문제의 파일과 정답 해시가
+   * 서로 어긋나지 않도록 생성된 파일을 DB에 보관한다.
+   */
+  private static void persistMvpArtifacts(ChallengeRepository challenges, Path mvpRoot)
+      throws IOException {
+    List<String> titles =
+        List.of(
+            "Signal in Plain Sight",
+            "Proxy Afterimage",
+            "Orbit Gatekeeper",
+            "Header Hunt",
+            "Layered Evidence");
+    List<String> paths =
+        List.of(
+            "signal.txt",
+            "proxy-afterimage.log",
+            "orbit-gatekeeper.zip",
+            "header-hunt.txt",
+            "layered-evidence.txt");
+    for (int i = 0; i < titles.size(); i++) {
+      var challenge = challenges.findByTitle(titles.get(i)).orElse(null);
+      Path artifact = mvpRoot.resolve(paths.get(i)).normalize();
+      if (challenge == null || !artifact.startsWith(mvpRoot) || !Files.isRegularFile(artifact)) {
+        continue;
+      }
+      challenge.setArtifactData(Files.readAllBytes(artifact));
+      challenges.save(challenge);
+    }
+    challenges.flush();
   }
 
   private static void seed(
