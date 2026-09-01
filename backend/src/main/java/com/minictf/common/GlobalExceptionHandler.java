@@ -71,6 +71,14 @@ public class GlobalExceptionHandler {
         "같은 접속 환경에서는 계정을 최대 3개까지 만들 수 있습니다.");
   }
 
+  @ExceptionHandler(AccountNameSafety.UnsafeAccountNameException.class)
+  ResponseEntity<ErrorResponse> unsafeAccountName() {
+    return response(
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        "UNSAFE_ACCOUNT_NAME",
+        "아이디와 표시 이름에는 비속어나 공격적인 표현을 사용할 수 없습니다.");
+  }
+
   @ExceptionHandler(AuthService.DuplicateUsernameException.class)
   ResponseEntity<ErrorResponse> duplicateUsername() {
     return response(HttpStatus.CONFLICT, "USERNAME_EXISTS", "이미 사용 중인 username입니다.");

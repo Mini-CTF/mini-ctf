@@ -1,6 +1,7 @@
 package com.minictf.user;
 
 import com.minictf.challenge.SolveRepository;
+import com.minictf.common.AccountNameSafety;
 import com.minictf.social.FriendshipRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.awt.image.BufferedImage;
@@ -23,22 +24,28 @@ public class UserProfileService {
   private final SolveRepository solves;
   private final FriendshipRepository friendships;
   private final AvatarStorage avatars;
+  private final AccountNameSafety accountNameSafety;
 
   public UserProfileService(
       UserRepository users,
       SolveRepository solves,
       FriendshipRepository friendships,
-      AvatarStorage avatars) {
+      AvatarStorage avatars,
+      AccountNameSafety accountNameSafety) {
     this.users = users;
     this.solves = solves;
     this.friendships = friendships;
     this.avatars = avatars;
+    this.accountNameSafety = accountNameSafety;
   }
 
   @Transactional
   public UserDtos.Profile update(User current, UserDtos.ProfileUpdateRequest request) {
-    if (request.nickname() != null && !request.nickname().isBlank())
-      current.setNickname(request.nickname().trim());
+    if (request.nickname() != null && !request.nickname().isBlank()) {
+      String nickname = request.nickname().trim();
+      accountNameSafety.requireSafe(nickname);
+      current.setNickname(nickname);
+    }
     current.setStatusMessage(cleanOptional(request.statusMessage(), 160));
     users.save(current);
     return profile(current);
