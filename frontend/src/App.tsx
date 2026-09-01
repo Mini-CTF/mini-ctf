@@ -461,7 +461,7 @@ function AppShell() {
         <Route path="/safe-learning" element={<PolicyView language={language} kind="safe-learning" />} />
         <Route path="/guide" element={<HelpView language={language} kind="guide" />} />
         <Route path="/faq" element={<HelpView language={language} kind="faq" />} />
-        <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole />) : <Navigate to="/" replace />} />
+        <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole language={language} />) : <Navigate to="/" replace />} />
         <Route path="/login" element={<LoginView onBack={() => go('/')} onAuth={completeAuth} language={language} />} />
         <Route path="/auth/callback" element={<CallbackRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -1544,7 +1544,8 @@ function CommentWriter({ postId, onCreated }: { postId: number; onCreated: (comm
 
 type AdminTab = 'overview' | 'accounts' | 'content' | 'notices' | 'security' | 'logs' | 'ai-feedback'
 
-function AdminConsole() {
+function AdminConsole({ language }: { language: Language }) {
+  const ko = language === 'ko'
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [comments, setComments] = useState<AdminComment[]>([])
@@ -1614,9 +1615,9 @@ function AdminConsole() {
     try { await api.permanentlyDeleteUser(id); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not permanently delete the account.') }
   }
   const adjustScore = async (id: number) => {
-    const amount = Number(window.prompt('Point change (use a negative number to remove points)', '0'))
+    const amount = Number(window.prompt(ko ? '변경할 점수를 입력하세요. 차감하려면 음수로 입력하세요.' : 'Point change (use a negative number to remove points)', '0'))
     if (!Number.isInteger(amount) || amount === 0) return
-    const reason = window.prompt('Reason for this point adjustment')?.trim()
+    const reason = window.prompt(ko ? '점수 조정 사유를 입력하세요.' : 'Reason for this point adjustment')?.trim()
     if (!reason) return
     try { await api.adjustAdminUserScore(id, amount, reason); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not adjust score.') }
   }
