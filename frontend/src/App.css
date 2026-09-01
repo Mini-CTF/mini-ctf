@@ -3727,13 +3727,14 @@ html[data-theme="dark"] .bookmark-ribbon-icon.is-filled {
 .category-progress-panel h2, .category-progress-panel p { margin: 0; }
 .category-progress-panel h2 { color: var(--text); font-size: 20px; }
 .category-progress-panel p { margin-top: 5px; color: var(--muted); font-size: 14px; }
-.category-progress-chart { grid-column: 1 / -1; display: grid; gap: 12px; }
-.category-progress-row { display: grid; gap: 7px; }
+.category-progress-panel > .button { inline-size: 132px; min-inline-size: 132px; padding-inline: 0; justify-content: center; }
+.category-progress-chart { grid-column: 1 / -1; inline-size: 100%; display: grid; gap: 12px; }
+.category-progress-row { inline-size: 100%; display: grid; gap: 7px; }
 .category-progress-row > div:first-child { display: flex; justify-content: space-between; gap: 14px; color: var(--text); font-size: 14px; }
 .category-progress-row span { color: var(--muted); font-weight: 700; }
 .category-progress-bar { height: 9px; overflow: hidden; border-radius: 999px; background: var(--surface-strong); }
 .category-progress-bar i { display: block; height: 100%; border-radius: inherit; background: #3d8cff; transition: width .28s ease; }
-@media (max-width: 620px) { .category-progress-panel { grid-template-columns: 1fr; } .category-progress-panel > .button { justify-self: start; } }
+@media (max-width: 620px) { .category-progress-panel { grid-template-columns: 1fr; } .category-progress-panel > .button { justify-self: start; inline-size: 132px; } }
 .bookmarks-page {
   max-width: 960px;
 }
