@@ -637,7 +637,7 @@ function LearnView({ lang, loggedIn }: { lang: 'ko' | 'en'; loggedIn: boolean })
   const list = learnArticles.filter((article) => field === 'ALL' || article.field === field)
   return (
     <div className="page">
-      {loggedIn && <LearningSnapshot lang={lang} />}
+      <LearningSnapshot lang={lang} loggedIn={loggedIn} />
       <PageIntro eyebrow="LEARN" title={lang === 'ko' ? '개념부터 차근차근' : 'Concepts first.'} description={lang === 'ko' ? '문제를 풀기 전에 읽으면 이해가 달라져요. 각 글은 5~9분이면 읽혀요.' : 'Read before you solve — each article is a 5–9 minute read.'} />
       <div className="filter-tabs" aria-label="학습 분야">
         {LEARN_FIELDS.map((item) => (
@@ -660,12 +660,13 @@ function LearnView({ lang, loggedIn }: { lang: 'ko' | 'en'; loggedIn: boolean })
   )
 }
 
-function LearningSnapshot({ lang }: { lang: 'ko' | 'en' }) {
+function LearningSnapshot({ lang, loggedIn }: { lang: 'ko' | 'en'; loggedIn: boolean }) {
   const [overview, setOverview] = useState<LearningOverview | null>(null)
   const [editing, setEditing] = useState(false)
   const [target, setTarget] = useState(3)
   const [error, setError] = useState('')
   const ko = lang === 'ko'
+  const routerNavigate = useNavigate()
   const refresh = useCallback(async () => {
     try {
       const next = await api.learningOverview()
@@ -675,7 +676,7 @@ function LearningSnapshot({ lang }: { lang: 'ko' | 'en' }) {
       setError(cause instanceof Error ? cause.message : 'Could not load your learning progress.')
     }
   }, [])
-  useEffect(() => { void refresh() }, [refresh])
+  useEffect(() => { if (loggedIn) void refresh() }, [loggedIn, refresh])
   const saveGoal = async () => {
     try {
       setError('')
@@ -686,6 +687,7 @@ function LearningSnapshot({ lang }: { lang: 'ko' | 'en' }) {
       setError(cause instanceof Error ? cause.message : 'Could not save the weekly goal.')
     }
   }
+  if (!loggedIn) return <section className="learning-snapshot learning-snapshot-guest"><div className="learning-snapshot-main"><span className="vault-kicker">MY LEARNING</span><h2>{ko ? '내 학습 기록을 시작해 보세요.' : 'Start your learning record.'}</h2><p>{ko ? '로그인하면 주간 목표, 풀이 기록, 업적을 한곳에서 확인할 수 있어요.' : 'Sign in to track weekly goals, solves, and achievements in one place.'}</p></div><button type="button" className="button primary" onClick={() => routerNavigate('/login')}>{ko ? '로그인하기' : 'Sign in'}</button></section>
   if (!overview && !error) return <div className="learning-snapshot loading"><span className="loading-mark" />{ko ? '학습 기록을 불러오는 중…' : 'Loading your learning progress…'}</div>
   if (error) return <p className="learning-snapshot-error">{error}</p>
   if (!overview) return null
