@@ -51,6 +51,7 @@ type ChallengeSummary = {
   score: number
   solved: boolean
   artifactAvailable: boolean
+  solveCount: number
 }
 type ChallengeDetail = ChallengeSummary & { description: string }
 type RankingRow = { rank: number; username: string; nickname: string; score: number; solvedCount: number }

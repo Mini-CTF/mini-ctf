@@ -22,6 +22,7 @@ type Filter = 'ALL' | 'WEB' | 'FORENSIC' | 'REVERSING'
 type DifficultyFilter = 'ALL' | 'BEGINNER' | 'EASY' | 'NORMAL' | 'ADVANCED' | 'EXPERT'
 const difficultyOrder: Record<string, number> = { BEGINNER: 0, EASY: 1, NORMAL: 2, ADVANCED: 3, EXPERT: 4 }
 const byDifficulty = (a: ChallengeSummary, b: ChallengeSummary) => (difficultyOrder[a.difficulty] ?? 9) - (difficultyOrder[b.difficulty] ?? 9) || a.score - b.score
+const byPopularity = (a: ChallengeSummary, b: ChallengeSummary) => b.solveCount - a.solveCount || b.score - a.score || byDifficulty(a, b)
 
 const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
 function oauthErrorMessage(code: string | null) {
@@ -160,6 +161,7 @@ function AppShell() {
   const [attendanceRanking, setAttendanceRanking] = useState<AttendanceRankingRow[]>([])
   const [category, setCategory] = useState<Filter>('ALL')
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('ALL')
+  const [popularOnly, setPopularOnly] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [compactLayout, setCompactLayout] = useState(() => window.innerWidth <= 620)
   const [error, setError] = useState('')
@@ -348,12 +350,13 @@ function AppShell() {
     [challenges],
   )
   const visibleChallenges = useMemo(
-    () =>
-      challenges
+    () => {
+      const filtered = challenges
         .filter((item) => category === 'ALL' || item.category === category)
         .filter((item) => difficulty === 'ALL' || item.difficulty === difficulty)
-        .sort(byDifficulty),
-    [category, difficulty, challenges],
+      return filtered.sort(popularOnly ? byPopularity : byDifficulty)
+    },
+    [category, difficulty, popularOnly, challenges],
   )
   const go = useCallback((path: string) => {
     setMobileNavOpen(false)
@@ -417,7 +420,7 @@ function AppShell() {
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       <Routes>
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onCommunity={() => go('/community')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
-        <Route path="/challenges" element={guarded(<><ChallengesProgress items={visibleChallenges} total={challenges.length} /><ChallengesView items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} /></>)} />
+        <Route path="/challenges" element={guarded(<><ChallengesProgress items={visibleChallenges} total={challenges.length} /><ChallengesView key={`${category}-${difficulty}-${popularOnly}`} items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} popular={popularOnly} onPopular={setPopularOnly} onOpen={(item) => go(`/challenges/${item.id}`)} /></>)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh(); void refreshWallet() }} />)} />
         <Route path="/learn" element={<LearnView lang={language} loggedIn={Boolean(user)} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
@@ -442,7 +445,7 @@ function AppShell() {
     <PublicProfileDialog />
     <FloatingAssistant open={assistantOpen} onOpenChange={setAssistantOpen} user={user} language={language} path={path} onLogin={() => go('/login')} />
     {assistantFeedbackOpen && <AssistantFeedbackDialog user={user} language={language} onClose={() => setAssistantFeedbackOpen(false)} onLogin={() => go('/login')} />}
-    <FloatingQuickMenu language={language} assistantOpen={assistantOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} onBookmarks={() => go(user ? '/bookmarks' : '/login')} />
+    <FloatingQuickMenu language={language} assistantOpen={assistantOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} onBookmarks={() => go(user ? '/bookmarks' : '/login')} onPopular={() => { setPopularOnly(true); go('/challenges') }} />
     <footer className="site-footer">
       <div className="footer-brand"><strong>FlagBox</strong><p>{language === 'ko' ? '보안을 처음 배우는 사람을 위한 쉽고 안전한 워게임 학습 플랫폼' : 'A safe, beginner-friendly wargame learning platform.'}</p></div>
       <div className="footer-links"><div><b>{language === 'ko' ? '서비스' : 'Services'}</b><nav className="footer-service-links" aria-label={language === 'ko' ? '서비스 바로가기' : 'Service shortcuts'}><button type="button" onClick={() => go('/challenges')}>{language === 'ko' ? '워게임' : 'Wargames'}</button><button type="button" onClick={() => go('/learn')}>{language === 'ko' ? '학습' : 'Learn'}</button><button type="button" onClick={() => go('/ranking')}>{language === 'ko' ? '랭킹' : 'Rankings'}</button><button type="button" onClick={() => go('/community')}>{language === 'ko' ? '커뮤니티' : 'Community'}</button><button type="button" onClick={() => user ? setVaultOpen(true) : go('/login')}>{language === 'ko' ? '상점' : 'Shop'}</button></nav></div><div><b>{language === 'ko' ? '도움말' : 'Help'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '도움말 바로가기' : 'Help shortcuts'}><a href="/guide">{language === 'ko' ? '이용 안내' : 'Guide'}</a><a href="/faq">{language === 'ko' ? '자주 묻는 질문' : 'FAQ'}</a><button className="footer-text-link" data-no-specular type="button" onClick={() => setAssistantFeedbackOpen(true)}>{language === 'ko' ? '피드백' : 'Feedback'}</button></nav><a href="mailto:flagbox.contact@gmail.com">{language === 'ko' ? '문의하기: flagbox.contact@gmail.com' : 'Contact: flagbox.contact@gmail.com'}</a></div><div><b>{language === 'ko' ? '정책' : 'Policies'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '정책 바로가기' : 'Policy shortcuts'}><a href="/terms">{language === 'ko' ? '이용약관' : 'Terms'}</a><a href="/privacy">{language === 'ko' ? '개인정보처리방침' : 'Privacy'}</a><a href="/safe-learning">{language === 'ko' ? '안전한 학습 가이드' : 'Safe learning guide'}</a></nav></div></div>
@@ -932,14 +935,16 @@ function ChallengesProgress({ items, total }: { items: ChallengeSummary[]; total
   return <section className="challenge-progress-overview"><div><span className="vault-kicker">YOUR PROGRESS</span><h2>문제 풀이 현황</h2><p>현재 선택한 분야와 난이도 기준이에요.</p></div><div className="challenge-progress-stats"><strong>{solved}<small> / {items.length} solved</small></strong><span>{percent}%</span></div><div className="challenge-progress-track" aria-label={`${solved} of ${items.length} challenges solved`}><i style={{ width: `${percent}%` }} /></div><small className="challenge-progress-total">전체 {total}문제 중 현재 조건 {items.length}문제</small></section>
 }
 
-function ChallengesView({ items, total, category, onCategory, difficulty, onDifficulty, onOpen }: { items: ChallengeSummary[]; total: number; category: Filter; onCategory: (value: Filter) => void; difficulty: DifficultyFilter; onDifficulty: (value: DifficultyFilter) => void; onOpen: (item: ChallengeSummary) => void }) {
-  const [visibleCount, setVisibleCount] = useState(24)
-  useEffect(() => setVisibleCount(24), [category, difficulty])
-  const visibleItems = items.slice(0, visibleCount)
-  return <div className="page"><PageIntro eyebrow="WARGAME" title="Pick your next challenge." description="Read the brief, then follow the guide one step at a time." /><section className="challenge-toolbar"><div className="filter-tabs" aria-label="카테고리">{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? 'All' : item}</button>)}</div><div className="filter-tabs difficulty-tabs" aria-label="난이도">{(['ALL', 'BEGINNER', 'EASY', 'NORMAL', 'ADVANCED', 'EXPERT'] as DifficultyFilter[]).map((item) => <button key={item} className={difficulty === item ? 'filter-tab active diff-' + item.toLowerCase() : 'filter-tab diff-' + item.toLowerCase()} type="button" onClick={() => onDifficulty(item)}>{item === 'ALL' ? 'All levels' : difficultyLabel(item)}</button>)}</div></section><div className="challenge-count"><span>전체 <strong>{total}</strong>개 중 <strong>{items.length}</strong>개 문제</span></div><div className="challenge-grid">{visibleItems.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div>{visibleCount < items.length && <div className="progressive-list-action"><button className="button secondary" type="button" onClick={() => setVisibleCount((count) => count + 24)}>문제 더 보기 ({items.length - visibleCount})</button></div>}{items.length === 0 && <EmptyState />}</div>
+function ChallengesView({ items, total, category, onCategory, difficulty, onDifficulty, popular, onPopular, onOpen }: { items: ChallengeSummary[]; total: number; category: Filter; onCategory: (value: Filter) => void; difficulty: DifficultyFilter; onDifficulty: (value: DifficultyFilter) => void; popular: boolean; onPopular: (value: boolean) => void; onOpen: (item: ChallengeSummary) => void }) {
+  const pageSize = 24
+  const [page, setPage] = useState(1)
+  const pageCount = Math.max(1, Math.ceil(items.length / pageSize))
+  const visibleItems = items.slice((page - 1) * pageSize, page * pageSize)
+  const ko = document.documentElement.lang !== 'en'
+  return <div className="page"><PageIntro eyebrow="WARGAME" title={ko ? '다음 문제를 골라보세요.' : 'Pick your next challenge.'} description={ko ? '문제를 읽고, 단서를 따라 한 단계씩 풀어보세요.' : 'Read the brief, then follow the guide one step at a time.'} /><section className="challenge-toolbar"><div className="filter-tabs" aria-label={ko ? '문제 정렬' : 'Challenge sorting'}><button className={popular ? 'filter-tab' : 'filter-tab active'} type="button" onClick={() => onPopular(false)}>{ko ? '전체 문제' : 'All challenges'}</button><button className={popular ? 'filter-tab active popular-filter' : 'filter-tab popular-filter'} type="button" onClick={() => onPopular(true)}>★ {ko ? '인기 문제' : 'Popular'}</button></div><div className="filter-tabs" aria-label={ko ? '카테고리' : 'Category'}>{(['ALL', 'WEB', 'FORENSIC', 'REVERSING'] as Filter[]).map((item) => <button key={item} className={category === item ? 'filter-tab active' : 'filter-tab'} type="button" onClick={() => onCategory(item)}>{item === 'ALL' ? (ko ? '전체 분야' : 'All fields') : item}</button>)}</div><div className="filter-tabs difficulty-tabs" aria-label={ko ? '난이도' : 'Difficulty'}>{(['ALL', 'BEGINNER', 'EASY', 'NORMAL', 'ADVANCED', 'EXPERT'] as DifficultyFilter[]).map((item) => <button key={item} className={difficulty === item ? 'filter-tab active diff-' + item.toLowerCase() : 'filter-tab diff-' + item.toLowerCase()} type="button" onClick={() => onDifficulty(item)}>{item === 'ALL' ? (ko ? '전체 난이도' : 'All levels') : difficultyLabel(item)}</button>)}</div></section><div className="challenge-count"><span>{ko ? `전체 ${total}개 중 조건에 맞는 ${items.length}개 문제` : `${items.length} matching challenges of ${total}`}</span><strong>{page} / {pageCount}</strong></div><div className="challenge-grid">{visibleItems.map((item) => <ChallengeCard key={item.id} item={item} onOpen={onOpen} />)}</div><nav className="challenge-pagination" aria-label={ko ? '문제 페이지 선택' : 'Challenge pages'}>{Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => <button key={pageNumber} className={page === pageNumber ? 'page-number active' : 'page-number'} type="button" aria-current={page === pageNumber ? 'page' : undefined} aria-label={ko ? `${pageNumber}페이지` : `Page ${pageNumber}`} onClick={() => { setPage(pageNumber); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>{pageNumber}</button>)}</nav>{items.length === 0 && <EmptyState />}</div>
 }
 
-function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h3>{item.title}</h3><p>Read each brief and hunt for clues step by step. Submit the FLAG when you find it.</p><div className="card-bottom"><strong>{item.score}<small>pts</small></strong>{item.solved && <span className="solved">Solved</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? 'Review' : 'Open'}</button></div></article> }
+function ChallengeCard({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { const ko = document.documentElement.lang !== 'en'; return <article className="challenge-card"><div className="card-top"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h3>{item.title}</h3><p>{ko ? '문제 설명을 읽고 단서를 따라 FLAG를 찾아보세요.' : 'Read each brief and hunt for clues step by step. Submit the FLAG when you find it.'}</p><div className="card-bottom"><strong>{item.score}<small>pts</small></strong><span className="challenge-solve-count">★ {item.solveCount} {ko ? '명 해결' : 'solves'}</span>{item.solved && <span className="solved">{ko ? '해결 완료' : 'Solved'}</span>}<button className="card-open" type="button" onClick={() => onOpen(item)}>{item.solved ? (ko ? '다시 보기' : 'Review') : (ko ? '열기' : 'Open')}</button></div></article> }
 
 function LegacyChallengeDetailView({ item, loggedIn, onBack, onLogin, onSubmitted }: { item: ChallengeDetail; loggedIn: boolean; onBack: () => void; onLogin: () => void; onSubmitted: () => void }) {
   const [flag, setFlag] = useState('')

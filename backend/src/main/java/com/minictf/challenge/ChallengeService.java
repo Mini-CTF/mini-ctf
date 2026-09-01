@@ -54,7 +54,7 @@ public class ChallengeService {
   public List<ChallengeDtos.Summary> list(String username) {
     Set<Long> solvedIds = solvedIds(username);
     return challenges.findByActiveTrueOrderByIdAsc().stream()
-        .map(c -> summary(c, solvedIds.contains(c.getId())))
+        .map(c -> summary(c, solvedIds.contains(c.getId()), solves.countByChallengeId(c.getId())))
         .toList();
   }
 
@@ -72,7 +72,8 @@ public class ChallengeService {
         solvedIds.contains(id),
         hasArtifact(c),
         c.getHintText() != null && !c.getHintText().isBlank(),
-        c.getHintCost());
+        c.getHintCost(),
+        solves.countByChallengeId(id));
   }
 
   @Transactional
@@ -304,7 +305,7 @@ public class ChallengeService {
     return c.getArtifactPath() != null && !c.getArtifactPath().isBlank();
   }
 
-  private ChallengeDtos.Summary summary(Challenge c, boolean solved) {
+  private ChallengeDtos.Summary summary(Challenge c, boolean solved, long solveCount) {
     return new ChallengeDtos.Summary(
         c.getId(),
         c.getTitle(),
@@ -312,7 +313,8 @@ public class ChallengeService {
         c.getDifficulty(),
         c.getScore(),
         solved,
-        hasArtifact(c));
+        hasArtifact(c),
+        solveCount);
   }
 
   private ChallengeDtos.AdminView adminView(Challenge c) {

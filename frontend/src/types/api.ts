@@ -16,6 +16,7 @@ export type ChallengeSummary = {
   score: number
   solved: boolean
   artifactAvailable: boolean
+  solveCount: number
 }
 
 export type ChallengeDetail = ChallengeSummary & { description: string; hintAvailable: boolean; hintCost: number }
