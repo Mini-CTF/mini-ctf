@@ -493,6 +493,7 @@
 .badge.crypto {
   color: #86c9ff;
   border-color: rgba(108, 184, 255, 0.3);
+  background: rgba(108, 184, 255, 0.14);
 }
 .badge.forensics {
   color: #ffc088;
@@ -511,6 +512,7 @@
 .badge.misc {
   color: #c3adff;
   border-color: rgba(161, 132, 255, 0.3);
+  background: rgba(161, 132, 255, 0.14);
 }
 .row-meta > b {
   font-family: var(--mono);
@@ -1461,7 +1463,7 @@ html[lang="en"] .site-footer::before {
 }
 .footer-links {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 30px;
   margin-top: 28px;
 }
@@ -3211,6 +3213,16 @@ html[data-theme="light"] .app-shell span.badge.reversing {
   border-color: rgba(109, 40, 217, 0.4) !important;
   background: rgba(109, 40, 217, 0.08) !important;
 }
+html[data-theme="light"] .app-shell span.badge.crypto {
+  color: #0369a1 !important;
+  border-color: rgba(3, 105, 161, 0.4) !important;
+  background: rgba(3, 105, 161, 0.08) !important;
+}
+html[data-theme="light"] .app-shell span.badge.misc {
+  color: #7e22ce !important;
+  border-color: rgba(126, 34, 206, 0.4) !important;
+  background: rgba(126, 34, 206, 0.08) !important;
+}
 html[data-theme="light"] .app-shell span.badge.beginner {
   color: #0f766e !important;
   border-color: rgba(15, 118, 110, 0.4) !important;
@@ -3823,6 +3835,12 @@ html[data-theme="dark"] .bookmark-ribbon-icon.is-filled {
 }
 .category-reversing .category-progress-ring-value {
   stroke: #45d6b0;
+}
+.category-crypto .category-progress-ring-value {
+  stroke: #4d99ff;
+}
+.category-misc .category-progress-ring-value {
+  stroke: #f06fa8;
 }
 .category-progress-ring > strong {
   position: relative;
@@ -5756,4 +5774,64 @@ pre,
   outline: 0 !important;
   box-shadow: none !important;
   background: transparent !important;
+}
+
+/* ���� �ذ� �Ϸ� ī�� ���� ���� */
+.challenge-card.solved-card {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: linear-gradient(
+    145deg,
+    rgba(34, 197, 94, 0.09),
+    rgba(16, 27, 20, 0.55)
+  );
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.15) inset;
+}
+.challenge-card.solved-card:hover {
+  border-color: rgba(34, 197, 94, 0.65);
+  transform: translateY(-2px);
+}
+.solved-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #22c55e;
+  color: #052e13;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.card-bottom .solved {
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80 !important;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.solved-ribbon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #052e13;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.35);
+}
+.challenge-card.solved-card h3 {
+  color: #dcfce7;
 }
