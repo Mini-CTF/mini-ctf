@@ -220,9 +220,12 @@ function AppShell() {
 
   useEffect(() => {
     if (!isPasswordResetLink) return
-    setShowIntro(false)
-    setShowTutorial(false)
-    setShowMemberTutorial(false)
+    const timer = window.setTimeout(() => {
+      setShowIntro(false)
+      setShowTutorial(false)
+      setShowMemberTutorial(false)
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [isPasswordResetLink])
   useEffect(() => {
     if (!showIntro) return
@@ -287,7 +290,8 @@ function AppShell() {
   }, [])
 
   useEffect(() => {
-    void refreshWallet()
+    const timer = window.setTimeout(() => void refreshWallet(), 0)
+    return () => window.clearTimeout(timer)
   }, [user?.username, refreshWallet])
 
   useEffect(() => {
@@ -538,7 +542,11 @@ function LegacyFloatingAssistant({ user, language, path, onLogin, initialOpen }:
   const greeting = challengeId
     ? (ko ? '지금 보고 있는 문제를 함께 살펴볼게요. 막힌 부분을 편하게 물어보세요.' : 'Let’s look at this challenge together. Tell me where you are stuck.')
     : (ko ? '안녕하세요, FlagBox 학습 도우미예요. 보안 개념이나 문제 풀이의 다음 단계를 물어보세요.' : 'Hi, I’m the FlagBox learning helper. Ask about security concepts or your next step.')
-  useEffect(() => { if (open && messages.length === 0) setMessages([{ role: 'assistant', content: greeting }]) }, [open, greeting, messages.length])
+  useEffect(() => {
+    if (!open || messages.length !== 0) return
+    const timer = window.setTimeout(() => setMessages([{ role: 'assistant', content: greeting }]), 0)
+    return () => window.clearTimeout(timer)
+  }, [open, greeting, messages.length])
   useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }) }, [messages, busy])
   const send = async (event: FormEvent) => {
     event.preventDefault()
@@ -582,7 +590,11 @@ function FloatingAssistant({ user, language, path, onLogin, open, onOpenChange }
   const greeting = challengeId
     ? (ko ? '현재 문제를 함께 살펴볼게요. 막힌 부분을 편하게 알려 주세요.' : 'Let’s look at this challenge together. Tell me where you are stuck.')
     : (ko ? '안녕하세요. FlagBox AI 학습 도우미예요. 보안 개념이나 다음 학습 단계를 물어보세요.' : 'Hi, I’m the FlagBox learning helper. Ask about security concepts or your next step.')
-  useEffect(() => { if (open && messages.length === 0) setMessages([{ role: 'assistant', content: greeting }]) }, [open, greeting, messages.length])
+  useEffect(() => {
+    if (!open || messages.length !== 0) return
+    const timer = window.setTimeout(() => setMessages([{ role: 'assistant', content: greeting }]), 0)
+    return () => window.clearTimeout(timer)
+  }, [open, greeting, messages.length])
   useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }) }, [messages, busy])
   const send = async (event: FormEvent) => {
     event.preventDefault()
@@ -722,7 +734,11 @@ function LearningSnapshot({ lang, loggedIn }: { lang: 'ko' | 'en'; loggedIn: boo
       setError(cause instanceof Error ? cause.message : 'Could not load your learning progress.')
     }
   }, [])
-  useEffect(() => { if (loggedIn) void refresh() }, [loggedIn, refresh])
+  useEffect(() => {
+    if (!loggedIn) return
+    const timer = window.setTimeout(() => void refresh(), 0)
+    return () => window.clearTimeout(timer)
+  }, [loggedIn, refresh])
   const saveGoal = async () => {
     try {
       setError('')
@@ -761,7 +777,10 @@ function BookmarksView() {
       setLoading(false)
     }
   }, [])
-  useEffect(() => { void refresh() }, [refresh])
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refresh(), 0)
+    return () => window.clearTimeout(timer)
+  }, [refresh])
   const remove = async (challengeId: number) => {
     try {
       await api.removeLearningBookmark(challengeId)
@@ -1016,7 +1035,7 @@ function ChallengesView({ items, total, category, onCategory, difficulty, onDiff
   const pageSize = 24
   const [page, setPage] = useState(1)
   const popular = false
-  const onPopular = (_value: boolean) => undefined
+  const onPopular = (value: boolean) => { void value }
   const matchingItems = items
   const pageCount = Math.max(1, Math.ceil(matchingItems.length / pageSize))
   const visibleItems = matchingItems.slice((page - 1) * pageSize, page * pageSize)
@@ -1674,8 +1693,11 @@ function AdminConsole({ language }: { language: Language }) {
   }, [refresh])
 
   useEffect(() => {
-    if (tab === 'content' || tab === 'notices') void loadContent()
-    if (tab === 'ai-feedback') void loadAssistantFeedback()
+    const timer = window.setTimeout(() => {
+      if (tab === 'content' || tab === 'notices') void loadContent()
+      if (tab === 'ai-feedback') void loadAssistantFeedback()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [tab, loadAssistantFeedback, loadContent])
 
   const applyAccountChange = (next: AdminUser) => {
@@ -1848,7 +1870,6 @@ function AdminConsole({ language }: { language: Language }) {
 
 function AdminSubmissionList({ items }: { items: AdminDashboard['recentSubmissions'] }) {
   const [visibleCount, setVisibleCount] = useState(24)
-  useEffect(() => setVisibleCount(24), [items])
   if (items.length === 0) return <p className="muted">No records yet.</p>
   const visibleItems = items.slice(0, visibleCount)
   return <><div className="admin-table">{visibleItems.map((item, index) => <div className="admin-row" key={`${item.username}-${item.submittedAt}-${index}`}><div><strong>@{item.username}</strong><small>{item.challengeTitle} · {new Date(item.submittedAt).toLocaleString()}</small></div><span className={item.correct ? 'success-text' : 'danger-text'}>{item.correct ? 'Correct' : 'Incorrect'}</span></div>)}</div><ProgressiveListAction remaining={items.length - visibleItems.length} onClick={() => setVisibleCount((count) => count + 24)} /></>
@@ -1856,7 +1877,6 @@ function AdminSubmissionList({ items }: { items: AdminDashboard['recentSubmissio
 
 function AdminEventList({ items }: { items: AdminDashboard['antiCheatEvents'] }) {
   const [visibleCount, setVisibleCount] = useState(24)
-  useEffect(() => setVisibleCount(24), [items])
   if (items.length === 0) return <p className="muted">No security events to review.</p>
   const visibleItems = items.slice(0, visibleCount)
   return <><div className="admin-table">{visibleItems.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.eventType} · @{item.username}</strong><small>{item.challengeTitle || 'Platform'} · {item.detail || 'No additional details'} · {new Date(item.createdAt).toLocaleString()}</small></div><span className={`severity ${item.severity.toLowerCase()}`}>{item.severity}</span></div>)}</div><ProgressiveListAction remaining={items.length - visibleItems.length} onClick={() => setVisibleCount((count) => count + 24)} /></>
@@ -1877,7 +1897,6 @@ void AdminView
 
 function LogList({ items, onControl }: { items: { id: number; title: string; detail: string; date: string }[]; onControl: (id: number, hide: boolean) => void }) {
   const [visibleCount, setVisibleCount] = useState(24)
-  useEffect(() => setVisibleCount(24), [items])
   if (items.length === 0) return <p className="muted">No records yet.</p>
   const visibleItems = items.slice(0, visibleCount)
   return <><div className="admin-table">{visibleItems.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.title}</strong><small>{item.detail} · {new Date(item.date).toLocaleString()}</small></div><div className="inline-actions"><button className="button secondary" type="button" onClick={() => onControl(item.id, false)}>Redact</button><button className="button ghost danger-button" type="button" onClick={() => onControl(item.id, true)}>Hide</button></div></div>)}</div><ProgressiveListAction remaining={items.length - visibleItems.length} onClick={() => setVisibleCount((count) => count + 24)} /></>
@@ -1888,7 +1907,7 @@ function ProgressiveListAction({ remaining, onClick }: { remaining: number; onCl
   return <div className="progressive-list-action"><button className="button secondary" type="button" onClick={onClick}>더 보기 ({remaining})</button></div>
 }
 
-function LegacyLoginView({ onBack, onAuth, language: _language }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {
+function LegacyLoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {
   const location = useLocation()
   const resetToken = new URLSearchParams(location.search).get('resetToken') ?? ''
   const [mode, setMode] = useState<'login' | 'register' | 'username' | 'password' | 'reset'>(resetToken ? 'reset' : 'login')
