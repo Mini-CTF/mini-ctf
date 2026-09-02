@@ -5768,6 +5768,15 @@ pre,
 .filter-tabs {
   justify-content: flex-start;
 }
+.challenge-toolbar .difficulty-tabs {
+  margin-left: auto;
+}
+
+@media (max-width: 820px) {
+  .challenge-toolbar .difficulty-tabs {
+    margin-left: 0;
+  }
+}
 
 /* ���� ȸ�� ���μ��� ��� ���� ���� ���� ���� */
 .challenge-toolbar,
