@@ -856,15 +856,545 @@ final class FlagboxChallengeCatalog {
                               + "\noutput  = "
                               + vmRun(flag, program)
                               + "\n");
-                    })));
+                    }),
+                // ───────────────────────────── CRYPTO · BEGINNER (5)
+
+                new Seed(
+                    "c01",
+                    "첫 암호 해독",
+                    "CRYPTO",
+                    "BEGINNER",
+                    50,
+                    "끝의 = 패딩은 Base64 신호! 디코더에 넣어보세요.",
+                    "암호학 입문용으로 Base64로 감춘 플래그 파일이 도착했어요. 인코딩된 문자열을 디코딩해 원문을 복원해 보세요!",
+                    "crypto-b64.txt",
+                    flag -> txt(b64(flag) + "\n")),
+                new Seed(
+                    "c02",
+                    "16진수 암호문",
+                    "CRYPTO",
+                    "BEGINNER",
+                    50,
+                    "두 글자씩 끊으면 한 글자! hex 디코더를 써보세요.",
+                    "16진수 문자열만 남겨진 파일이 발견됐어요. 헥사 값을 텍스트로 되돌리면 플래그가 보일 거예요!",
+                    "crypto-hex.txt",
+                    flag -> txt(hex(flag) + "\n")),
+                new Seed(
+                    "c03",
+                    "로테이트의 비밀",
+                    "CRYPTO",
+                    "BEGINNER",
+                    50,
+                    "ROT13은 두 번 하면 원문! 온라인 변환기로 뒤집어보세요.",
+                    "ROT13으로 뒤집힌 메시지 파일을 받았어요. 알파벳을 13칸씩 밀어 원문을 찾아보세요!",
+                    "crypto-rot13.txt",
+                    flag -> txt(rot13(flag) + "\n")),
+                new Seed(
+                    "c04",
+                    "거꾸로 된 암호",
+                    "CRYPTO",
+                    "BEGINNER",
+                    50,
+                    "문자열을 뒤집으면 끝! 리버스 연산으로 복원하세요.",
+                    "모든 글자가 거꾸로 저장된 파일이 도착했어요. 뒤집기를 한 번 더 하면 원래 플래그가 나타나요!",
+                    "crypto-reverse.txt",
+                    flag -> txt(reverse(flag) + "\n")),
+                new Seed(
+                    "c05",
+                    "시저의 첫 편지",
+                    "CRYPTO",
+                    "BEGINNER",
+                    50,
+                    "3칸 밀렸으니 3칸 당기면 원문! 알파벳·기호 모두 32~126 범위에서 순환해요.",
+                    "시저 암호로 3칸 밀린 편지가 도착했어요. 보이는 문자 전체가 밀렸으니 역연산으로 복원해 보세요!",
+                    "crypto-caesar.txt",
+                    flag -> txt(caesar(flag, 3) + "\n")),
+
+                // ───────────────────────────── CRYPTO · EASY (6)
+
+                new Seed(
+                    "c06",
+                    "XOR 키 K",
+                    "CRYPTO",
+                    "EASY",
+                    150,
+                    "같은 키로 XOR를 두 번 하면 원문! 키는 대문자 K예요.",
+                    "단일 바이트 XOR로 잠긴 파일이에요. 키 문자가 K라는 힌트와 16진수 암호문이 함께 있습니다!",
+                    "crypto-xor.txt",
+                    flag -> txt(xorHex(flag, "K") + "\n")),
+                new Seed(
+                    "c07",
+                    "이중 Base64",
+                    "CRYPTO",
+                    "EASY",
+                    150,
+                    "한 번 풀었는데 또 Base64처럼 보이면 한 번 더!",
+                    "Base64를 두 번 감싼 상자가 도착했어요. 디코딩을 두 번 수행해 보세요!",
+                    "crypto-double-b64.txt",
+                    flag -> txt(b64(b64(flag)) + "\n")),
+                new Seed(
+                    "c08",
+                    "엔터티 암호",
+                    "CRYPTO",
+                    "EASY",
+                    150,
+                    "&#숫자; 형태는 HTML 엔터티! 숫자를 문자로 바꾸면 돼요.",
+                    "HTML 엔터티로 인코딩된 파일이 도착했어요. &#67; 같은 코드를 원래 문자로 되돌려 보세요!",
+                    "crypto-entity.txt",
+                    flag -> txt(htmlEntities(flag) + "\n")),
+                new Seed(
+                    "c09",
+                    "니블 스왑",
+                    "CRYPTO",
+                    "EASY",
+                    150,
+                    "앞뒤 4비트를 맞바꾼 것! 같은 연산을 다시 하면 원복돼요.",
+                    "각 바이트의 상위·하위 니블을 교환한 파일이에요. 같은 스왑을 한 번 더 하면 플래그가 보여요!",
+                    "crypto-nibble.txt",
+                    flag -> txt(swapNibbles(flag) + "\n")),
+                new Seed(
+                    "c10",
+                    "문자 코드표",
+                    "CRYPTO",
+                    "EASY",
+                    150,
+                    "숫자는 아스키 코드! chr 함수로 문자로 바꾸세요.",
+                    "숫자 배열만 남겨진 파일이에요. 각 숫자를 문자로 변환하면 플래그가 됩니다!",
+                    "crypto-codes.txt",
+                    flag -> txt(joinInts(charCodes(flag)) + "\n")),
+                new Seed(
+                    "c11",
+                    "뒤집힌 16진수",
+                    "CRYPTO",
+                    "EASY",
+                    150,
+                    "포장은 hex → 뒤집기 순서! 거꾸로 풀 때 뒤집기 먼저!",
+                    "Base64로 인코딩 후 뒤집고 다시 16진수로 만든 파일이에요. 역순으로 풀어보세요!",
+                    "crypto-hex-reverse.txt",
+                    flag -> txt(hex(reverse(b64(flag))) + "\n")),
+
+                // ───────────────────────────── CRYPTO · NORMAL (4)
+
+                new Seed(
+                    "c12",
+                    "위치마다 다른 시프트",
+                    "CRYPTO",
+                    "NORMAL",
+                    300,
+                    "키 [3,1,4,1,5]가 순환 적용돼요. 32~126 범위 순환을 잊지 마세요!",
+                    "자리마다 다른 이동량으로 밀린 암호문이 도착했어요. 키 숫자열 3,1,4,1,5로 역연산해 보세요!",
+                    "crypto-positional.txt",
+                    flag -> txt(positionalShift(flag, new int[] {3, 1, 4, 1, 5}) + "\n")),
+                new Seed(
+                    "c13",
+                    "세 겹 암호",
+                    "CRYPTO",
+                    "NORMAL",
+                    300,
+                    "겉은 16진수, 중간은 뒤집기, 안은 Base64! 역순으로 벗기세요.",
+                    "Base64 → 뒤집기 → 16진수 세 겹으로 포장된 파일이에요. 안쪽부터 차례로 풀면 플래그가 나와요!",
+                    "crypto-triple.txt",
+                    flag -> txt(hex(b64(reverse(flag))) + "\n")),
+                new Seed(
+                    "c14",
+                    "반복 키 XOR",
+                    "CRYPTO",
+                    "NORMAL",
+                    300,
+                    "키가 3글자면 3글자마다 순환! 키는 key 예요.",
+                    "세 글자 키로 XOR한 암호문이 도착했어요. 키 단어를 알고 있으니 역XOR로 복원해 보세요!",
+                    "crypto-xor-key.txt",
+                    flag -> txt(xorHex(flag, "key") + "\n")),
+                new Seed(
+                    "c15",
+                    "인덱스 더하기",
+                    "CRYPTO",
+                    "NORMAL",
+                    300,
+                    "i번째 글자에 i를 더했어요. 빼면 원문이 보여요!",
+                    "루프가 각 바이트에 인덱스를 더해 만든 16진수 파일이에요. 위치값을 빼서 원문을 복원하세요!",
+                    "crypto-index.txt",
+                    flag -> txt(indexAddHex(flag) + "\n")),
+
+                // ───────────────────────────── CRYPTO · ADVANCED (3)
+
+                new Seed(
+                    "c16",
+                    "회전과 교환",
+                    "CRYPTO",
+                    "ADVANCED",
+                    600,
+                    "5칸 회전 후 인접 스왑! 역순은 스왑 먼저, 그 다음 -5!",
+                    "5칸 회전 후 옆자리끼리 맞바꾼 변환기와 기대 출력이 담긴 파일이에요. 역변환 스크립트를 짜보세요!",
+                    "crypto-rotate.txt",
+                    flag -> txt(joinInts(rotateSwap(flag, 5)) + "\n")),
+                new Seed(
+                    "c17",
+                    "두 라운드 게이트",
+                    "CRYPTO",
+                    "ADVANCED",
+                    600,
+                    "마지막 라운드부터 거꾸로: -덧셈 후 XOR, 키 순환은 라운드별로 달라요!",
+                    "게이트 검증기와 기대 출력이 담긴 파일이에요. 두 라운드 XOR+덧셈을 역산해 보세요. 키는 gate7!",
+                    "crypto-gate.txt",
+                    flag -> txt(joinInts(twoRoundTransform(flag, "gate7")) + "\n")),
+                new Seed(
+                    "c18",
+                    "커스텀 Base64",
+                    "CRYPTO",
+                    "ADVANCED",
+                    600,
+                    "암호문 글자를 사용표에서 표준표로 옮긴 뒤 표준 Base64 디코딩!",
+                    "알파벳 순서를 바꾼 Base64 표로 인코딩된 파일이에요. 두 표가 함께 들어 있으니 표준으로 되돌린 뒤 디코딩하세요!",
+                    "crypto-custom-b64.txt",
+                    flag ->
+                        txt(
+                            "표준표: "
+                                + STANDARD_ALPHABET
+                                + "\n사용표 : "
+                                + CUSTOM_ALPHABET
+                                + "\n암호문 : "
+                                + mapAlphabet(b64(flag))
+                                + "\n")),
+
+                // ───────────────────────────── CRYPTO · EXPERT (2)
+
+                new Seed(
+                    "c19",
+                    "예측 가능한 난수",
+                    "CRYPTO",
+                    "EXPERT",
+                    1000,
+                    "시드가 같으면 키스트림도 같아요! LCG를 재현해 XOR를 풀어보세요.",
+                    "LCG 난수로 만든 암호문이에요. 시드 20260826과 생성식이 공개되어 있으니 키스트림을 재현해 보세요!",
+                    "crypto-lcg.txt",
+                    flag ->
+                        txt(
+                            "x0 = 20260826\nx(n+1) = (x(n) * 1103515245 + 12345) mod 67108864\n키스트림: x mod 256\ncipher_hex = "
+                                + xorBytesHex(flag, lcgStream(20260826L, flag.length()))
+                                + "\n")),
+                new Seed(
+                    "c20",
+                    "미니 VM",
+                    "CRYPTO",
+                    "EXPERT",
+                    1000,
+                    "명령을 역순으로 되감기: XOR k → -k → 뒤집기!",
+                    "초미니 VM의 프로그램과 출력이 담긴 파일이에요. 명령을 역순으로 되감아 원래 입력을 복원하세요!",
+                    "crypto-vm.txt",
+                    flag -> {
+                      int[] program = {3, 1, 5, 2, 42};
+                      return txt(
+                          "명령어:\n3       : 바이트 순서 뒤집기\n1 k     : 모든 바이트에 k 더하기 (mod 256)\n2 k     : 모든 바이트와 k XOR\n\nprogram = "
+                              + joinInts(program)
+                              + "\noutput  = "
+                              + vmRun(flag, program)
+                              + "\n");
+                    }),
+
+                // ───────────────────────────── MISC · BEGINNER (5)
+
+                new Seed(
+                    "m01",
+                    "숨겨진 주석",
+                    "MISC",
+                    "BEGINNER",
+                    50,
+                    "주석은 <!-- 와 --> 사이! 소스에서 FLAG를 찾아보세요.",
+                    "배포된 페이지 소스 파일을 받았어요. 개발자가 지우지 않은 주석 속에 플래그가 숨어 있대요!",
+                    "misc-comment.html",
+                    FlagboxChallengeCatalog::pageHtmlWithComment),
+                new Seed(
+                    "m02",
+                    "숨겨진 입력칸",
+                    "MISC",
+                    "BEGINNER",
+                    50,
+                    "type=\"hidden\"은 화면만 숨겨요. value를 읽어보세요.",
+                    "회원가입 폼 파일이 도착했어요. 화면에 안 보이는 숨은 입력칸에 초대 코드가 들어 있대요!",
+                    "misc-hidden.html",
+                    flag ->
+                        txt(
+                            "<form><input name=\"id\"><input type=\"hidden\" name=\"invite\" value=\""
+                                + flag
+                                + "\"></form>\n")),
+                new Seed(
+                    "m03",
+                    "로봇의 메모",
+                    "MISC",
+                    "BEGINNER",
+                    50,
+                    "robots.txt의 Disallow가 숨긴 경로를 알려줘요.",
+                    "웹 스냅샷 파일을 받았어요. robots.txt와 숨긴 메모 파일이 함께 담겨 있대요!",
+                    "misc-robots.txt",
+                    flag ->
+                        txt(
+                            "robots.txt\nUser-agent: *\nDisallow: /secret/note.txt\n\n/secret/note.txt\n메모: "
+                                + flag
+                                + "\n")),
+                new Seed(
+                    "m04",
+                    "쿠키 속 값",
+                    "MISC",
+                    "BEGINNER",
+                    50,
+                    "= 패딩은 Base64! 디코더에 넣어보세요.",
+                    "브라우저 쿠키 덤프를 받았어요. Base64로 포장된 값이 숨어 있대요!",
+                    "misc-cookie.txt",
+                    flag -> txt("note=" + b64(flag) + "\n")),
+                new Seed(
+                    "m05",
+                    "헤더 속 쪽지",
+                    "MISC",
+                    "BEGINNER",
+                    50,
+                    "X-로 시작하는 헤더는 개발자 메모 공간이에요.",
+                    "캡처된 HTTP 헤더 파일을 받았어요. 본문 말고 헤더에 수상한 값이 있대요!",
+                    "misc-header.txt",
+                    flag ->
+                        txt(
+                            "HTTP/1.1 200 OK\nX-Hidden-Note: "
+                                + flag
+                                + "\nContent-Type: text/html\n")),
+
+                // ───────────────────────────── MISC · EASY (6)
+
+                new Seed(
+                    "m06",
+                    "자바스크립트 변수",
+                    "MISC",
+                    "EASY",
+                    150,
+                    "코드에서 의미 있는 변수 이름을 찾아보세요.",
+                    "웹페이지가 로드한 스크립트 파일을 받았어요. 관리자 메모가 변수에 남아 있대요!",
+                    "misc-script.js",
+                    flag -> txt("const SECRET = \"" + flag + "\";\n")),
+                new Seed(
+                    "m07",
+                    "링크 속 데이터",
+                    "MISC",
+                    "EASY",
+                    150,
+                    "?data= 뒤는 Base64! 디코딩하면 끝이에요.",
+                    "공유 링크 파일을 받았어요. URL 끝에 붙은 데이터가 Base64로 인코딩되어 있대요!",
+                    "misc-link.txt",
+                    flag -> txt("https://example.com/?data=" + b64(flag) + "\n")),
+                new Seed(
+                    "m08",
+                    "지워진 로그",
+                    "MISC",
+                    "EASY",
+                    150,
+                    "휴지통 $I/$R 기록에서 복구된 문장을 읽어보세요.",
+                    "삭제된 문서 복구 리포트를 받았어요. 휴지통 인덱스와 일부 복구된 내용이 담겨 있대요!",
+                    "misc-recycle.txt",
+                    flag ->
+                        txt(
+                            "$I index 원본: C:\\Users\\guest\\doc.txt\n$R content: \"남긴 문구 -> "
+                                + flag
+                                + "\"\n")),
+                new Seed(
+                    "m09",
+                    "로그 속 파일명",
+                    "MISC",
+                    "EASY",
+                    150,
+                    "POST /uploads/ 뒤 파일명이 Base64라면 디코딩!",
+                    "웹서버 접속 로그를 받았어요. 업로드된 파일명이 수상하다고 해요!",
+                    "misc-access.log",
+                    flag -> logArtifact(flag)),
+                new Seed(
+                    "m10",
+                    "덤프의 ASCII",
+                    "MISC",
+                    "EASY",
+                    150,
+                    "hexdump 오른쪽 열이 텍스트 번역본이에요.",
+                    "메모리 덤프의 hexdump를 받았어요. 오른쪽 ASCII 열만 읽으면 플래그가 보인대요!",
+                    "misc-hexdump.txt",
+                    flag -> txt(hexDump(flag))),
+                new Seed(
+                    "m11",
+                    "압축의 코멘트",
+                    "MISC",
+                    "EASY",
+                    150,
+                    "zipinfo Comment 줄을 확인하세요!",
+                    "ZIP 구조 정보 파일을 받았어요. 압축파일 자체에 달린 코멘트에 플래그가 있대요!",
+                    "misc-zipinfo.txt",
+                    flag ->
+                        txt(
+                            "Archive: backup.zip\nComment: "
+                                + flag
+                                + "\n Length Name\n 2048 readme.txt\n")),
+
+                // ───────────────────────────── MISC · NORMAL (4)
+
+                new Seed(
+                    "m12",
+                    "JWT 메모",
+                    "MISC",
+                    "NORMAL",
+                    300,
+                    "JWT는 점으로 세 칸! 두 번째 칸을 Base64URL 디코딩하세요.",
+                    "로그인 토큰 파일을 받았어요. 페이로드 속 memo 필드에 플래그가 들어 있대요!",
+                    "misc-token.jwt",
+                    flag -> {
+                      String payload = "{\"sub\":\"guest\",\"memo\":\"" + flag + "\"}";
+                      return txt(
+                          b64Url("{\"alg\":\"HS256\",\"typ\":\"JWT\"}")
+                              + "."
+                              + b64Url(payload)
+                              + ".signature\n");
+                    }),
+                new Seed(
+                    "m13",
+                    "이중 포장",
+                    "MISC",
+                    "NORMAL",
+                    300,
+                    "겉은 hex, 안은 Base64! 순서대로 벗기세요.",
+                    "소포가 16진수로 한 번, Base64로 한 번 포장되어 왔어요. 겉부터 차례로 풀어보세요!",
+                    "misc-parcel.hex",
+                    flag -> txt(hex(b64(flag)) + "\n")),
+                new Seed(
+                    "m14",
+                    "리다이렉트 조각",
+                    "MISC",
+                    "NORMAL",
+                    300,
+                    "piece1/2/3 순서대로 이어 붙이세요!",
+                    "세 번 리다이렉트되며 쿠키 조각을 나눠 준 기록이에요. 조각을 순서대로 합치면 플래그가 됩니다!",
+                    "misc-redirect.txt",
+                    flag -> {
+                      String p1 = flag.substring(0, flag.length() / 3);
+                      String p2 = flag.substring(flag.length() / 3, flag.length() * 2 / 3);
+                      String p3 = flag.substring(flag.length() * 2 / 3);
+                      return txt(
+                          "302 /a Set-Cookie: piece1="
+                              + p1
+                              + "\n302 /b Set-Cookie: piece2="
+                              + p2
+                              + "\n302 /c Set-Cookie: piece3="
+                              + p3
+                              + "\n");
+                    }),
+                new Seed(
+                    "m15",
+                    "난독화 스크립트",
+                    "MISC",
+                    "NORMAL",
+                    300,
+                    "atob는 Base64 디코딩, eval은 실행! 안쪽 코드를 복원하세요.",
+                    "브라우저 콘솔용 난독화 스크립트를 받았어요. atob와 eval이 보이네요. 안쪽을 풀어 실행해 보세요!",
+                    "misc-obfuscate.js",
+                    flag -> jsObfuscated(flag)),
+
+                // ───────────────────────────── MISC · ADVANCED (3)
+
+                new Seed(
+                    "m16",
+                    "시간이 뒤틀린 문서",
+                    "MISC",
+                    "ADVANCED",
+                    600,
+                    "modified가 created보다 과거면 의심! v2에서 지워진 문단을 찾아보세요.",
+                    "문서 버전 기록이 이상해요. 수정일이 생성일보다 과거인 파일에서 지워진 문단을 찾아보세요!",
+                    "misc-version.txt",
+                    flag ->
+                        txt(
+                            "v1 created 2026-08-01 modified 2026-08-01\nv2 created 2026-08-05 modified 2026-07-30\nv2 발췌: (지워진 문단: 코드 "
+                                + flag
+                                + ")\n")),
+                new Seed(
+                    "m17",
+                    "찢어진 Base64",
+                    "MISC",
+                    "ADVANCED",
+                    600,
+                    "3조각 길이가 4의 배수가 되도록 맞춰보세요! 유일한 조합이 정답이에요.",
+                    "Base64 문장이 세 조각으로 찢어져 왔어요. 조각 길이가 적혀 있으니 순서 조합을 시도해 보세요!",
+                    "misc-torn.txt",
+                    flag -> {
+                      String whole = b64(flag);
+                      int cut = whole.length() / 3;
+                      String a = whole.substring(0, cut);
+                      String b = whole.substring(cut, cut * 2);
+                      String c = whole.substring(cut * 2);
+                      return txt(
+                          "조각-가 ("
+                              + a.length()
+                              + "글자): "
+                              + a
+                              + "\n조각-나 ("
+                              + b.length()
+                              + "글자): "
+                              + b
+                              + "\n조각-다 ("
+                              + c.length()
+                              + "글자): "
+                              + c
+                              + "\n전체 길이: "
+                              + whole.length()
+                              + "글자\n");
+                    }),
+                new Seed(
+                    "m18",
+                    "공백 스테가노",
+                    "MISC",
+                    "ADVANCED",
+                    600,
+                    "줄 끝 공백 개수가 아스키 코드! 렌더링을 켜고 세어보세요.",
+                    "시처럼 보이는 메모 파일이에요. 줄 끝 공백 개수에 플래그가 숨겨져 있대요!",
+                    "misc-whitespace.txt",
+                    FlagboxChallengeCatalog::spaceStego),
+
+                // ───────────────────────────── MISC · EXPERT (2)
+
+                new Seed(
+                    "m19",
+                    "흩어진 조각",
+                    "MISC",
+                    "EXPERT",
+                    1000,
+                    "조각 번호가 순서예요. 세 조각을 순서대로 합치세요!",
+                    "플래그가 세 곳에 흩어져 발견됐어요. 파일에 조각별 위치와 함께 정리되어 있어요!",
+                    "misc-pieces.txt",
+                    flag -> {
+                      String[] pieces = slice(flag, 3);
+                      return txt(
+                          "[조각1]\n"
+                              + pieces[0]
+                              + "\n\n[조각2]\n"
+                              + pieces[1]
+                              + "\n\n[조각3]\n"
+                              + pieces[2]
+                              + "\n");
+                    }),
+                new Seed(
+                    "m20",
+                    "최종 관문",
+                    "MISC",
+                    "EXPERT",
+                    1000,
+                    "변수명과 주석이 단서! SAMPLE·TEMPLATE는 함정, REAL이 진짜예요.",
+                    "배포 백업 파일이 노출됐어요. 여러 CTF 값이 섞여 있지만 단 하나만 진짜 플래그예요!",
+                    "misc-deploy.env",
+                    flag ->
+                        txt(
+                            "# decoy\nDEBUG_FLAG=CTF{decoy_01}\n# real\nAPP_REAL_FLAG="
+                                + flag
+                                + "\n# template\nTEMPLATE=CTF{replace_me}\n"))));
     addExpandedSeeds(seeds, "WEB", "w");
     addExpandedSeeds(seeds, "FORENSIC", "f");
     addExpandedSeeds(seeds, "REVERSING", "r");
+    addExpandedSeeds(seeds, "CRYPTO", "c");
+    addExpandedSeeds(seeds, "MISC", "m");
     return List.copyOf(seeds);
   }
 
   /**
-   * 3개 분야에 각 35개(첫걸음 5 / 쉬움 10 / 보통 10 / 어려움 5 / 도전 5)를 더한다. 개별 파일과 지문은 번호·분야·변환법에 맞춰 생성되어 기존 문제와
+   * 5개 분야에 각 35개(첫걸음 5 / 쉬움 10 / 보통 10 / 어려움 5 / 도전 5)를 더한다. 개별 파일과 지문은 번호·분야·변환법에 맞춰 생성되어 기존 문제와
    * 같은 오프라인 풀이 흐름을 유지한다.
    */
   private static void addExpandedSeeds(List<Seed> seeds, String category, String prefix) {
