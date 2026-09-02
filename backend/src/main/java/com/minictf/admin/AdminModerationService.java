@@ -211,9 +211,14 @@ public class AdminModerationService {
 
   @Transactional
   public AdminDtos.IpBanView banIp(AdminDtos.IpBanRequest request, String adminUsername) {
-    String ip = request.ipAddress().trim();
-    if (!ip.matches("[0-9a-fA-F:.]{3,45}"))
+    String raw = request.ipAddress().trim();
+    String ip = com.minictf.config.IpBanFilter.normalizeIp(raw);
+    if (ip == null || ip.isBlank()) throw new IllegalArgumentException("유효한 IP 주소를 입력해 주세요.");
+    try {
+      java.net.InetAddress.getByName(ip);
+    } catch (java.net.UnknownHostException e) {
       throw new IllegalArgumentException("유효한 IP 주소를 입력해 주세요.");
+    }
     IpBan ban = ipBans.findByIpAddress(ip).orElseGet(IpBan::new);
     ban.setIpAddress(ip);
     ban.setReason(request.reason().trim());
@@ -240,14 +245,16 @@ public class AdminModerationService {
     SecurityEvent registration =
         securityEvents
             .findFirstByUserIdAndEventTypeInAndIpAddressIsNotNullOrderByCreatedAtAsc(
-                target.getId(), Set.of("ACCOUNT_REGISTERED", "OAUTH_LOGIN"))
+                target.getId(), Set.of("ACCOUNT_REGISTERED", "OAUTH_LOGIN", "OAUTH_LOGIN_SUCCESS"))
             .filter(event -> !event.getIpAddress().isBlank())
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
                         "This account has no saved registration IP address"));
     AdminDtos.IpBanView result =
-        banIp(new AdminDtos.IpBanRequest(registration.getIpAddress(), request.reason()), adminUsername);
+        banIp(
+            new AdminDtos.IpBanRequest(registration.getIpAddress(), request.reason()),
+            adminUsername);
     target.setStatus("SUSPENDED");
     target.setSuspensionReason("Account ban: " + request.reason().trim());
     target.setSuspendedAt(Instant.now());

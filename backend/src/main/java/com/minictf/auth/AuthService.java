@@ -69,7 +69,8 @@ public class AuthService {
   }
 
   @Transactional
-  public AuthDtos.AuthResponse register(AuthDtos.RegisterRequest request, String ip) {
+  public AuthDtos.AuthResponse register(
+      AuthDtos.RegisterRequest request, String ip, String deviceFingerprint) {
     if (!request.password().equals(request.passwordConfirmation()))
       throw new IllegalArgumentException("비밀번호 확인이 일치하지 않습니다.");
     String username = request.username().trim();
@@ -79,8 +80,16 @@ public class AuthService {
             : request.nickname().trim();
     accountNameSafety.requireSafe(username);
     accountNameSafety.requireSafe(nickname);
-    if (securityEventRepository.countByEventTypeAndIpAddress("ACCOUNT_REGISTERED", ip) >= 3)
-      throw new AccountRegistrationLimitException();
+    String normalizedIp = com.minictf.config.IpBanFilter.normalizeIp(ip);
+    if (normalizedIp == null) normalizedIp = ip;
+    String fp = deviceFingerprint == null ? null : deviceFingerprint.trim();
+    if (fp != null && fp.length() > 64) fp = fp.substring(0, 64);
+    if (securityEventRepository.countByEventTypeAndIpAddress("ACCOUNT_REGISTERED", normalizedIp)
+        >= 3) throw new AccountRegistrationLimitException();
+    if (fp != null
+        && !fp.isBlank()
+        && securityEventRepository.countByEventTypeAndDeviceFingerprint("ACCOUNT_REGISTERED", fp)
+            >= 3) throw new AccountRegistrationLimitException();
     if (users.existsByUsernameIgnoreCase(username)
         || users.existsByDeletedOriginalUsernameIgnoreCase(username))
       throw new DuplicateUsernameException();
@@ -93,8 +102,18 @@ public class AuthService {
     user.setScore(0);
     User saved = users.save(user);
     securityEvents.record(
-        saved, "ACCOUNT_REGISTERED", saved.getUsername(), ip, "Local account created");
+        saved,
+        "ACCOUNT_REGISTERED",
+        saved.getUsername(),
+        normalizedIp,
+        fp,
+        "Local account created");
     return issueNewSession(saved.getId());
+  }
+
+  @Transactional
+  public AuthDtos.AuthResponse register(AuthDtos.RegisterRequest request, String ip) {
+    return register(request, ip, null);
   }
 
   @Transactional

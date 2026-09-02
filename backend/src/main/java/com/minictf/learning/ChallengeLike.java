@@ -27,9 +27,23 @@ public class ChallengeLike {
     if (createdAt == null) createdAt = Instant.now();
   }
 
-  public User getUser() { return user; }
-  public void setUser(User value) { user = value; }
-  public Challenge getChallenge() { return challenge; }
-  public void setChallenge(Challenge value) { challenge = value; }
-  public Instant getCreatedAt() { return createdAt; }
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User value) {
+    user = value;
+  }
+
+  public Challenge getChallenge() {
+    return challenge;
+  }
+
+  public void setChallenge(Challenge value) {
+    challenge = value;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
 }

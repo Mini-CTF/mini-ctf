@@ -1,7 +1,7 @@
 package com.minictf.challenge;
 
-import java.util.List;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +17,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
   @Modifying
   @Query("delete from Submission submission where submission.user.id = :userId")
   int deleteByUserId(@Param("userId") Long userId);
+
   @Query(
       "select s from Submission s join fetch s.challenge where s.user.id=:userId order by s.submittedAt desc")
   List<Submission> findByUserId(@Param("userId") Long userId, Pageable pageable);

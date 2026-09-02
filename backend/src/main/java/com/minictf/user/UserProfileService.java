@@ -102,7 +102,12 @@ public class UserProfileService {
         solves.findByUserId(user.getId()).stream()
             .collect(
                 java.util.stream.Collectors.groupingBy(
-                    solve -> solve.getSolvedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate().toString(),
+                    solve ->
+                        solve
+                            .getSolvedAt()
+                            .atZone(ZoneId.of("Asia/Seoul"))
+                            .toLocalDate()
+                            .toString(),
                     java.util.stream.Collectors.counting()));
     return new UserDtos.PublicProfile(
         user.getUsername(),

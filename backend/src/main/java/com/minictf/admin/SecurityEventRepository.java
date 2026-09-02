@@ -13,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 public interface SecurityEventRepository extends JpaRepository<SecurityEvent, Long> {
   long countByEventTypeAndIpAddress(String eventType, String ipAddress);
 
+  long countByEventTypeAndDeviceFingerprint(String eventType, String deviceFingerprint);
+
   Optional<SecurityEvent> findFirstByUserIdAndEventTypeInAndIpAddressIsNotNullOrderByCreatedAtAsc(
       Long userId, Collection<String> eventTypes);
 

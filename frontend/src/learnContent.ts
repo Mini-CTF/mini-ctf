@@ -5,7 +5,7 @@ export type LearnSection = { heading: string; body: string[] }
 
 export type LearnArticle = {
   slug: string
-  field: 'WEB' | 'FORENSIC' | 'REVERSING'
+  field: 'WEB' | 'FORENSIC' | 'REVERSING' | 'CRYPTO' | 'MISC'
   title: string
   minutes: number
   summary: string
@@ -83,6 +83,8 @@ export const LEARN_FIELDS = [
   { key: 'WEB', label: '웹' },
   { key: 'FORENSIC', label: '포렌식' },
   { key: 'REVERSING', label: '리버싱' },
+  { key: 'CRYPTO', label: '암호학' },
+  { key: 'MISC', label: '미스셀레니어스' },
 ] as const
 
 export const learnArticles: LearnArticle[] = [

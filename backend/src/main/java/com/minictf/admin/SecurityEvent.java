@@ -27,6 +27,9 @@ public class SecurityEvent {
   @Column(name = "ip_address", length = 64)
   private String ipAddress;
 
+  @Column(name = "device_fingerprint", length = 64)
+  private String deviceFingerprint;
+
   @Column(length = 1000)
   private String detail;
 
@@ -67,6 +70,10 @@ public class SecurityEvent {
     return ipAddress;
   }
 
+  public String getDeviceFingerprint() {
+    return deviceFingerprint;
+  }
+
   public String getDetail() {
     return detail;
   }
@@ -101,6 +108,10 @@ public class SecurityEvent {
 
   public void setIpAddress(String value) {
     ipAddress = value;
+  }
+
+  public void setDeviceFingerprint(String value) {
+    deviceFingerprint = value;
   }
 
   public void setDetail(String value) {

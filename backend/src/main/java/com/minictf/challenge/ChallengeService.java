@@ -58,9 +58,11 @@ public class ChallengeService {
   public List<ChallengeDtos.Summary> list(String username) {
     Set<Long> solvedIds = solvedIds(username);
     List<Challenge> active = challenges.findByActiveTrueOrderByIdAsc();
-    Set<Long> ids = active.stream().map(Challenge::getId).collect(java.util.stream.Collectors.toSet());
+    Set<Long> ids =
+        active.stream().map(Challenge::getId).collect(java.util.stream.Collectors.toSet());
     Map<Long, Long> likeCounts = likeCounts(ids);
-    Set<Long> likedIds = username == null ? Set.of() : likes.findChallengeIdsByUserId(userId(username));
+    Set<Long> likedIds =
+        username == null ? Set.of() : likes.findChallengeIdsByUserId(userId(username));
     return active.stream()
         .map(
             c ->
@@ -77,7 +79,11 @@ public class ChallengeService {
   public ChallengeDtos.Detail detail(Long id, String username) {
     Challenge c = getActive(id);
     Set<Long> solvedIds = solvedIds(username);
-    long likeCount = likes.countByChallengeIds(Set.of(id)).stream().mapToLong(row -> ((Number) row[1]).longValue()).findFirst().orElse(0L);
+    long likeCount =
+        likes.countByChallengeIds(Set.of(id)).stream()
+            .mapToLong(row -> ((Number) row[1]).longValue())
+            .findFirst()
+            .orElse(0L);
     return new ChallengeDtos.Detail(
         c.getId(),
         c.getTitle(),
@@ -264,6 +270,10 @@ public class ChallengeService {
       case "FORENSIC" -> "Follow the suspicious request and decode each representation in order.";
       case "REVERSING" ->
           "Work backwards from the verifier's final comparison and undo one round at a time.";
+      case "CRYPTO" ->
+          "Identify the cipher, encoding, or mathematical structure before attempting to decode it.";
+      case "MISC" ->
+          "Start by inventorying every clue, then test the simplest interpretation of each one.";
       default ->
           "Use the challenge description as your first source of truth and isolate one clue at a time.";
     };

@@ -14,9 +14,11 @@ public interface ChallengeLikeRepository extends JpaRepository<ChallengeLike, Ch
   @Query("select entry.challenge.id from ChallengeLike entry where entry.user.id = :userId")
   Set<Long> findChallengeIdsByUserId(@Param("userId") Long userId);
 
-  @Query("select entry.challenge.id, count(entry) from ChallengeLike entry where entry.challenge.id in :challengeIds group by entry.challenge.id")
+  @Query(
+      "select entry.challenge.id, count(entry) from ChallengeLike entry where entry.challenge.id in :challengeIds group by entry.challenge.id")
   List<Object[]> countByChallengeIds(@Param("challengeIds") Set<Long> challengeIds);
 
-  @Query("select entry from ChallengeLike entry join fetch entry.challenge where entry.challenge.active = true order by entry.createdAt desc")
+  @Query(
+      "select entry from ChallengeLike entry join fetch entry.challenge where entry.challenge.active = true order by entry.createdAt desc")
   List<ChallengeLike> findAllWithActiveChallenge();
 }

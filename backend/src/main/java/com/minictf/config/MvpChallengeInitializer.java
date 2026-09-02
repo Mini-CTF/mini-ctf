@@ -141,10 +141,7 @@ public class MvpChallengeInitializer {
     };
   }
 
-  /**
-   * Render처럼 로컬 디스크가 초기화될 수 있는 환경에서도 MVP 문제의 파일과 정답 해시가
-   * 서로 어긋나지 않도록 생성된 파일을 DB에 보관한다.
-   */
+  /** Render처럼 로컬 디스크가 초기화될 수 있는 환경에서도 MVP 문제의 파일과 정답 해시가 서로 어긋나지 않도록 생성된 파일을 DB에 보관한다. */
   private static void persistMvpArtifacts(ChallengeRepository challenges, Path mvpRoot)
       throws IOException {
     List<String> titles =
@@ -243,13 +240,14 @@ public class MvpChallengeInitializer {
     if (challenge == null || challenge.getArtifactData() == null) return;
 
     String artifact = new String(challenge.getArtifactData(), StandardCharsets.UTF_8);
-    Matcher matcher = Pattern.compile("(?m)^Payload:\\s*([A-Za-z0-9+/=]+)\\s*$")
-        .matcher(artifact);
+    Matcher matcher = Pattern.compile("(?m)^Payload:\\s*([A-Za-z0-9+/=]+)\\s*$").matcher(artifact);
     if (!matcher.find()) return;
 
     try {
-      String flag = new String(Base64.getDecoder().decode(matcher.group(1)), StandardCharsets.UTF_8);
-      if (flag.startsWith("CTF{") && flag.endsWith("}")
+      String flag =
+          new String(Base64.getDecoder().decode(matcher.group(1)), StandardCharsets.UTF_8);
+      if (flag.startsWith("CTF{")
+          && flag.endsWith("}")
           && !encoder.matches(flag, challenge.getFlagHash())) {
         challenge.setFlagHash(encoder.encode(flag));
         challenges.save(challenge);

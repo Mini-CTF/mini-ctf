@@ -12,7 +12,8 @@ public interface VaultOwnedCosmeticRepository extends JpaRepository<VaultOwnedCo
   List<VaultOwnedCosmetic> findByUserId(Long userId);
 
   @Modifying
-  @Query("delete from VaultOwnedCosmetic cosmetic where cosmetic.user.id = :userId and cosmetic.cosmeticId = :cosmeticId")
+  @Query(
+      "delete from VaultOwnedCosmetic cosmetic where cosmetic.user.id = :userId and cosmetic.cosmeticId = :cosmeticId")
   void deleteByUserIdAndCosmeticId(
       @Param("userId") Long userId, @Param("cosmeticId") String cosmeticId);
 }

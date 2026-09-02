@@ -370,6 +370,14 @@ export function guideForChallenge(_title: string, category: string, difficulty: 
       tools: ['텍스트 편집기', '파이썬 또는 간단한 계산기'],
     },
   }
+  categoryCopy.CRYPTO = {
+    concept: 'Identify the cipher, encoding, or mathematical structure before attempting to decode it. Record the format and repeating patterns first.',
+    tools: ['CyberChef', 'Python or a calculator'],
+  }
+  categoryCopy.MISC = {
+    concept: 'Miscellaneous challenges can combine different kinds of clues. Separate files, text, and metadata, then test the simplest explanation first.',
+    tools: ['Text editor', 'CyberChef or a file-analysis tool'],
+  }
   const selected = categoryCopy[category] ?? categoryCopy.WEB
   const depth = difficulty === 'BEGINNER' ? '한 번의' : difficulty === 'EXPERT' ? '여러 단계의' : '두세 단계의'
   return g(selected.concept, selected.tools, [

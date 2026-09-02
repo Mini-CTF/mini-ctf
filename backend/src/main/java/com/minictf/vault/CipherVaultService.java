@@ -527,7 +527,10 @@ public class CipherVaultService {
     owned.save(cosmetic);
   }
 
-  /** Administrator-only inventory adjustment. Kept here so the catalog remains the single source of truth. */
+  /**
+   * Administrator-only inventory adjustment. Kept here so the catalog remains the single source of
+   * truth.
+   */
   @Transactional
   public void setAdminGrant(User user, String cosmeticId, boolean granted) {
     Item item = item(cosmeticId);

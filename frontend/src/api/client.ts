@@ -49,6 +49,24 @@ function normalizeUsername(username: string): string {
 
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 
+function getDeviceFingerprint(): string {
+  const key = 'flagbox_fp'
+  try {
+    const existing = window.localStorage.getItem(key)
+    if (existing && existing.length >= 8) return existing
+    const rand = (typeof crypto !== 'undefined' && 'randomUUID' in crypto) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 48) : 'unknown'
+    const raw = `${rand}-${ua}-${screen.width}x${screen.height}`
+    let hash = 0
+    for (let i = 0; i < raw.length; i++) hash = (hash * 31 + raw.charCodeAt(i)) >>> 0
+    const fp = `fbx-${hash.toString(36)}-${rand.slice(0, 8)}`
+    window.localStorage.setItem(key, fp)
+    return fp
+  } catch {
+    return `fbx-${Math.random().toString(36).slice(2, 10)}`
+  }
+}
+
 function notifyAdminAccountChanged(user?: AdminUser): void {
   window.dispatchEvent(new Event(rankingChangedEvent))
   if (user) window.dispatchEvent(new CustomEvent(adminAccountChangedEvent, { detail: user }))
@@ -66,6 +84,7 @@ async function request<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
   if (init.body) headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
+  try { headers.set('X-Device-Fingerprint', getDeviceFingerprint()) } catch { /* ignore */ }
 
   const retryDelays = init.method && init.method !== 'GET' ? [] : GET_RETRY_DELAYS_MS
   const { timeoutMs = REQUEST_TIMEOUT_MS, ...fetchInit } = init

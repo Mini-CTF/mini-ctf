@@ -14,8 +14,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -140,7 +140,8 @@ public class LearningService {
   public List<LearningDtos.PopularChallenge> popular(String username) {
     User user = user(username);
     List<Challenge> active = challenges.findByActiveTrueOrderByIdAsc();
-    Set<Long> ids = active.stream().map(Challenge::getId).collect(java.util.stream.Collectors.toSet());
+    Set<Long> ids =
+        active.stream().map(Challenge::getId).collect(java.util.stream.Collectors.toSet());
     Map<Long, Long> counts = new HashMap<>();
     if (!ids.isEmpty())
       for (Object[] row : likes.countByChallengeIds(ids))

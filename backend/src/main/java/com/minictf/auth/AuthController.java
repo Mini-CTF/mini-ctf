@@ -38,36 +38,40 @@ public class AuthController {
   public ResponseEntity<ApiResponse<AuthDtos.AuthResponse>> register(
       @Valid @RequestBody AuthDtos.RegisterRequest req, HttpServletRequest http) {
     String ip = IpBanFilter.clientIp(http);
+    String fp = http.getHeader("X-Device-Fingerprint");
+    if (fp != null) fp = fp.trim();
     rateLimits.check("register", ip, 10, 60);
+    if (fp != null && !fp.isBlank()) rateLimits.check("register-fp", fp, 5, 3600);
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.ok(service.register(req, ip)));
+        .body(ApiResponse.ok(service.register(req, ip, fp)));
   }
 
   @PostMapping("/login")
   public ApiResponse<AuthDtos.AuthResponse> login(
       @Valid @RequestBody AuthDtos.LoginRequest req, HttpServletRequest http) {
-    rateLimits.check("login", http.getRemoteAddr(), 20, 60);
-    return ApiResponse.ok(service.login(req, http.getRemoteAddr()));
+    String ip = IpBanFilter.clientIp(http);
+    rateLimits.check("login", ip, 20, 60);
+    return ApiResponse.ok(service.login(req, ip));
   }
 
   @PostMapping("/recovery/username")
   public ApiResponse<AuthDtos.RecoveryMessage> recoverUsername(
       @Valid @RequestBody AuthDtos.UsernameRecoveryRequest req, HttpServletRequest http) {
-    rateLimits.check("recover-username", http.getRemoteAddr(), 5, 60);
+    rateLimits.check("recover-username", IpBanFilter.clientIp(http), 5, 60);
     return ApiResponse.ok(service.recoverUsername(req));
   }
 
   @PostMapping("/recovery/password")
   public ApiResponse<AuthDtos.RecoveryMessage> requestPasswordReset(
       @Valid @RequestBody AuthDtos.PasswordRecoveryRequest req, HttpServletRequest http) {
-    rateLimits.check("recover-password", http.getRemoteAddr(), 5, 60);
+    rateLimits.check("recover-password", IpBanFilter.clientIp(http), 5, 60);
     return ApiResponse.ok(service.requestPasswordReset(req));
   }
 
   @PostMapping("/recovery/reset")
   public ApiResponse<AuthDtos.RecoveryMessage> resetPassword(
       @Valid @RequestBody AuthDtos.PasswordResetRequest req, HttpServletRequest http) {
-    rateLimits.check("reset-password", http.getRemoteAddr(), 8, 60);
+    rateLimits.check("reset-password", IpBanFilter.clientIp(http), 8, 60);
     return ApiResponse.ok(service.resetPassword(req));
   }
 
