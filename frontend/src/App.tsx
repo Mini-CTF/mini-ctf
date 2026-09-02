@@ -1291,6 +1291,7 @@ const categoryColors = ['#4d99ff', '#b38cff', '#45d6b0', '#ff9f5a', '#f06fa8', '
 
 function CombinedFieldRadar({ items }: { items: ChallengeSummary[] }) {
   const fields = useMemo<string[]>(() => [...challengeCategories], [])
+  return <BklitStyleRadar items={items} metrics={fields} />
   const values = fields.map((category) => {
     const challenges = items.filter((item) => item.category === category)
     return challenges.length === 0 ? 0 : Math.round((challenges.filter((item) => item.solved).length / challenges.length) * 100)
@@ -1318,7 +1319,48 @@ function CombinedFieldRadar({ items }: { items: ChallengeSummary[] }) {
   </section>
 }
 
+function BklitStyleRadar({ items, metrics }: { items: ChallengeSummary[]; metrics: string[] }) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const data = useMemo(() => [{
+    label: '전체 성취율',
+    color: '#3b82f6',
+    values: Object.fromEntries(metrics.map((metric) => {
+      const fieldItems = items.filter((item) => item.category === metric)
+      const value = fieldItems.length === 0 ? 0 : Math.round((fieldItems.filter((item) => item.solved).length / fieldItems.length) * 100)
+      return [metric, value]
+    })),
+  }], [items, metrics])
+  const size = 420
+  const center = size / 2
+  const radius = 132
+  const point = (index: number, value: number) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / metrics.length
+    const distance = radius * (value / 100)
+    return [center + Math.cos(angle) * distance, center + Math.sin(angle) * distance]
+  }
+  const polygon = (value: number) => metrics.map((_, index) => point(index, value).join(',')).join(' ')
+  const values = data[0].values
+  const area = metrics.map((metric, index) => point(index, values[metric] as number).join(',')).join(' ')
+  const ariaLabel = metrics.map((metric) => `${metric} ${values[metric]}%`).join(', ')
+  return <section className="combined-field-radar bklit-radar" aria-label="분야별 성취율 레이더 차트"><div className="combined-field-radar-copy"><span className="vault-kicker">ALL FIELDS</span><h2>분야별 성취율 종합</h2><p>각 축은 문제 분야이고, 해결 비율이 바깥쪽에 가까울수록 높습니다.</p></div><div className="radar-layout"><svg className="field-radar bklit-radar-chart" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={ariaLabel} onMouseLeave={() => setHoveredIndex(null)}>{[20, 40, 60, 80, 100].map((level) => <polygon key={level} points={polygon(level)} className="field-radar-grid bklit-radar-grid" />)}{metrics.map((metric, index) => { const outer = point(index, 100); const label = point(index, 122); const dot = point(index, values[metric] as number); const active = hoveredIndex === index; return <g key={metric} className={active ? 'bklit-radar-metric active' : 'bklit-radar-metric'} onMouseEnter={() => setHoveredIndex(index)}><line x1={center} y1={center} x2={outer[0]} y2={outer[1]} className="field-radar-axis" /><circle cx={dot[0]} cy={dot[1]} r={active ? 8 : 6} fill={categoryColors[index % categoryColors.length]} className="field-radar-dot" /><text x={label[0]} y={label[1]} className="field-radar-label" tabIndex={0} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}>{metric}</text></g>})}<polygon points={area} className="field-radar-area bklit-radar-area" /></svg><div className="field-radar-legend">{metrics.map((metric, index) => <button key={metric} type="button" className={hoveredIndex === index ? 'active' : ''} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}><i style={{ background: categoryColors[index % categoryColors.length] }} />{metric}<b>{values[metric]}%</b></button>)}</div></div></section>
+}
+
+function ContributionHeatmap({ activity, range, onRangeChange }: { activity: PublicProfile['solveActivity']; range: 'week' | 'month' | 'year'; onRangeChange: (range: 'week' | 'month' | 'year') => void }) {
+  const daysToShow = range === 'week' ? 7 : range === 'month' ? 30 : 365
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const start = new Date(today); start.setDate(start.getDate() - (daysToShow - 1) - ((daysToShow - 1) % 7 + 7) % 7)
+  const formatKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  const counts = new Map(activity.map((item) => [item.date, item.count]))
+  const days = Array.from({ length: Math.ceil((daysToShow + (today.getDay() - start.getDay())) / 7) * 7 }, (_, index) => { const date = new Date(start); date.setDate(start.getDate() + index); return { date, key: formatKey(date), count: date > today ? 0 : counts.get(formatKey(date)) ?? 0, future: date > today } })
+  const maximum = Math.max(1, ...days.map((day) => day.count))
+  const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
+  const monthLabels = weeks.map((week, index) => index === 0 || week[0].date.getMonth() !== weeks[index - 1][0].date.getMonth() ? week[0].date.toLocaleString('en-US', { month: 'short' }) : '')
+  return <section className="profile-heatmap contribution-heatmap"><div className="heatmap-heading"><div><span className="vault-kicker">SOLVE ACTIVITY</span><h2>문제 풀이 기록</h2><p>{range === 'week' ? '최근 1주' : range === 'month' ? '최근 1개월' : '최근 1년'} 동안의 문제 풀이 활동입니다.</p></div><div className="heatmap-range" role="group" aria-label="활동 기간 선택">{([['week', '1주'], ['month', '1개월'], ['year', '1년']] as const).map(([value, label]) => <button key={value} type="button" className={range === value ? 'active' : ''} onClick={() => onRangeChange(value)}>{label}</button>)}</div></div><div className="contribution-chart"><div className="heatmap-weekdays" aria-hidden="true"><span>Mon</span><span /><span>Wed</span><span /><span>Fri</span><span /><span /></div><div className="contribution-scroll"><div className="heatmap-months" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(12px, 1fr))` }}>{monthLabels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}</div><div className="heatmap-grid contribution-grid" role="img" aria-label={`${daysToShow}일 문제 풀이 히트맵`}>{weeks.flatMap((week) => week.map((day) => { const level = day.future || day.count === 0 ? 0 : Math.min(4, Math.ceil((day.count / maximum) * 4)); return <span key={day.key} className={`heatmap-cell level-${level}${day.future ? ' future' : ''}`} title={`${day.key}: ${day.count} solved`} /> }))}</div></div></div><div className="heatmap-legend"><span>Less</span>{[0, 1, 2, 3, 4].map((level) => <i key={level} className={`level-${level}`} />)}<span>More</span></div></section>
+}
+
 function ProfileHeatmap({ activity }: { activity: PublicProfile['solveActivity'] }) {
+  const [range, setRange] = useState<'week' | 'month' | 'year'>('year')
+  return <ContributionHeatmap activity={activity} range={range} onRangeChange={setRange} />
   const counts = new Map(activity.map((item) => [item.date, item.count]))
   const days = Array.from({ length: 365 }, (_, index) => {
     const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (364 - index))
