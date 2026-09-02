@@ -1390,21 +1390,31 @@ function ContributionHeatmap({
   onRangeChange: (range: "week" | "month" | "year") => void;
   className?: string;
 }) {
-  const daysToShow = range === "week" ? 7 : range === "month" ? 30 : 365;
   const ko = document.documentElement.lang !== "en";
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const start = new Date(today);
-  start.setDate(
-    start.getDate() - (daysToShow - 1) - ((((daysToShow - 1) % 7) + 7) % 7),
-  );
+  const calendarYear = range === "year";
+  const daysToShow = calendarYear
+    ? new Date(today.getFullYear(), 1, 29).getMonth() === 1
+      ? 366
+      : 365
+    : range === "week"
+      ? 7
+      : 30;
+  const start = calendarYear
+    ? new Date(today.getFullYear(), 0, 1)
+    : new Date(today);
+  if (!calendarYear) {
+    start.setDate(
+      start.getDate() - (daysToShow - 1) - ((((daysToShow - 1) % 7) + 7) % 7),
+    );
+  }
   const formatKey = (date: Date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   const counts = new Map(activity.map((item) => [item.date, item.count]));
   const days = Array.from(
     {
-      length:
-        Math.ceil((daysToShow + (today.getDay() - start.getDay())) / 7) * 7,
+      length: calendarYear ? Math.ceil(daysToShow / 7) * 7 : Math.ceil((daysToShow + (today.getDay() - start.getDay())) / 7) * 7,
     },
     (_, index) => {
       const date = new Date(start);
