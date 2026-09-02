@@ -188,6 +188,7 @@ function AppShell() {
   const loading = false
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [language, setLanguage] = useState<Language>(initialLanguage)
+  const localizationVersion = useRef(0)
   const [vaultOpen, setVaultOpen] = useState(false)
   const [headerGems, setHeaderGems] = useState<number | null>(null)
   const [showIntro, setShowIntro] = useState(() => !isPasswordResetLink && sessionStorage.getItem('flagbox-intro-seen') !== 'true')
@@ -380,15 +381,32 @@ function AppShell() {
     localStorage.setItem('flagbox-language', language)
   }, [language])
   useLayoutEffect(() => {
-    localizeSystemInterface(language)
+    const version = ++localizationVersion.current
+    const applyLocalization = () => {
+      if (version === localizationVersion.current) localizeSystemInterface(language)
+    }
+    applyLocalization()
     const root = document.querySelector('.app-shell')
     if (!root) return
-    const observer = new MutationObserver(() => localizeSystemInterface(language))
-    observer.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'aria-label', 'title'] })
+    let scheduled = false
+    const observer = new MutationObserver(() => {
+      if (scheduled) return
+      scheduled = true
+      window.requestAnimationFrame(() => {
+        scheduled = false
+        applyLocalization()
+      })
+    })
+    observer.observe(root, { childList: true, subtree: true })
     return () => observer.disconnect()
   }, [language])
 
   const text = uiCopy[language]
+  const toggleLanguage = () => {
+    const next: Language = language === 'ko' ? 'en' : 'ko'
+    document.documentElement.lang = next
+    setLanguage(next)
+  }
 
   const featuredChallenges = useMemo(
     () => [...challenges].sort((a, b) => Number(a.solved) - Number(b.solved) || byDifficulty(a, b)).slice(0, 3),
@@ -457,10 +475,10 @@ function AppShell() {
         {user && <NavButton active={path.startsWith('/friends')} onClick={() => go('/friends')}>Friends</NavButton>}
         {user && <NavButton active={false} onClick={() => { setMobileNavOpen(false); setVaultOpen(true) }}>{text.shop}</NavButton>}
         {user?.role === 'ADMIN' && <NavButton active={path.startsWith('/admin')} onClick={() => go('/admin')}>{text.admin}</NavButton>}
-        <button className="nav-button mobile-language" type="button" onClick={() => setLanguage((current) => current === 'ko' ? 'en' : 'ko')} aria-label={text.language}><GlobeIcon /> {language === 'ko' ? 'EN' : 'KO'}</button>
+        <button className="nav-button mobile-language" type="button" onClick={toggleLanguage} aria-label={text.language}><GlobeIcon /> {language === 'ko' ? 'EN' : 'KO'}</button>
         {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>{text.logout}</button> : <button className="nav-button mobile-auth" type="button" onClick={() => go('/login')}>{text.login}</button>}
       </nav>
-      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={() => setLanguage((current) => current === 'ko' ? 'en' : 'ko')}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><button className="header-ruby-balance" type="button" onClick={() => setVaultOpen(true)} aria-label="레드 루비 교환소 열기"><span className="ruby-gem small" aria-hidden="true" /><strong>{headerGems ?? '—'}</strong></button><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button></> : <button className="header-login" type="button" onClick={() => go('/login')}>{text.login}</button>}</div>
+      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={toggleLanguage}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><button className="header-ruby-balance" type="button" onClick={() => setVaultOpen(true)} aria-label="레드 루비 교환소 열기"><span className="ruby-gem small" aria-hidden="true" /><strong>{headerGems ?? '—'}</strong></button><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button></> : <button className="header-login" type="button" onClick={() => go('/login')}>{text.login}</button>}</div>
     </header>
     <main>
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
