@@ -3787,7 +3787,7 @@ html[data-theme="dark"] .bookmark-ribbon-icon.is-filled {
   grid-column: 1 / -1;
   inline-size: 100%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
 }
 .category-progress-ring-card {

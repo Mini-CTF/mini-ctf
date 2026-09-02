@@ -1290,7 +1290,7 @@ function RankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceR
 const categoryColors = ['#4d99ff', '#b38cff', '#45d6b0', '#ff9f5a', '#f06fa8', '#f2cc60']
 
 function CombinedFieldRadar({ items }: { items: ChallengeSummary[] }) {
-  const fields = useMemo(() => Array.from(new Set(items.map((item) => item.category))).sort(), [items])
+  const fields = useMemo<string[]>(() => [...challengeCategories], [])
   const values = fields.map((category) => {
     const challenges = items.filter((item) => item.category === category)
     return challenges.length === 0 ? 0 : Math.round((challenges.filter((item) => item.solved).length / challenges.length) * 100)
