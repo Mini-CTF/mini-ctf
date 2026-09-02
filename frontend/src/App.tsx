@@ -1361,207 +1361,1304 @@ function BklitStyleRadar({ items, metrics }: { items: ChallengeSummary[]; metric
   return <section className="combined-field-radar bklit-radar" aria-label="분야별 성취율 레이더 차트"><div className="combined-field-radar-copy"><span className="vault-kicker">ALL FIELDS</span><h2>분야별 성취율 종합</h2><p>각 축은 문제 분야이고, 해결 비율이 바깥쪽에 가까울수록 높습니다.</p></div><div className="radar-layout"><svg className="field-radar bklit-radar-chart" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={ariaLabel} onMouseLeave={() => setHoveredIndex(null)}>{[20, 40, 60, 80, 100].map((level) => <polygon key={level} points={polygon(level)} className="field-radar-grid bklit-radar-grid" />)}{metrics.map((metric, index) => { const outer = point(index, 100); const label = point(index, 122); const dot = point(index, values[metric] as number); const active = hoveredIndex === index; return <g key={metric} className={active ? 'bklit-radar-metric active' : 'bklit-radar-metric'} onMouseEnter={() => setHoveredIndex(index)}><line x1={center} y1={center} x2={outer[0]} y2={outer[1]} className="field-radar-axis" /><circle cx={dot[0]} cy={dot[1]} r={active ? 8 : 6} fill={categoryColors[index % categoryColors.length]} className="field-radar-dot" /><text x={label[0]} y={label[1]} className="field-radar-label" tabIndex={0} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}>{metric}</text></g>})}<polygon points={area} className="field-radar-area bklit-radar-area" /></svg><div className="field-radar-legend">{metrics.map((metric, index) => <button key={metric} type="button" className={hoveredIndex === index ? 'active' : ''} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}><i style={{ background: categoryColors[index % categoryColors.length] }} />{metric}<b>{values[metric]}%</b></button>)}</div></div></section>
 }
 
-function ContributionHeatmap({ activity, range, onRangeChange }: { activity: PublicProfile['solveActivity']; range: 'week' | 'month' | 'year'; onRangeChange: (range: 'week' | 'month' | 'year') => void }) {
-  const daysToShow = range === 'week' ? 7 : range === 'month' ? 30 : 365
-  const ko = document.documentElement.lang !== 'en'
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const start = new Date(today); start.setDate(start.getDate() - (daysToShow - 1) - ((daysToShow - 1) % 7 + 7) % 7)
-  const formatKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-  const counts = new Map(activity.map((item) => [item.date, item.count]))
-  const days = Array.from({ length: Math.ceil((daysToShow + (today.getDay() - start.getDay())) / 7) * 7 }, (_, index) => { const date = new Date(start); date.setDate(start.getDate() + index); return { date, key: formatKey(date), count: date > today ? 0 : counts.get(formatKey(date)) ?? 0, future: date > today } })
-  const maximum = Math.max(1, ...days.map((day) => day.count))
-  const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
-  const monthLabels = weeks.map((week, index) => index === 0 || week[0].date.getMonth() !== weeks[index - 1][0].date.getMonth() ? week[0].date.toLocaleString('en-US', { month: 'short' }) : '')
-  return <section className="profile-heatmap contribution-heatmap"><div className="heatmap-heading"><div><span className="vault-kicker">SOLVE ACTIVITY</span><h2>문제 풀이 기록</h2><p>{range === 'week' ? '최근 1주' : range === 'month' ? '최근 1개월' : '최근 1년'} 동안의 문제 풀이 활동입니다.</p></div><div className="heatmap-range" role="group" aria-label="활동 기간 선택">{([['week', '1주'], ['month', '1개월'], ['year', '1년']] as const).map(([value, label]) => <button key={value} type="button" className={range === value ? 'active' : ''} onClick={() => onRangeChange(value)}>{label}</button>)}</div></div><div className="contribution-chart"><div className="heatmap-weekdays" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span></div><div className="contribution-scroll"><div className="heatmap-months" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(12px, 1fr))` }}>{monthLabels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}</div><div className="heatmap-grid contribution-grid" role="img" aria-label={`${daysToShow}일 문제 풀이 히트맵`}>{weeks.flatMap((week) => week.map((day) => { const level = day.future || day.count === 0 ? 0 : Math.min(4, Math.ceil((day.count / maximum) * 4)); return <span key={day.key} className={`heatmap-cell level-${level}${day.future ? ' future' : ''}`} title={`${day.key} · ${day.date.toLocaleDateString(ko ? 'ko-KR' : 'en-US', { weekday: 'long' })}: ${day.count} solved`} /> }))}</div></div></div><div className="heatmap-legend"><span>Less</span>{[0, 1, 2, 3, 4].map((level) => <i key={level} className={`level-${level}`} />)}<span>More</span></div></section>
+function ContributionHeatmap({
+  activity,
+  range,
+  onRangeChange,
+  className = "",
+}: {
+  activity: PublicProfile["solveActivity"];
+  range: "week" | "month" | "year";
+  onRangeChange: (range: "week" | "month" | "year") => void;
+  className?: string;
+}) {
+  const daysToShow = range === "week" ? 7 : range === "month" ? 30 : 365;
+  const ko = document.documentElement.lang !== "en";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(
+    start.getDate() - (daysToShow - 1) - ((((daysToShow - 1) % 7) + 7) % 7),
+  );
+  const formatKey = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const counts = new Map(activity.map((item) => [item.date, item.count]));
+  const days = Array.from(
+    {
+      length:
+        Math.ceil((daysToShow + (today.getDay() - start.getDay())) / 7) * 7,
+    },
+    (_, index) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + index);
+      return {
+        date,
+        key: formatKey(date),
+        count: date > today ? 0 : (counts.get(formatKey(date)) ?? 0),
+        future: date > today,
+      };
+    },
+  );
+  const maximum = Math.max(1, ...days.map((day) => day.count));
+  const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) =>
+    days.slice(index * 7, index * 7 + 7),
+  );
+  const monthLabels = weeks.map((week, index) =>
+    index === 0 ||
+    week[0].date.getMonth() !== weeks[index - 1][0].date.getMonth()
+      ? week[0].date.toLocaleString("en-US", { month: "short" })
+      : "",
+  );
+  return (
+    <section className={`profile-heatmap contribution-heatmap ${className}`.trim()}>
+      <div className="heatmap-heading">
+        <div>
+          <span className="vault-kicker">SOLVE ACTIVITY</span>
+          <h2>문제 풀이 기록</h2>
+          <p>
+            {range === "week"
+              ? "최근 1주"
+              : range === "month"
+                ? "최근 1개월"
+                : "최근 1년"}{" "}
+            동안의 문제 풀이 활동입니다.
+          </p>
+        </div>
+        <div className="heatmap-range" role="group" aria-label="활동 기간 선택">
+          {(
+            [
+              ["week", "1주"],
+              ["month", "1개월"],
+              ["year", "1년"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={range === value ? "active" : ""}
+              onClick={() => onRangeChange(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="contribution-chart">
+        <div className="heatmap-weekdays" aria-hidden="true">
+          <span>Mon</span>
+          <span>Tue</span>
+          <span>Wed</span>
+          <span>Thu</span>
+          <span>Fri</span>
+        </div>
+        <div className="contribution-scroll">
+          <div
+            className="heatmap-months"
+            style={{
+              gridTemplateColumns: `repeat(${weeks.length}, minmax(12px, 1fr))`,
+            }}
+          >
+            {monthLabels.map((label, index) => (
+              <span key={`${label}-${index}`}>{label}</span>
+            ))}
+          </div>
+          <div
+            className="heatmap-grid contribution-grid"
+            role="img"
+            aria-label={`${daysToShow}일 문제 풀이 히트맵`}
+          >
+            {weeks.flatMap((week) =>
+              week.map((day) => {
+                const level =
+                  day.future || day.count === 0
+                    ? 0
+                    : Math.min(4, Math.ceil((day.count / maximum) * 4));
+                return (
+                  <span
+                    key={day.key}
+                    className={`heatmap-cell level-${level}${day.future ? " future" : ""}`}
+                    title={`${day.key} · ${day.date.toLocaleDateString(ko ? "ko-KR" : "en-US", { weekday: "long" })}: ${day.count} solved`}
+                  />
+                );
+              }),
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="heatmap-legend">
+        <span>Less</span>
+        {[0, 1, 2, 3, 4].map((level) => (
+          <i key={level} className={`level-${level}`} />
+        ))}
+        <span>More</span>
+      </div>
+    </section>
+  );
 }
 
-function ProfileHeatmap({ activity }: { activity: PublicProfile['solveActivity'] }) {
-  const [range, setRange] = useState<'week' | 'month' | 'year'>('year')
-  return <ContributionHeatmap activity={activity} range={range} onRangeChange={setRange} />
-  const counts = new Map(activity.map((item) => [item.date, item.count]))
+function ProfileHeatmap({
+  activity,
+  className,
+}: {
+  activity: PublicProfile["solveActivity"];
+  className?: string;
+}) {
+  const [range, setRange] = useState<"week" | "month" | "year">("year");
+  return (
+    <ContributionHeatmap
+      activity={activity}
+      range={range}
+      onRangeChange={setRange}
+      className={className}
+    />
+  );
+  const counts = new Map(activity.map((item) => [item.date, item.count]));
   const days = Array.from({ length: 365 }, (_, index) => {
-    const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (364 - index))
-    const key = date.toISOString().slice(0, 10)
-    return { key, date, count: counts.get(key) ?? 0 }
-  })
-  const maximum = Math.max(1, ...days.map((day) => day.count))
-  return <section className="profile-heatmap"><div><span className="vault-kicker">SOLVE ACTIVITY</span><h2>문제 풀이 기록</h2><p>최근 1년 동안 풀이한 문제 수입니다.</p></div><div className="heatmap-grid" role="img" aria-label="최근 1년 문제 풀이 히트맵">{days.map((day) => { const level = day.count === 0 ? 0 : Math.min(4, Math.ceil((day.count / maximum) * 4)); return <span key={day.key} className={`heatmap-cell level-${level}`} title={`${day.key}: ${day.count} solved`} /> })}</div><div className="heatmap-legend"><span>적음</span>{[0, 1, 2, 3, 4].map((level) => <i key={level} className={`level-${level}`} />)}<span>많음</span></div></section>
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (364 - index));
+    const key = date.toISOString().slice(0, 10);
+    return { key, date, count: counts.get(key) ?? 0 };
+  });
+  const maximum = Math.max(1, ...days.map((day) => day.count));
+  return (
+    <section className="profile-heatmap">
+      <div>
+        <span className="vault-kicker">SOLVE ACTIVITY</span>
+        <h2>문제 풀이 기록</h2>
+        <p>최근 1년 동안 풀이한 문제 수입니다.</p>
+      </div>
+      <div
+        className="heatmap-grid"
+        role="img"
+        aria-label="최근 1년 문제 풀이 히트맵"
+      >
+        {days.map((day) => {
+          const level =
+            day.count === 0
+              ? 0
+              : Math.min(4, Math.ceil((day.count / maximum) * 4));
+          return (
+            <span
+              key={day.key}
+              className={`heatmap-cell level-${level}`}
+              title={`${day.key}: ${day.count} solved`}
+            />
+          );
+        })}
+      </div>
+      <div className="heatmap-legend">
+        <span>적음</span>
+        {[0, 1, 2, 3, 4].map((level) => (
+          <i key={level} className={`level-${level}`} />
+        ))}
+        <span>많음</span>
+      </div>
+    </section>
+  );
 }
 
 function PublicProfilePage() {
-  const { username = '' } = useParams()
-  const navigate = useNavigate()
-  const [profile, setProfile] = useState<PublicProfile | null>(null)
-  const [error, setError] = useState('')
-  useEffect(() => { void api.publicProfile(username).then(setProfile).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load this profile.')) }, [username])
-  if (error) return <div className="page"><p className="alert error">{error}</p></div>
-  if (!profile) return <div className="page"><LoadingState label="Loading profile..." /></div>
-  const name = profile.nickname || profile.username
-  return <div className="page public-profile-page"><button className="back-link" type="button" onClick={() => navigate('/')}>← 홈으로</button><section className={`public-profile-page-hero ${profile.equippedFrame ? `equipped-${profile.equippedFrame}` : ''}`}><span className="profile-avatar avatar-large">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><div><span className="eyebrow">PUBLIC PROFILE</span><h1>{name} <TierEmblem tier={profile.tier} /></h1>{profile.equippedTitle && <p className="profile-title">{cosmeticLabel(profile.equippedTitle)}</p>}<p className="muted">@{profile.username}</p><p>{profile.statusMessage || 'No status message yet.'}</p></div><div className="public-profile-page-stats"><span><b>{profile.score}</b>Score</span><span><b>{profile.solvedCount}</b>Solves</span></div></section><ProfileHeatmap activity={profile.solveActivity} /></div>
+  const { username = "" } = useParams();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    void api
+      .publicProfile(username)
+      .then(setProfile)
+      .catch((cause: unknown) =>
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Could not load this profile.",
+        ),
+      );
+  }, [username]);
+  if (error)
+    return (
+      <div className="page">
+        <p className="alert error">{error}</p>
+      </div>
+    );
+  if (!profile)
+    return (
+      <div className="page">
+        <LoadingState label="Loading profile..." />
+      </div>
+    );
+  const name = profile.nickname || profile.username;
+  return (
+    <div className="page public-profile-page">
+      <button className="back-link" type="button" onClick={() => navigate("/")}>
+        ← 홈으로
+      </button>
+      <section
+        className={`public-profile-page-hero ${profile.equippedFrame ? `equipped-${profile.equippedFrame}` : ""}`}
+      >
+        <span className="profile-avatar avatar-large">
+          {profile.avatarUrl ? (
+            <img src={profile.avatarUrl} alt="" />
+          ) : (
+            name.slice(0, 2).toUpperCase()
+          )}
+        </span>
+        <div>
+          <span className="eyebrow">PUBLIC PROFILE</span>
+          <h1>
+            {name} <TierEmblem tier={profile.tier} />
+          </h1>
+          {profile.equippedTitle && (
+            <p className="profile-title">
+              {cosmeticLabel(profile.equippedTitle)}
+            </p>
+          )}
+          <p className="muted">@{profile.username}</p>
+          <p>{profile.statusMessage || "No status message yet."}</p>
+        </div>
+        <div className="public-profile-page-stats">
+          <span>
+            <b>{profile.score}</b>Score
+          </span>
+          <span>
+            <b>{profile.solvedCount}</b>Solves
+          </span>
+        </div>
+      </section>
+      <ProfileHeatmap activity={profile.solveActivity} />
+    </div>
+  );
 }
 
-void LegacyCipherVault
-void LegacyChallengeDetailView
-void LegacyRankingView
-void RankingView
-void VaultOpening
-void HiddenOperation
-void hiddenMissionText
-void hiddenRewardText
+void LegacyCipherVault;
+void LegacyChallengeDetailView;
+void LegacyRankingView;
+void RankingView;
+void VaultOpening;
+void HiddenOperation;
+void hiddenMissionText;
+void hiddenRewardText;
 
-function ProfileView({ user, onChallenges, onLogin, onVault, onAppearanceChanged }: { user: User | null; onChallenges: () => void; onLogin: () => void; onVault: () => void; onAppearanceChanged: () => Promise<void> }) {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [attendance, setAttendance] = useState<AttendanceSummary | null>(null)
-  const [vault, setVault] = useState<VaultSummary | null>(null)
-  const [friends, setFriends] = useState<Friend[]>([])
-  const [selectedFriend, setSelectedFriend] = useState<string | null>(null)
-  const [messages, setMessages] = useState<DirectMessage[]>([])
-  const [error, setError] = useState('')
-  const [avatarRevision, setAvatarRevision] = useState(() => Date.now())
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
-  const avatarInput = useRef<HTMLInputElement>(null)
+function ProfileView({
+  user,
+  onChallenges,
+  onLogin,
+  onVault,
+  onAppearanceChanged,
+}: {
+  user: User | null;
+  onChallenges: () => void;
+  onLogin: () => void;
+  onVault: () => void;
+  onAppearanceChanged: () => Promise<void>;
+}) {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
+  const [vault, setVault] = useState<VaultSummary | null>(null);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
+  const [messages, setMessages] = useState<DirectMessage[]>([]);
+  const [solveActivity, setSolveActivity] = useState<PublicProfile["solveActivity"]>([]);
+  const [error, setError] = useState("");
+  const [avatarRevision, setAvatarRevision] = useState(() => Date.now());
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const avatarInput = useRef<HTMLInputElement>(null);
   const refresh = useCallback(async () => {
-    const [profileResult, friendsResult, attendanceResult, vaultResult] = await Promise.allSettled([api.profile(), api.friends(), api.attendance(), api.vault()])
-    if (profileResult.status === 'fulfilled') setProfile(profileResult.value)
-    else setError(profileResult.reason instanceof Error ? profileResult.reason.message : 'Could not load profile.')
-    if (friendsResult.status === 'fulfilled') setFriends(friendsResult.value)
-    else setError(friendsResult.reason instanceof Error ? friendsResult.reason.message : 'Could not load friends.')
-    if (attendanceResult.status === 'fulfilled') setAttendance(attendanceResult.value)
-    else setError(attendanceResult.reason instanceof Error ? attendanceResult.reason.message : 'Could not load attendance.')
-    if (vaultResult.status === 'fulfilled') setVault(vaultResult.value)
-    else setError(vaultResult.reason instanceof Error ? vaultResult.reason.message : 'Could not load cosmetics.')
-  }, [])
+    const [profileResult, friendsResult, attendanceResult, vaultResult] =
+      await Promise.allSettled([
+        api.profile(),
+        api.friends(),
+        api.attendance(),
+        api.vault(),
+      ]);
+    if (profileResult.status === "fulfilled") setProfile(profileResult.value);
+    else
+      setError(
+        profileResult.reason instanceof Error
+          ? profileResult.reason.message
+          : "Could not load profile.",
+      );
+    if (friendsResult.status === "fulfilled") setFriends(friendsResult.value);
+    else
+      setError(
+        friendsResult.reason instanceof Error
+          ? friendsResult.reason.message
+          : "Could not load friends.",
+      );
+    if (attendanceResult.status === "fulfilled")
+      setAttendance(attendanceResult.value);
+    else
+      setError(
+        attendanceResult.reason instanceof Error
+          ? attendanceResult.reason.message
+          : "Could not load attendance.",
+      );
+    if (vaultResult.status === "fulfilled") setVault(vaultResult.value);
+    else
+      setError(
+        vaultResult.reason instanceof Error
+          ? vaultResult.reason.message
+          : "Could not load cosmetics.",
+      );
+  }, []);
   useEffect(() => {
-    if (!user) return
-    const timer = window.setTimeout(() => void refresh(), 0)
-    return () => window.clearTimeout(timer)
-  }, [user, refresh])
-  useEffect(() => { if (selectedFriend) void api.messages(selectedFriend).then(setMessages).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load messages.')) }, [selectedFriend])
+    if (!user) return;
+    const timer = window.setTimeout(() => void refresh(), 0);
+    return () => window.clearTimeout(timer);
+  }, [user, refresh]);
   useEffect(() => {
-    if (!user) return
+    if (!user) return;
+    let active = true;
+    void api
+      .publicProfile(user.username)
+      .then((next) => {
+        if (active) setSolveActivity(next.solveActivity);
+      })
+      .catch((cause: unknown) => {
+        if (active)
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : "Could not load solve activity.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [user]);
+  useEffect(() => {
+    if (selectedFriend)
+      void api
+        .messages(selectedFriend)
+        .then(setMessages)
+        .catch((cause: unknown) =>
+          setError(
+            cause instanceof Error ? cause.message : "Could not load messages.",
+          ),
+        );
+  }, [selectedFriend]);
+  useEffect(() => {
+    if (!user) return;
     return subscribeToSocialUpdates({
       onMessage: (message) => {
-        const other = message.sender === user.username ? message.recipient : message.sender
-        if (other !== selectedFriend) return
-        setMessages((currentMessages) => currentMessages.some((item) => item.id === message.id)
-          ? currentMessages.map((item) => item.id === message.id ? message : item)
-          : [...currentMessages, message])
+        const other =
+          message.sender === user.username ? message.recipient : message.sender;
+        if (other !== selectedFriend) return;
+        setMessages((currentMessages) =>
+          currentMessages.some((item) => item.id === message.id)
+            ? currentMessages.map((item) =>
+                item.id === message.id ? message : item,
+              )
+            : [...currentMessages, message],
+        );
       },
       onMessageDeleted: (message) => {
-        const other = message.sender === user.username ? message.recipient : message.sender
-        if (other === selectedFriend) setMessages((currentMessages) => currentMessages.filter((item) => item.id !== message.id))
+        const other =
+          message.sender === user.username ? message.recipient : message.sender;
+        if (other === selectedFriend)
+          setMessages((currentMessages) =>
+            currentMessages.filter((item) => item.id !== message.id),
+          );
       },
       onFriendship: (friendship) => {
         setFriends((currentFriends) => {
-          const index = currentFriends.findIndex((item) => item.username === friendship.username)
-          if (index === -1) return [...currentFriends, friendship]
-          return currentFriends.map((item) => item.username === friendship.username ? friendship : item)
-        })
+          const index = currentFriends.findIndex(
+            (item) => item.username === friendship.username,
+          );
+          if (index === -1) return [...currentFriends, friendship];
+          return currentFriends.map((item) =>
+            item.username === friendship.username ? friendship : item,
+          );
+        });
       },
-    })
-  }, [user, selectedFriend])
+    });
+  }, [user, selectedFriend]);
   useEffect(() => {
-    const messageList = document.querySelector<HTMLDivElement>('.message-list')
-    if (!messageList || messages.length === 0) return
-    messageList.scrollTo({ top: messageList.scrollHeight, behavior: 'smooth' })
-  }, [messages, selectedFriend])
-  useEffect(() => () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview) }, [avatarPreview])
+    const messageList = document.querySelector<HTMLDivElement>(".message-list");
+    if (!messageList || messages.length === 0) return;
+    messageList.scrollTo({ top: messageList.scrollHeight, behavior: "smooth" });
+  }, [messages, selectedFriend]);
+  useEffect(
+    () => () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    },
+    [avatarPreview],
+  );
   useEffect(() => {
-    const select = document.querySelector<HTMLSelectElement>('.attendance-title-select select')
-    if (!select || select.querySelector('option[value="NONE"]')) return
-    const option = document.createElement('option')
-    option.value = 'NONE'
-    option.textContent = 'Unequip title'
-    select.append(option)
-    return () => option.remove()
-  }, [attendance])
-  if (!user) return <div className="page"><PageIntro eyebrow="YOUR PROGRESS" title="Sign in to track your progress." description="Your score and solved challenges are tied to your authenticated account." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
-  const current = profile ?? { ...user, rank: 0, solvedCount: 0, statusMessage: null, avatarUrl: null, equippedFrame: null, equippedAccessory: null, equippedTitle: null, tier: 'beginner' }
-  const saveProfile = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); try { setProfile(await api.updateProfile({ nickname: String(form.get('nickname')), statusMessage: String(form.get('statusMessage')) })); await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save profile.') } }
-  const checkIn = async () => { try { setAttendance(await api.checkIn()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not complete the daily check-in.') } }
-  const selectTitle = async (event: ChangeEvent<HTMLSelectElement>) => { try { setAttendance(await api.selectAttendanceTitle(event.target.value)); await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update the title.') } }
-  const uploadAvatar = async (file: File) => { setError(''); setAvatarPreview(URL.createObjectURL(file)); try { setProfile(await api.uploadAvatar(file)); setAvatarRevision(Date.now()); await onAppearanceChanged() } catch (cause) { setAvatarPreview(null); setError(cause instanceof Error ? cause.message : 'Could not upload avatar.') } }
-  const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.currentTarget.value = ''; if (!file) return; const validType = !file.type || ['image/png', 'image/jpeg'].includes(file.type); const validName = /\.(png|jpe?g)$/i.test(file.name); if (!validType && !validName) { setError('PNG 또는 JPG 이미지만 업로드할 수 있습니다.'); return } if (file.size > 2 * 1024 * 1024) { setError('프로필 이미지는 2MB 이하만 업로드할 수 있습니다.'); return } void uploadAvatar(file) }
-  const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const formElement = event.currentTarget; setError(''); const reference = String(new FormData(formElement).get('username')).trim(); if (!reference || reference.length > 80) { setError('Enter an account ID or display name.'); return } try { await api.requestFriend(reference); await refresh(); formElement.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
-  const sendMessage = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const formElement = event.currentTarget; if (!selectedFriend) return; const form = new FormData(formElement); try { const sent = await api.sendMessage(selectedFriend, String(form.get('content'))); setMessages((currentMessages) => [...currentMessages, sent]); formElement.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send message.') } }
-  const editMessage = async (message: DirectMessage) => { const content = window.prompt('Edit message', message.content)?.trim(); if (!content || content === message.content) return; try { const updated = await api.updateMessage(message.id, content); setMessages((currentMessages) => currentMessages.map((item) => item.id === updated.id ? updated : item)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not edit message.') } }
-  const deleteMessage = async (message: DirectMessage) => { if (!window.confirm('Delete this message?')) return; try { await api.deleteMessage(message.id); setMessages((currentMessages) => currentMessages.filter((item) => item.id !== message.id)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete message.') } }
-  const equipItem = async (item: VaultCosmetic) => { try { setVault(await api.equipVaultItem(item.id)); await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update loadout.') } }
-  const ownedCosmetics = vault?.cosmetics.filter((item) => item.owned) ?? []
-  const ownedFrames = ownedCosmetics.filter((i) => i.type === 'FRAME')
-  const ownedAccessories = ownedCosmetics.filter((i) => i.type === 'ACCESSORY')
-  const ownedTitles = ownedCosmetics.filter((i) => i.type === 'TITLE')
-  const loadoutGroups = [{ label: '프레임', items: ownedFrames }, { label: '액세서리', items: ownedAccessories }, { label: '칭호', items: ownedTitles }].filter((g) => g.items.length > 0)
-  const avatarSrc = avatarPreview ?? (current.avatarUrl ? `${current.avatarUrl}${current.avatarUrl.includes('?') ? '&' : '?'}view=${avatarRevision}` : null)
-  const activeTitle = attendance?.earnedTitles.find((title) => title.id === attendance.activeTitle)
-  return <div className="page profile-page">
-    <div className={`profile-hero ${current.equippedFrame ? `equipped-${current.equippedFrame}` : ''} ${current.equippedTitle === 'super_user' || attendance?.activeTitle === 'SUPER_USER' ? 'super-user-profile' : ''}`}>
-      <button className="profile-avatar avatar-large avatar-picker" type="button" onClick={() => avatarInput.current?.click()} aria-label="Upload profile photo">
-        {avatarSrc ? <img src={avatarSrc} alt="" /> : (current.nickname || current.username).slice(0, 2).toUpperCase()}
-        <span className="avatar-picker-label">Change photo</span>
-      </button>
-      <input ref={avatarInput} className="sr-only" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={selectAvatar} />
-      <div><p className="eyebrow">OPERATOR PROFILE</p><h1>{current.nickname || current.username} {current.equippedAccessory && <span className="profile-accessory" title={cosmeticLabel(current.equippedAccessory)}>◈</span>}<TierEmblem tier={current.tier} /></h1>{current.equippedTitle ? <p className={`profile-title vault-profile-title ${titleTone(current.equippedTitle)}`}>{cosmeticLabel(current.equippedTitle)}</p> : activeTitle && <p className={`profile-title ${titleTone(activeTitle.id)}`}>{activeTitle.name}</p>}<p className="muted">@{current.username}</p><p className="status-message">{current.statusMessage || 'No status message yet.'}</p></div>
+    const select = document.querySelector<HTMLSelectElement>(
+      ".attendance-title-select select",
+    );
+    if (!select || select.querySelector('option[value="NONE"]')) return;
+    const option = document.createElement("option");
+    option.value = "NONE";
+    option.textContent = "Unequip title";
+    select.append(option);
+    return () => option.remove();
+  }, [attendance]);
+  if (!user)
+    return (
+      <div className="page">
+        <PageIntro
+          eyebrow="YOUR PROGRESS"
+          title="Sign in to track your progress."
+          description="Your score and solved challenges are tied to your authenticated account."
+        />
+        <button className="button primary" type="button" onClick={onLogin}>
+          Sign in
+        </button>
+      </div>
+    );
+  const current = profile ?? {
+    ...user,
+    rank: 0,
+    solvedCount: 0,
+    statusMessage: null,
+    avatarUrl: null,
+    equippedFrame: null,
+    equippedAccessory: null,
+    equippedTitle: null,
+    tier: "beginner",
+  };
+  const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    try {
+      setProfile(
+        await api.updateProfile({
+          nickname: String(form.get("nickname")),
+          statusMessage: String(form.get("statusMessage")),
+        }),
+      );
+      await onAppearanceChanged();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not save profile.",
+      );
+    }
+  };
+  const checkIn = async () => {
+    try {
+      setAttendance(await api.checkIn());
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not complete the daily check-in.",
+      );
+    }
+  };
+  const selectTitle = async (event: ChangeEvent<HTMLSelectElement>) => {
+    try {
+      setAttendance(await api.selectAttendanceTitle(event.target.value));
+      await onAppearanceChanged();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not update the title.",
+      );
+    }
+  };
+  const uploadAvatar = async (file: File) => {
+    setError("");
+    setAvatarPreview(URL.createObjectURL(file));
+    try {
+      setProfile(await api.uploadAvatar(file));
+      setAvatarRevision(Date.now());
+      await onAppearanceChanged();
+    } catch (cause) {
+      setAvatarPreview(null);
+      setError(
+        cause instanceof Error ? cause.message : "Could not upload avatar.",
+      );
+    }
+  };
+  const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    const validType =
+      !file.type || ["image/png", "image/jpeg"].includes(file.type);
+    const validName = /\.(png|jpe?g)$/i.test(file.name);
+    if (!validType && !validName) {
+      setError("PNG 또는 JPG 이미지만 업로드할 수 있습니다.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("프로필 이미지는 2MB 이하만 업로드할 수 있습니다.");
+      return;
+    }
+    void uploadAvatar(file);
+  };
+  const addFriend = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    setError("");
+    const reference = String(new FormData(formElement).get("username")).trim();
+    if (!reference || reference.length > 80) {
+      setError("Enter an account ID or display name.");
+      return;
+    }
+    try {
+      await api.requestFriend(reference);
+      await refresh();
+      formElement.reset();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not send friend request.",
+      );
+    }
+  };
+  const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    if (!selectedFriend) return;
+    const form = new FormData(formElement);
+    try {
+      const sent = await api.sendMessage(
+        selectedFriend,
+        String(form.get("content")),
+      );
+      setMessages((currentMessages) => [...currentMessages, sent]);
+      formElement.reset();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not send message.",
+      );
+    }
+  };
+  const editMessage = async (message: DirectMessage) => {
+    const content = window.prompt("Edit message", message.content)?.trim();
+    if (!content || content === message.content) return;
+    try {
+      const updated = await api.updateMessage(message.id, content);
+      setMessages((currentMessages) =>
+        currentMessages.map((item) =>
+          item.id === updated.id ? updated : item,
+        ),
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not edit message.",
+      );
+    }
+  };
+  const deleteMessage = async (message: DirectMessage) => {
+    if (!window.confirm("Delete this message?")) return;
+    try {
+      await api.deleteMessage(message.id);
+      setMessages((currentMessages) =>
+        currentMessages.filter((item) => item.id !== message.id),
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not delete message.",
+      );
+    }
+  };
+  const equipItem = async (item: VaultCosmetic) => {
+    try {
+      setVault(await api.equipVaultItem(item.id));
+      await onAppearanceChanged();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not update loadout.",
+      );
+    }
+  };
+  const ownedCosmetics = vault?.cosmetics.filter((item) => item.owned) ?? [];
+  const ownedFrames = ownedCosmetics.filter((i) => i.type === "FRAME");
+  const ownedAccessories = ownedCosmetics.filter((i) => i.type === "ACCESSORY");
+  const ownedTitles = ownedCosmetics.filter((i) => i.type === "TITLE");
+  const loadoutGroups = [
+    { label: "프레임", items: ownedFrames },
+    { label: "액세서리", items: ownedAccessories },
+    { label: "칭호", items: ownedTitles },
+  ].filter((g) => g.items.length > 0);
+  const avatarSrc =
+    avatarPreview ??
+    (current.avatarUrl
+      ? `${current.avatarUrl}${current.avatarUrl.includes("?") ? "&" : "?"}view=${avatarRevision}`
+      : null);
+  const activeTitle = attendance?.earnedTitles.find(
+    (title) => title.id === attendance.activeTitle,
+  );
+  return (
+    <div className="page profile-page">
+      <div
+        className={`profile-hero ${current.equippedFrame ? `equipped-${current.equippedFrame}` : ""} ${current.equippedTitle === "super_user" || attendance?.activeTitle === "SUPER_USER" ? "super-user-profile" : ""}`}
+      >
+        <button
+          className="profile-avatar avatar-large avatar-picker"
+          type="button"
+          onClick={() => avatarInput.current?.click()}
+          aria-label="Upload profile photo"
+        >
+          {avatarSrc ? (
+            <img src={avatarSrc} alt="" />
+          ) : (
+            (current.nickname || current.username).slice(0, 2).toUpperCase()
+          )}
+          <span className="avatar-picker-label">Change photo</span>
+        </button>
+        <input
+          ref={avatarInput}
+          className="sr-only"
+          type="file"
+          accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+          onChange={selectAvatar}
+        />
+        <div>
+          <p className="eyebrow">OPERATOR PROFILE</p>
+          <h1>
+            {current.nickname || current.username}{" "}
+            {current.equippedAccessory && (
+              <span
+                className="profile-accessory"
+                title={cosmeticLabel(current.equippedAccessory)}
+              >
+                ◈
+              </span>
+            )}
+            <TierEmblem tier={current.tier} />
+          </h1>
+          {current.equippedTitle ? (
+            <p
+              className={`profile-title vault-profile-title ${titleTone(current.equippedTitle)}`}
+            >
+              {cosmeticLabel(current.equippedTitle)}
+            </p>
+          ) : (
+            activeTitle && (
+              <p className={`profile-title ${titleTone(activeTitle.id)}`}>
+                {activeTitle.name}
+              </p>
+            )
+          )}
+          <p className="muted">@{current.username}</p>
+          <p className="status-message">
+            {current.statusMessage || "No status message yet."}
+          </p>
+        </div>
+      </div>
+      <div className="profile-stats">
+        <Stat value={current.score} label="Score" detail="total points" />
+        <Stat
+          value={current.solvedCount}
+          label="Solves"
+          detail={`rank #${current.rank || "—"}`}
+        />
+      </div>
+      <section className="profile-layout">
+        <div>
+          {attendance && (
+            <section className="panel attendance-panel">
+              <div className="attendance-heading">
+                <div>
+                  <p className="eyebrow">DAILY OPERATIONS</p>
+                  <h2>Attendance</h2>
+                </div>
+                <button
+                  type="button"
+                  className="button primary"
+                  disabled={attendance.checkedInToday}
+                  onClick={() => void checkIn()}
+                >
+                  {attendance.checkedInToday
+                    ? "Checked in today"
+                    : "Check in today"}
+                </button>
+              </div>
+              <div className="attendance-stats">
+                <div>
+                  <strong>{attendance.currentStreak}</strong>
+                  <small>Current streak</small>
+                </div>
+                <div>
+                  <strong>{attendance.longestStreak}</strong>
+                  <small>Longest streak</small>
+                </div>
+                <div>
+                  <strong>{attendance.totalDays}</strong>
+                  <small>Total days</small>
+                </div>
+              </div>
+              <label className="attendance-title-select">
+                Profile title
+                <select
+                  value={attendance.activeTitle ?? ""}
+                  onChange={selectTitle}
+                  disabled={attendance.earnedTitles.length === 0}
+                >
+                  <option value="" disabled>
+                    Earn a title to equip it
+                  </option>
+                  {attendance.earnedTitles.map((title) => (
+                    <option key={title.id} value={title.id}>
+                      {title.name} · {title.requirement}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="attendance-badges">
+                {attendance.badges.map((badge) => (
+                  <span
+                    className="attendance-badge"
+                    key={badge.id}
+                    title={badge.description}
+                  >
+                    ✦ {badge.name}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="panel profile-editor">
+            <h2>Customize profile</h2>
+            <form onSubmit={(event) => void saveProfile(event)}>
+              <label>
+                Display name
+                <input
+                  name="nickname"
+                  defaultValue={current.nickname}
+                  maxLength={80}
+                />
+              </label>
+              <label>
+                Status message
+                <textarea
+                  name="statusMessage"
+                  defaultValue={current.statusMessage || ""}
+                  maxLength={160}
+                  placeholder="What are you working on?"
+                />
+              </label>
+              <button className="button primary" type="submit">
+                Save profile
+              </button>
+            </form>
+            <button
+              className="button secondary profile-vault-button"
+              type="button"
+              onClick={onVault}
+            >
+              상점에서 구매
+            </button>
+          </section>
+          <ProfileHeatmap activity={solveActivity} className="my-profile-activity" />
+          {loadoutGroups.length > 0 && (
+            <section className="panel loadout-panel">
+              <p className="eyebrow">MY LOADOUT</p>
+              <h2>꾸미기</h2>
+              {loadoutGroups.map(({ label, items }) => (
+                <div className="loadout-group" key={label}>
+                  <h3>{label}</h3>
+                  <div className="loadout-grid">
+                    {items.map((item) => (
+                      <button
+                        className={`loadout-item ${item.equipped ? "equipped" : ""}`}
+                        key={item.id}
+                        type="button"
+                        onClick={() => void equipItem(item)}
+                      >
+                        <span className="loadout-glyph">
+                          {item.type === "FRAME"
+                            ? "▣"
+                            : item.type === "ACCESSORY"
+                              ? "◈"
+                              : "✦"}
+                        </span>
+                        <span className="loadout-name">{item.name}</span>
+                        {item.equipped && (
+                          <span className="loadout-badge">장착 중</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div className="loadout-footer">
+                <small>
+                  {vault?.gems} <span>루비</span>
+                </small>
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={onVault}
+                >
+                  상점에서 더 보기
+                </button>
+              </div>
+            </section>
+          )}
+          <section className="content-section">
+            <button
+              className="button secondary"
+              type="button"
+              onClick={onChallenges}
+            >
+              Browse challenges
+            </button>
+          </section>
+        </div>
+        <aside className="social-panel">
+          <h2>Friends</h2>
+          <form
+            className="friend-request"
+            onSubmit={(event) => void addFriend(event)}
+          >
+            <input
+              name="username"
+              placeholder="Account username (e.g. @player_1)"
+              minLength={3}
+              maxLength={51}
+              autoComplete="off"
+              required
+            />
+            <button className="button primary" type="submit">
+              Add
+            </button>
+          </form>
+          <div className="friend-list">
+            {friends.length === 0 && <p className="muted">No friends yet.</p>}
+            {friends.map((friend) => (
+              <div className="friend-row" key={friend.username}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    friend.relationshipStatus === "ACCEPTED" &&
+                    setSelectedFriend(friend.username)
+                  }
+                >
+                  <span className="mini-avatar">
+                    {friend.avatarUrl ? (
+                      <img src={friend.avatarUrl} alt="" />
+                    ) : (
+                      friend.nickname.slice(0, 2).toUpperCase()
+                    )}
+                  </span>
+                  <span>
+                    <strong>{friend.nickname}</strong>
+                    <small>
+                      @{friend.username} · {friend.relationshipStatus}
+                    </small>
+                  </span>
+                </button>
+                {friend.incomingRequest ? (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={async () => {
+                      try {
+                        await api.acceptFriend(friend.username);
+                        await refresh();
+                      } catch (cause) {
+                        setError(
+                          cause instanceof Error
+                            ? cause.message
+                            : "Could not accept request.",
+                        );
+                      }
+                    }}
+                  >
+                    Accept
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={async () => {
+                      if (!window.confirm("Remove this friend?")) return;
+                      try {
+                        await api.removeFriend(friend.username);
+                        if (selectedFriend === friend.username)
+                          setSelectedFriend(null);
+                        await refresh();
+                      } catch (cause) {
+                        setError(
+                          cause instanceof Error
+                            ? cause.message
+                            : "Could not remove friend.",
+                        );
+                      }
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          {selectedFriend && (
+            <section className="message-panel">
+              <h3>Message @{selectedFriend}</h3>
+              <div className="message-list">
+                {messages.map((message) => (
+                  <article
+                    className={
+                      message.sender === current.username
+                        ? "message sent"
+                        : "message received"
+                    }
+                    key={message.id}
+                  >
+                    <span>{message.content}</span>
+                    {message.sender === current.username && (
+                      <div className="message-actions">
+                        <button
+                          type="button"
+                          onClick={() => void editMessage(message)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void deleteMessage(message)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+              <form onSubmit={(event) => void sendMessage(event)}>
+                <textarea
+                  name="content"
+                  maxLength={2000}
+                  required
+                  placeholder="Write a private message"
+                />
+                <button className="button primary" type="submit">
+                  Send
+                </button>
+              </form>
+            </section>
+          )}
+        </aside>
+      </section>
+      {error && <p className="alert error">{error}</p>}
     </div>
-    <div className="profile-stats"><Stat value={current.score} label="Score" detail="total points" /><Stat value={current.solvedCount} label="Solves" detail={`rank #${current.rank || '—'}`} /></div>
-    <section className="profile-layout"><div>{attendance && <section className="panel attendance-panel"><div className="attendance-heading"><div><p className="eyebrow">DAILY OPERATIONS</p><h2>Attendance</h2></div><button type="button" className="button primary" disabled={attendance.checkedInToday} onClick={() => void checkIn()}>{attendance.checkedInToday ? 'Checked in today' : 'Check in today'}</button></div><div className="attendance-stats"><div><strong>{attendance.currentStreak}</strong><small>Current streak</small></div><div><strong>{attendance.longestStreak}</strong><small>Longest streak</small></div><div><strong>{attendance.totalDays}</strong><small>Total days</small></div></div><label className="attendance-title-select">Profile title<select value={attendance.activeTitle ?? ''} onChange={selectTitle} disabled={attendance.earnedTitles.length === 0}><option value="" disabled>Earn a title to equip it</option>{attendance.earnedTitles.map((title) => <option key={title.id} value={title.id}>{title.name} · {title.requirement}</option>)}</select></label><div className="attendance-badges">{attendance.badges.map((badge) => <span className="attendance-badge" key={badge.id} title={badge.description}>✦ {badge.name}</span>)}</div></section>}<section className="panel profile-editor"><h2>Customize profile</h2><form onSubmit={(event) => void saveProfile(event)}><label>Display name<input name="nickname" defaultValue={current.nickname} maxLength={80} /></label><label>Status message<textarea name="statusMessage" defaultValue={current.statusMessage || ''} maxLength={160} placeholder="What are you working on?" /></label><button className="button primary" type="submit">Save profile</button></form><button className="button secondary profile-vault-button" type="button" onClick={onVault}>상점에서 구매</button></section>{loadoutGroups.length > 0 && <section className="panel loadout-panel"><p className="eyebrow">MY LOADOUT</p><h2>꾸미기</h2>{loadoutGroups.map(({ label, items }) => <div className="loadout-group" key={label}><h3>{label}</h3><div className="loadout-grid">{items.map((item) => <button className={`loadout-item ${item.equipped ? 'equipped' : ''}`} key={item.id} type="button" onClick={() => void equipItem(item)}><span className="loadout-glyph">{item.type === 'FRAME' ? '▣' : item.type === 'ACCESSORY' ? '◈' : '✦'}</span><span className="loadout-name">{item.name}</span>{item.equipped && <span className="loadout-badge">장착 중</span>}</button>)}</div></div>)}<div className="loadout-footer"><small>{vault?.gems} <span>루비</span></small><button className="button secondary" type="button" onClick={onVault}>상점에서 더 보기</button></div></section>}<section className="content-section"><button className="button secondary" type="button" onClick={onChallenges}>Browse challenges</button></section></div><aside className="social-panel"><h2>Friends</h2><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Account username (e.g. @player_1)" minLength={3} maxLength={51} autoComplete="off" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={async () => { try { await api.acceptFriend(friend.username); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not accept request.') } }}>Accept</button> : <button type="button" className="text-link" onClick={async () => { if (!window.confirm('Remove this friend?')) return; try { await api.removeFriend(friend.username); if (selectedFriend === friend.username) setSelectedFriend(null); await refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove friend.') } }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list">{messages.map((message) => <article className={message.sender === current.username ? 'message sent' : 'message received'} key={message.id}><span>{message.content}</span>{message.sender === current.username && <div className="message-actions"><button type="button" onClick={() => void editMessage(message)}>Edit</button><button type="button" onClick={() => void deleteMessage(message)}>Delete</button></div>}</article>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</aside></section>
-    {error && <p className="alert error">{error}</p>}
-  </div>
+  );
 }
 
-function FriendsView({ user, onLogin }: { user: User | null; onLogin: () => void }) {
-  const [friends, setFriends] = useState<Friend[]>([])
-  const [selectedFriend, setSelectedFriend] = useState<string | null>(null)
-  const [messages, setMessages] = useState<DirectMessage[]>([])
-  const [error, setError] = useState('')
-  const messageList = useRef<HTMLDivElement>(null)
+function FriendsView({
+  user,
+  onLogin,
+}: {
+  user: User | null;
+  onLogin: () => void;
+}) {
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
+  const [messages, setMessages] = useState<DirectMessage[]>([]);
+  const [error, setError] = useState("");
+  const messageList = useRef<HTMLDivElement>(null);
   const refresh = useCallback(async () => {
-    try { setFriends(await api.friends()) }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not load friends.') }
-  }, [])
+    try {
+      setFriends(await api.friends());
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not load friends.",
+      );
+    }
+  }, []);
   const upsertMessage = useCallback((message: DirectMessage) => {
-    setMessages((current) => current.some((item) => item.id === message.id)
-      ? current.map((item) => item.id === message.id ? message : item)
-      : [...current, message])
-  }, [])
-  useEffect(() => { if (!user) return; const timer = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(timer) }, [user, refresh])
+    setMessages((current) =>
+      current.some((item) => item.id === message.id)
+        ? current.map((item) => (item.id === message.id ? message : item))
+        : [...current, message],
+    );
+  }, []);
   useEffect(() => {
-    if (!selectedFriend) return
-    let active = true
-    void api.messages(selectedFriend).then((next) => { if (active) { setMessages(next); setError('') } }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Could not load messages.') })
-    return () => { active = false }
-  }, [selectedFriend])
+    if (!user) return;
+    const timer = window.setTimeout(() => void refresh(), 0);
+    return () => window.clearTimeout(timer);
+  }, [user, refresh]);
   useEffect(() => {
-    if (!user) return
+    if (!selectedFriend) return;
+    let active = true;
+    void api
+      .messages(selectedFriend)
+      .then((next) => {
+        if (active) {
+          setMessages(next);
+          setError("");
+        }
+      })
+      .catch((cause: unknown) => {
+        if (active)
+          setError(
+            cause instanceof Error ? cause.message : "Could not load messages.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [selectedFriend]);
+  useEffect(() => {
+    if (!user) return;
     return subscribeToSocialUpdates({
       onMessage: (message) => {
-        const other = message.sender === user.username ? message.recipient : message.sender
-        if (other === selectedFriend) upsertMessage(message)
+        const other =
+          message.sender === user.username ? message.recipient : message.sender;
+        if (other === selectedFriend) upsertMessage(message);
       },
       onMessageDeleted: (message) => {
-        const other = message.sender === user.username ? message.recipient : message.sender
-        if (other === selectedFriend) setMessages((current) => current.filter((item) => item.id !== message.id))
+        const other =
+          message.sender === user.username ? message.recipient : message.sender;
+        if (other === selectedFriend)
+          setMessages((current) =>
+            current.filter((item) => item.id !== message.id),
+          );
       },
-      onFriendship: (friendship) => setFriends((current) => {
-        const exists = current.some((item) => item.username === friendship.username)
-        return exists ? current.map((item) => item.username === friendship.username ? friendship : item) : [...current, friendship]
-      }),
-    })
-  }, [selectedFriend, upsertMessage, user])
+      onFriendship: (friendship) =>
+        setFriends((current) => {
+          const exists = current.some(
+            (item) => item.username === friendship.username,
+          );
+          return exists
+            ? current.map((item) =>
+                item.username === friendship.username ? friendship : item,
+              )
+            : [...current, friendship];
+        }),
+    });
+  }, [selectedFriend, upsertMessage, user]);
   useEffect(() => {
-    if (messages.length) messageList.current?.scrollTo({ top: messageList.current.scrollHeight, behavior: 'smooth' })
-  }, [messages])
+    if (messages.length)
+      messageList.current?.scrollTo({
+        top: messageList.current.scrollHeight,
+        behavior: "smooth",
+      });
+  }, [messages]);
   useLayoutEffect(() => {
-    document.querySelectorAll<HTMLSpanElement>('.friends-page .message-meta small').forEach((label) => {
-      label.classList.toggle('is-read', label.textContent === 'Read')
-    })
-  }, [messages])
-  if (!user) return <div className="page"><PageIntro eyebrow="FRIENDS" title="Sign in to message your friends." description="Friend requests and private messages are available after sign-in." /><button className="button primary" type="button" onClick={onLogin}>Sign in</button></div>
-  const addFriend = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = event.currentTarget; const username = String(new FormData(form).get('username')).trim(); try { await api.requestFriend(username); await refresh(); form.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send friend request.') } }
-  const sendMessage = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!selectedFriend) return; const form = event.currentTarget; try { upsertMessage(await api.sendMessage(selectedFriend, String(new FormData(form).get('content')))); form.reset() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not send message.') } }
-  const editMessage = async (message: DirectMessage) => { const content = window.prompt('Edit message', message.content)?.trim(); if (!content || content === message.content) return; try { upsertMessage(await api.updateMessage(message.id, content)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not edit message.') } }
-  const deleteMessage = async (message: DirectMessage) => { if (!window.confirm('Delete this message?')) return; try { await api.deleteMessage(message.id); setMessages((current) => current.filter((item) => item.id !== message.id)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete message.') } }
-  return <div className="page friends-page"><PageIntro eyebrow="FRIENDS & MESSAGES" title="Friends" description="Add fellow learners and keep the conversation private." /><section className="social-panel"><form className="friend-request" onSubmit={(event) => void addFriend(event)}><input name="username" placeholder="Account username (e.g. @player_1)" minLength={3} maxLength={80} autoComplete="off" required /><button className="button primary" type="submit">Add</button></form><div className="friend-list">{friends.length === 0 && <p className="muted">No friends yet.</p>}{friends.map((friend) => <div className="friend-row" key={friend.username}><button type="button" onClick={() => friend.relationshipStatus === 'ACCEPTED' && setSelectedFriend(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong><small>@{friend.username} · {friend.relationshipStatus}</small></span></button>{friend.incomingRequest ? <button type="button" className="button secondary" onClick={() => void api.acceptFriend(friend.username).then(refresh).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not accept request.'))}>Accept</button> : <button type="button" className="text-link" onClick={() => { if (!window.confirm('Remove this friend?')) return; void api.removeFriend(friend.username).then(() => { if (selectedFriend === friend.username) setSelectedFriend(null); return refresh() }).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not remove friend.')) }}>Remove</button>}</div>)}</div>{selectedFriend && <section className="message-panel"><h3>Message @{selectedFriend}</h3><div className="message-list" ref={messageList}>{messages.map((message) => <article className={message.sender === user.username ? 'message sent' : 'message received'} key={message.id}><span>{message.content}</span>{message.sender === user.username && <div className="message-meta"><small>{message.read ? 'Read' : 'Sent'}</small><div className="message-actions"><button type="button" onClick={() => void editMessage(message)}>Edit</button><button type="button" onClick={() => void deleteMessage(message)}>Delete</button></div></div>}</article>)}</div><form onSubmit={(event) => void sendMessage(event)}><textarea name="content" maxLength={2000} required placeholder="Write a private message" /><button className="button primary" type="submit">Send</button></form></section>}</section>{error && <p className="alert error">{error}</p>}</div>
+    document
+      .querySelectorAll<HTMLSpanElement>(".friends-page .message-meta small")
+      .forEach((label) => {
+        label.classList.toggle("is-read", label.textContent === "Read");
+      });
+  }, [messages]);
+  if (!user)
+    return (
+      <div className="page">
+        <PageIntro
+          eyebrow="FRIENDS"
+          title="Sign in to message your friends."
+          description="Friend requests and private messages are available after sign-in."
+        />
+        <button className="button primary" type="button" onClick={onLogin}>
+          Sign in
+        </button>
+      </div>
+    );
+  const addFriend = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const username = String(new FormData(form).get("username")).trim();
+    try {
+      await api.requestFriend(username);
+      await refresh();
+      form.reset();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not send friend request.",
+      );
+    }
+  };
+  const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedFriend) return;
+    const form = event.currentTarget;
+    try {
+      upsertMessage(
+        await api.sendMessage(
+          selectedFriend,
+          String(new FormData(form).get("content")),
+        ),
+      );
+      form.reset();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not send message.",
+      );
+    }
+  };
+  const editMessage = async (message: DirectMessage) => {
+    const content = window.prompt("Edit message", message.content)?.trim();
+    if (!content || content === message.content) return;
+    try {
+      upsertMessage(await api.updateMessage(message.id, content));
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not edit message.",
+      );
+    }
+  };
+  const deleteMessage = async (message: DirectMessage) => {
+    if (!window.confirm("Delete this message?")) return;
+    try {
+      await api.deleteMessage(message.id);
+      setMessages((current) =>
+        current.filter((item) => item.id !== message.id),
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Could not delete message.",
+      );
+    }
+  };
+  return (
+    <div className="page friends-page">
+      <PageIntro
+        eyebrow="FRIENDS & MESSAGES"
+        title="Friends"
+        description="Add fellow learners and keep the conversation private."
+      />
+      <section className="social-panel">
+        <form
+          className="friend-request"
+          onSubmit={(event) => void addFriend(event)}
+        >
+          <input
+            name="username"
+            placeholder="Account username (e.g. @player_1)"
+            minLength={3}
+            maxLength={80}
+            autoComplete="off"
+            required
+          />
+          <button className="button primary" type="submit">
+            Add
+          </button>
+        </form>
+        <div className="friend-list">
+          {friends.length === 0 && <p className="muted">No friends yet.</p>}
+          {friends.map((friend) => (
+            <div className="friend-row" key={friend.username}>
+              <button
+                type="button"
+                onClick={() =>
+                  friend.relationshipStatus === "ACCEPTED" &&
+                  setSelectedFriend(friend.username)
+                }
+              >
+                <span className="mini-avatar">
+                  {friend.avatarUrl ? (
+                    <img src={friend.avatarUrl} alt="" />
+                  ) : (
+                    friend.nickname.slice(0, 2).toUpperCase()
+                  )}
+                </span>
+                <span>
+                  <strong>{friend.nickname}</strong>
+                  <small>
+                    @{friend.username} · {friend.relationshipStatus}
+                  </small>
+                </span>
+              </button>
+              {friend.incomingRequest ? (
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() =>
+                    void api
+                      .acceptFriend(friend.username)
+                      .then(refresh)
+                      .catch((cause: unknown) =>
+                        setError(
+                          cause instanceof Error
+                            ? cause.message
+                            : "Could not accept request.",
+                        ),
+                      )
+                  }
+                >
+                  Accept
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => {
+                    if (!window.confirm("Remove this friend?")) return;
+                    void api
+                      .removeFriend(friend.username)
+                      .then(() => {
+                        if (selectedFriend === friend.username)
+                          setSelectedFriend(null);
+                        return refresh();
+                      })
+                      .catch((cause: unknown) =>
+                        setError(
+                          cause instanceof Error
+                            ? cause.message
+                            : "Could not remove friend.",
+                        ),
+                      );
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        {selectedFriend && (
+          <section className="message-panel">
+            <h3>Message @{selectedFriend}</h3>
+            <div className="message-list" ref={messageList}>
+              {messages.map((message) => (
+                <article
+                  className={
+                    message.sender === user.username
+                      ? "message sent"
+                      : "message received"
+                  }
+                  key={message.id}
+                >
+                  <span>{message.content}</span>
+                  {message.sender === user.username && (
+                    <div className="message-meta">
+                      <small>{message.read ? "Read" : "Sent"}</small>
+                      <div className="message-actions">
+                        <button
+                          type="button"
+                          onClick={() => void editMessage(message)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void deleteMessage(message)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+            <form onSubmit={(event) => void sendMessage(event)}>
+              <textarea
+                name="content"
+                maxLength={2000}
+                required
+                placeholder="Write a private message"
+              />
+              <button className="button primary" type="submit">
+                Send
+              </button>
+            </form>
+          </section>
+        )}
+      </section>
+      {error && <p className="alert error">{error}</p>}
+    </div>
+  );
 }
 
 function communityCategoryFromSearch(search: string): CommunityCategory | undefined {
