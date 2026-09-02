@@ -7,8 +7,10 @@ import jakarta.persistence.EntityNotFoundException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import javax.imageio.ImageIO;
@@ -96,6 +98,12 @@ public class UserProfileService {
   @Transactional(readOnly = true)
   public UserDtos.PublicProfile publicProfile(String username) {
     User user = byUsername(username);
+    Map<String, Long> solveActivity =
+        solves.findByUserId(user.getId()).stream()
+            .collect(
+                java.util.stream.Collectors.groupingBy(
+                    solve -> solve.getSolvedAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate().toString(),
+                    java.util.stream.Collectors.counting()));
     return new UserDtos.PublicProfile(
         user.getUsername(),
         user.getNickname(),
@@ -121,6 +129,10 @@ public class UserProfileService {
                         friend.getEquippedFrame(),
                         friend.getEquippedAccessory(),
                         friend.getEquippedVaultTitle()))
+            .toList(),
+        solveActivity.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .map(entry -> new UserDtos.SolveActivity(entry.getKey(), entry.getValue()))
             .toList(),
         UserTier.forScore(user.getScore()).id());
   }

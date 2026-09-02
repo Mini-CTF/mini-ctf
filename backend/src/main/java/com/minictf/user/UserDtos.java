@@ -44,7 +44,10 @@ public final class UserDtos {
       String equippedAccessory,
       String equippedTitle,
       List<PublicFriend> friends,
+      List<SolveActivity> solveActivity,
       String tier) {}
+
+  public record SolveActivity(String date, long count) {}
 
   public record SolveView(Long challengeId, String title, int score, Instant solvedAt) {}
 

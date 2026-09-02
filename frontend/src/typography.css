@@ -885,6 +885,13 @@ html[data-theme='light'] .app-shell :is(.profile-title, .ranking-title, .communi
 .profile-hero h1 { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0; line-height: 1.2; letter-spacing: -.035em; }
 .profile-hero .tier-emblem { margin: 0; }
 .profile-hero .profile-title { margin: 2px 0 0 !important; }
+.app-shell :is(.profile-title, .ranking-title, .community-title, .super-user-title) {
+  font-family: var(--sans) !important;
+  font-style: normal;
+  letter-spacing: .02em !important;
+  text-shadow: none !important;
+  animation: none !important;
+}
 .profile-hero .muted, .profile-hero .status-message { margin: 0; line-height: 1.6; }
 .community-detail > .muted {
   margin-top: 14px;

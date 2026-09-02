@@ -460,10 +460,11 @@ function AppShell() {
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       <Routes>
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onCommunity={() => go('/community')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
-        <Route path="/challenges" element={guarded(<div className="page challenges-page"><ChallengesProgress items={challenges} total={challenges.length} /><CategoryProgressChart items={challenges} /><ChallengeSearch value={challengeSearch} onChange={setChallengeSearch} /><ChallengesView key={`${category}-${difficulty}-${challengeSearch}`} items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} /></div>)} />
+        <Route path="/challenges" element={guarded(<div className="page challenges-page"><ChallengesProgress items={challenges} total={challenges.length} /><CategoryProgressChart items={challenges} /><CombinedFieldRadar items={challenges} /><ChallengeSearch value={challengeSearch} onChange={setChallengeSearch} /><ChallengesView key={`${category}-${difficulty}-${challengeSearch}`} items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} onOpen={(item) => go(`/challenges/${item.id}`)} /></div>)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh(); void refreshWallet() }} />)} />
         <Route path="/learn" element={<LearnView lang={language} loggedIn={Boolean(user)} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
+        <Route path="/users/:username" element={guarded(<PublicProfilePage />)} />
         <Route path="/bookmarks" element={user ? guarded(<BookmarksView />) : <Navigate to="/login" replace />} />
         <Route path="/popular" element={user ? guarded(<PopularChallengesView />) : <Navigate to="/login" replace />} />
         <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
@@ -1194,7 +1195,7 @@ function EnhancedRankingView({ rows, attendanceRows }: { rows: RankingRow[]; att
     ['beginner', '0점 이상'], ['rookie', '300점 이상'], ['junior', '1,000점 이상'],
     ['senior', '2,500점 이상'], ['veteran', '4,000점 이상'], ['master', '7,000점 이상'], ['root', '15,000점 이상'],
   ] as const
-  return <div className="page ranking-page"><PageIntro eyebrow="RANKING" title="함께 쌓아가는 기록" description={section === 'score' ? '문제를 해결하며 쌓은 점수와 기록이에요.' : '매일 학습을 이어온 꾸준한 기록이에요.'} /><div className="filter-tabs ranking-tabs"><button type="button" className={section === 'score' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('score')}>점수 랭킹</button><button type="button" className={section === 'attendance' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('attendance')}>출석 랭킹</button></div><div className="ranking-content-layout"><section className="panel ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>{section === 'score' ? '해결' : '누적'}</span><span>{section === 'score' ? '점수' : '연속'}</span></div>{visibleRows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><RankIdentity row={row} /><span>{section === 'score' ? (row as RankingRow).solvedCount : `${(row as AttendanceRankingRow).totalDays}일`}</span><b>{section === 'score' ? (row as RankingRow).score : `${(row as AttendanceRankingRow).currentStreak}일`}</b></div>)}{visibleRows.length === 0 && <EmptyState />}</section><aside className="tier-guide"><span className="vault-kicker">TIER GUIDE</span><h2>티어 기준</h2><p>점수가 오르면 다음 티어로 자동 승급해요.</p><div>{tierGuide.map(([tier, threshold]) => <span key={tier}><TierEmblem tier={tier} /><small>{threshold}</small></span>)}</div></aside></div></div>
+  return <div className="page ranking-page"><PageIntro eyebrow="RANKING" title="함께 쌓아가는 기록" description={section === 'score' ? '문제를 해결하며 쌓은 점수와 기록이에요.' : '매일 학습을 이어온 꾸준한 기록이에요.'} /><div className="filter-tabs ranking-tabs"><button type="button" className={section === 'score' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('score')}>점수 랭킹</button><button type="button" className={section === 'attendance' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('attendance')}>출석 랭킹</button></div><div className="ranking-content-layout"><section className="panel ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>{section === 'score' ? '해결' : '누적'}</span><span>{section === 'score' ? '점수' : '연속'}</span></div>{visibleRows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><RankIdentity row={row} /><span>{section === 'score' ? (row as RankingRow).solvedCount : `${(row as AttendanceRankingRow).totalDays}일`}</span><b>{section === 'score' ? (row as RankingRow).score : `${(row as AttendanceRankingRow).currentStreak}일`}</b></div>)}{visibleRows.length === 0 && <EmptyState />}</section><aside className="tier-guide"><span className="vault-kicker">TIER GUIDE</span><h2>티어 기준</h2><p>점수가 오르면 다음 티어로 자동 승급해요.</p><div>{tierGuide.slice().reverse().map(([tier, threshold]) => <span key={tier}><TierEmblem tier={tier} /><small>{threshold}</small></span>)}</div></aside></div></div>
 }
 
 function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' | 'avatarUrl' | 'equippedFrame' | 'equippedAccessory' | 'equippedTitle' | 'tier'> }) {
@@ -1239,6 +1240,18 @@ function PublicProfileDialog() {
     if (!username) return
     void api.publicProfile(username).then(setProfile).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load this profile.'))
   }, [username])
+  useEffect(() => {
+    if (!profile) return
+    const card = document.querySelector('.public-profile-card')
+    if (!(card instanceof HTMLElement) || card.querySelector('.public-profile-detail-link')) return
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'button secondary public-profile-detail-link'
+    button.textContent = '자세히 보기'
+    button.addEventListener('click', () => { window.location.href = `/users/${encodeURIComponent(profile.username)}` })
+    card.append(button)
+    return () => button.remove()
+  }, [profile])
   if (!username) return null
   const name = profile?.nickname || username
   return <div className="public-profile-backdrop" role="dialog" aria-modal="true" aria-label="Public profile" onMouseDown={() => setUsername(null)}><section className="public-profile-card" onMouseDown={(event) => event.stopPropagation()}><button className="vault-close" type="button" onClick={() => setUsername(null)} aria-label="Close profile">×</button>{!profile && !error && <LoadingState label="Loading profile..." />}{error && <p className="alert error">{error}</p>}{profile && <><div className={`public-profile-hero ${profile.equippedFrame ? `equipped-${profile.equippedFrame}` : ''} ${profile.equippedTitle?.toLowerCase() === 'super_user' ? 'super-user-profile' : ''}`}><span className="profile-avatar avatar-large">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><div><p className="eyebrow">PUBLIC PROFILE</p><h2>{name}{profile.equippedAccessory && <i className="profile-accessory">◈</i>}<TierEmblem tier={profile.tier} /></h2>{profile.equippedTitle && <p className="profile-title vault-profile-title">{cosmeticLabel(profile.equippedTitle)}</p>}<p className="muted">@{profile.username}</p></div></div><p className="public-profile-status">{profile.statusMessage || 'No status message yet.'}</p><div className="public-profile-stats"><span><b>{profile.score}</b> Score</span><span><b>{profile.solvedCount}</b> Solves</span></div><section className="public-profile-friends"><h3>Friends <span>{profile.friends.length}</span></h3>{profile.friends.length === 0 ? <p className="muted">No public friends yet.</p> : <div>{profile.friends.map((friend) => <button type="button" key={friend.username} onClick={() => openPublicProfile(friend.username)}><span className={`mini-avatar ${friend.equippedFrame ? `equipped-${friend.equippedFrame}` : ''}`}>{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}{friend.equippedAccessory && <i className="profile-accessory">◈</i>}</strong>{friend.equippedTitle && <small className="ranking-title">{cosmeticLabel(friend.equippedTitle)}</small>}</span></button>)}</div>}</section></>}</section></div>
@@ -1247,6 +1260,60 @@ function PublicProfileDialog() {
 function RankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceRows: AttendanceRankingRow[] }) {
   const [section, setSection] = useState<'score' | 'attendance'>('score')
   return <div className="page"><PageIntro eyebrow="RANKING" title="함께 쌓아가는 기록" description={section === 'score' ? '문제를 해결하며 쌓은 점수와 기록이에요.' : '매일 학습을 이어온 꾸준한 기록이에요.'} /><div className="filter-tabs ranking-tabs"><button type="button" className={section === 'score' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('score')}>점수 랭킹</button><button type="button" className={section === 'attendance' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('attendance')}>출석 랭킹</button></div>{section === 'score' ? <section className="panel ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>해결</span><span>점수</span></div>{rows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><div className="operator"><span className={`mini-avatar ${row.equippedFrame ? `equipped-${row.equippedFrame}` : ''}`}>{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><span><strong>{row.nickname || row.username}</strong>{row.equippedTitle && <small className="ranking-title">{cosmeticLabel(row.equippedTitle)}</small>}</span></div><span>{row.solvedCount}</span><b>{row.score}</b></div>)}{rows.length === 0 && <EmptyState />}</section> : <section className="panel ranking-panel attendance-ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>누적</span><span>연속</span></div>{attendanceRows.map((row) => <div className="ranking-row" key={row.username}><strong className="rank-number">#{row.rank}</strong><div className="operator"><span className="mini-avatar">{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><span>{row.nickname || row.username}</span></div><span>{row.totalDays}일</span><b>{row.currentStreak}일</b></div>)}{attendanceRows.length === 0 && <EmptyState />}</section>}</div>
+}
+
+const categoryColors = ['#4d99ff', '#b38cff', '#45d6b0', '#ff9f5a', '#f06fa8', '#f2cc60']
+
+function CombinedFieldRadar({ items }: { items: ChallengeSummary[] }) {
+  const fields = useMemo(() => Array.from(new Set(items.map((item) => item.category))).sort(), [items])
+  const values = fields.map((category) => {
+    const challenges = items.filter((item) => item.category === category)
+    return challenges.length === 0 ? 0 : Math.round((challenges.filter((item) => item.solved).length / challenges.length) * 100)
+  })
+  const size = 360
+  const center = size / 2
+  const radius = 112
+  const point = (index: number, value: number) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(fields.length, 3)
+    const distance = radius * (value / 100)
+    return [center + Math.cos(angle) * distance, center + Math.sin(angle) * distance]
+  }
+  const polygon = (scale: number) => fields.map((_, index) => point(index, scale * 100).join(',')).join(' ')
+  const valuePolygon = fields.map((_, index) => point(index, values[index]).join(',')).join(' ')
+  const axes = fields.map((field, index) => ({ field, index, outer: point(index, 100), label: point(index, 122) }))
+  const ariaLabel = fields.map((field, index) => `${field} ${values[index]}%`).join(', ')
+  return <section className="combined-field-radar" aria-label="Combined field achievement radar chart">
+    <div className="combined-field-radar-copy"><span className="vault-kicker">ALL FIELDS</span><h2>분야별 성취율 종합</h2><p>문제 분야가 추가되면 축과 도형이 자동으로 늘어납니다.</p></div>
+    {fields.length === 0 ? <EmptyState /> : <div className="radar-layout"><svg className="field-radar" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={ariaLabel}>
+      {[.25, .5, .75, 1].map((level) => <polygon key={level} points={polygon(level)} className="field-radar-grid" />)}
+      {axes.map(({ field, index, outer, label }) => <g key={field}><line x1={center} y1={center} x2={outer[0]} y2={outer[1]} stroke={categoryColors[index % categoryColors.length]} className="field-radar-axis" /><text x={label[0]} y={label[1]} fill={categoryColors[index % categoryColors.length]} className="field-radar-label">{field}</text></g>)}
+      <polygon points={valuePolygon} className="field-radar-area" />
+      {fields.map((field, index) => { const dot = point(index, values[index]); return <circle key={field} cx={dot[0]} cy={dot[1]} r="6" fill={categoryColors[index % categoryColors.length]} className="field-radar-dot" /> })}
+    </svg><div className="field-radar-legend">{fields.map((field, index) => <span key={field}><i style={{ background: categoryColors[index % categoryColors.length] }} />{field} <b>{values[index]}%</b></span>)}</div></div>}
+  </section>
+}
+
+function ProfileHeatmap({ activity }: { activity: PublicProfile['solveActivity'] }) {
+  const counts = new Map(activity.map((item) => [item.date, item.count]))
+  const days = Array.from({ length: 365 }, (_, index) => {
+    const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (364 - index))
+    const key = date.toISOString().slice(0, 10)
+    return { key, date, count: counts.get(key) ?? 0 }
+  })
+  const maximum = Math.max(1, ...days.map((day) => day.count))
+  return <section className="profile-heatmap"><div><span className="vault-kicker">SOLVE ACTIVITY</span><h2>문제 풀이 기록</h2><p>최근 1년 동안 풀이한 문제 수입니다.</p></div><div className="heatmap-grid" role="img" aria-label="최근 1년 문제 풀이 히트맵">{days.map((day) => { const level = day.count === 0 ? 0 : Math.min(4, Math.ceil((day.count / maximum) * 4)); return <span key={day.key} className={`heatmap-cell level-${level}`} title={`${day.key}: ${day.count} solved`} /> })}</div><div className="heatmap-legend"><span>적음</span>{[0, 1, 2, 3, 4].map((level) => <i key={level} className={`level-${level}`} />)}<span>많음</span></div></section>
+}
+
+function PublicProfilePage() {
+  const { username = '' } = useParams()
+  const navigate = useNavigate()
+  const [profile, setProfile] = useState<PublicProfile | null>(null)
+  const [error, setError] = useState('')
+  useEffect(() => { void api.publicProfile(username).then(setProfile).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Could not load this profile.')) }, [username])
+  if (error) return <div className="page"><p className="alert error">{error}</p></div>
+  if (!profile) return <div className="page"><LoadingState label="Loading profile..." /></div>
+  const name = profile.nickname || profile.username
+  return <div className="page public-profile-page"><button className="back-link" type="button" onClick={() => navigate(-1)}>Back</button><section className={`public-profile-page-hero ${profile.equippedFrame ? `equipped-${profile.equippedFrame}` : ''}`}><span className="profile-avatar avatar-large">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><div><span className="eyebrow">PUBLIC PROFILE</span><h1>{name} <TierEmblem tier={profile.tier} /></h1>{profile.equippedTitle && <p className="profile-title">{cosmeticLabel(profile.equippedTitle)}</p>}<p className="muted">@{profile.username}</p><p>{profile.statusMessage || 'No status message yet.'}</p></div><div className="public-profile-page-stats"><span><b>{profile.score}</b>Score</span><span><b>{profile.solvedCount}</b>Solves</span></div></section><ProfileHeatmap activity={profile.solveActivity} /></div>
 }
 
 void LegacyCipherVault

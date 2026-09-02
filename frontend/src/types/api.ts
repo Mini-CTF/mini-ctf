@@ -234,6 +234,7 @@ export type PublicProfile = {
   equippedAccessory: string | null
   equippedTitle: string | null
   friends: PublicProfileFriend[]
+  solveActivity: { date: string; count: number }[]
   tier: string
 }
 
