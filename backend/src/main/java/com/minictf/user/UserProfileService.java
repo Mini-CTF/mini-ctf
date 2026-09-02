@@ -116,8 +116,8 @@ public class UserProfileService {
         solves.countByActiveUser(user.getId()),
         user.getStatusMessage(),
         avatarUrl(user),
-        user.getEquippedFrame(),
-        user.getEquippedAccessory(),
+        null,
+        null,
         displayTitle(user),
         friendships.findAcceptedForUser(user.getId()).stream()
             .map(
@@ -131,9 +131,9 @@ public class UserProfileService {
                         friend.getUsername(),
                         friend.getNickname(),
                         avatarUrl(friend),
-                        friend.getEquippedFrame(),
-                        friend.getEquippedAccessory(),
-                        friend.getEquippedVaultTitle()))
+                        null,
+                        null,
+                        displayTitle(friend)))
             .toList(),
         solveActivity.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
@@ -164,9 +164,9 @@ public class UserProfileService {
         solves.countByActiveUser(user.getId()),
         user.getStatusMessage(),
         avatarUrl(user),
-        user.getEquippedFrame(),
-        user.getEquippedAccessory(),
-        user.getEquippedVaultTitle(),
+        null,
+        null,
+        displayTitle(user),
         UserTier.forScore(user.getScore()).id());
   }
 
@@ -193,8 +193,7 @@ public class UserProfileService {
   }
 
   private String displayTitle(User user) {
-    if (user.getEquippedVaultTitle() != null) return user.getEquippedVaultTitle();
-    return "NONE".equals(user.getAttendanceTitle()) ? null : user.getAttendanceTitle();
+    return "ADMIN".equals(user.getRole()) ? "SUPER_USER" : null;
   }
 
   private String cleanOptional(String value, int max) {

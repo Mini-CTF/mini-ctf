@@ -10,8 +10,7 @@ function buildTutorialSteps(firstChallengeId?: number, scope: 'public' | 'member
     return [
       { path: '/profile', selector: '.profile-stats', ko: { title: '내 학습 기록', body: '점수, 해결한 문제 수, 현재 순위를 여기서 바로 확인해요.', action: '다음' }, en: { title: 'Your learning record', body: 'See your score, solved challenges, and current rank at a glance.', action: 'Next' } },
       { selector: '.attendance-panel', ko: { title: '매일 출석하기', body: '하루 한 번 출석하면 연속 기록과 보상을 쌓을 수 있어요. 부담 없이 꾸준히 이어가 보세요.', action: '다음' }, en: { title: 'Daily check-in', body: 'Check in once a day to build a streak and earn rewards.', action: 'Next' } },
-      { selector: '.profile-editor', ko: { title: '프로필 꾸미기', body: '표시 이름과 상태 메시지를 바꿀 수 있어요. 저장하면 랭킹과 커뮤니티에도 바로 반영됩니다.', action: '다음' }, en: { title: 'Customize your profile', body: 'Change your display name and status. Your updates appear in rankings and community too.', action: 'Next' } },
-      { selector: '.profile-vault-button', ko: { title: 'Cipher Vault', body: '출석과 미션으로 얻은 루비로 프로필 테두리, 칭호, 힌트 크레딧을 관리해요.', action: '다음' }, en: { title: 'Cipher Vault', body: 'Use rubies earned from check-ins and missions for frames, titles, and hint credits.', action: 'Next' } },
+      { selector: '.profile-editor', ko: { title: '프로필 정보', body: '표시 이름과 상태 메시지를 바꿀 수 있어요. 저장하면 랭킹과 커뮤니티에도 바로 반영됩니다.', action: '다음' }, en: { title: 'Profile information', body: 'Change your display name and status. Your updates appear in rankings and community too.', action: 'Next' } },
       { path: '/friends', selector: '.friend-request', ko: { title: '친구 추가하기', body: '상대방의 계정 아이디를 입력해 친구 요청을 보낼 수 있어요.', action: '다음' }, en: { title: 'Add friends', body: 'Enter a learner’s account username to send a friend request.', action: 'Next' } },
       { selector: '.friend-list', ko: { title: '친구와 DM', body: '요청을 수락하면 이 목록에서 친구 프로필을 보고 개인 메시지를 보낼 수 있어요.', action: '마치기' }, en: { title: 'Friends & DMs', body: 'After a request is accepted, use this list to view profiles and send private messages.', action: 'Finish' } },
     ]
@@ -48,13 +47,13 @@ function buildTutorialSteps(firstChallengeId?: number, scope: 'public' | 'member
         {
           selector: '.hint-panel',
           ko: {
-            title: '힌트와 크레딧',
-            body: '크레딧으로 힌트를 열 수 있어요. 잔액과 충전은 상점(Cipher Vault)에서!',
+            title: '무료 힌트',
+            body: '막히면 비용이나 횟수 제한 없이 힌트를 확인할 수 있어요.',
             action: '다음',
           },
           en: {
-            title: 'Hints & credits',
-            body: 'Spend credits to reveal hints. Balance and top-up live in the Cipher Vault shop.',
+            title: 'Free hints',
+            body: 'Reveal a hint whenever you need one, with no credits or usage limit.',
             action: 'Next',
           },
         },
@@ -97,7 +96,7 @@ function buildTutorialSteps(firstChallengeId?: number, scope: 'public' | 'member
     { path: '/learn', selector: '.filter-tabs', ko: { title: '학습 탭 — 개념부터', body: '관심 분야의 아티클을 읽고 개념을 잡은 뒤 문제로 넘어가면 훨씬 쉬워요.', action: '다음' }, en: { title: 'Learn tab — concepts first', body: 'Read a short article in your field, then jump into problems. Way easier!', action: 'Next' } },
     { selector: '.learn-list', ko: { title: '아티클 열어 보기', body: '각 글은 5~9분짜리 짧은 읽기거리예요. 카드를 누르면 바로 열립니다.', action: '다음' }, en: { title: 'Open an article', body: 'Each one is a 5–9 minute read. Tap any card to open it instantly.', action: 'Next' } },
     { path: '/ranking', selector: '.ranking-tabs', ko: { title: '랭킹은 두 종류', body: '점수 랭킹과 출석 랭킹! 꾸준함도 기록되니 부담 없이 이어가요.', action: '다음' }, en: { title: 'Two kinds of ranking', body: 'Score ranking AND attendance ranking — consistency counts too.', action: 'Next' } },
-    { selector: '.ranking-panel', ko: { title: '티어와 배지', body: '상위 러너들의 프로필 테두리·칭호가 보이죠? 나중에 내 것도 만들 수 있어요.', action: '다음' }, en: { title: 'Tiers & badges', body: 'See those profile frames and titles? Yours will show up here too.', action: 'Next' } },
+    { selector: '.ranking-panel', ko: { title: '티어와 배지', body: '상위 러너들의 티어와 점수를 확인해 보세요. 내 문제 풀이 기록도 랭킹에 반영됩니다.', action: '다음' }, en: { title: 'Tiers & badges', body: 'See top learners’ tiers and scores. Your solve record appears here too.', action: 'Next' } },
     { path: '/community', selector: '.community-toolbar', ko: { title: '커뮤니티에서 질문하기', body: '막혔다면 질문 탭에 남겨보세요. 함께 배우면 빨라집니다.', action: '다음' }, en: { title: 'Ask the community', body: 'Stuck? Post in the question tab. Learning together is faster.', action: 'Next' } },
     { selector: '.community-list', ko: { title: '글·반응·댓글', body: '다른 러너의 기록에 좋아요와 답글로 응원해요. 플래그 직접 공유는 금지!', action: '다음' }, en: { title: 'Posts · reactions · replies', body: 'Cheer others with likes and replies. Never post raw flags!', action: 'Next' } },
     { selector: '.header-login', ko: { title: '이제 로그인해 볼까요?', body: '로그인하면 출석, 프로필 꾸미기, 친구와 메시지 같은 개인 기능도 사용할 수 있어요.', action: 'FlagBox 시작!' }, en: { title: 'Ready for your account?', body: 'Sign in to unlock check-ins, profile customization, friends, and private messages.', action: "Let's go!" } },

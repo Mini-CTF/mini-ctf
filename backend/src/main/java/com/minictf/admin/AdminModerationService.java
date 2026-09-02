@@ -9,7 +9,6 @@ import com.minictf.community.PostCommentRepository;
 import com.minictf.community.PostRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
-import com.minictf.vault.CipherVaultService;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.util.List;
@@ -31,7 +30,6 @@ public class AdminModerationService {
   private final PostRepository posts;
   private final PostCommentRepository postComments;
   private final IpBanRepository ipBans;
-  private final CipherVaultService vault;
 
   public AdminModerationService(
       UserRepository users,
@@ -42,8 +40,7 @@ public class AdminModerationService {
       SecurityEventRepository securityEvents,
       PostRepository posts,
       PostCommentRepository postComments,
-      IpBanRepository ipBans,
-      CipherVaultService vault) {
+      IpBanRepository ipBans) {
     this.users = users;
     this.submissions = submissions;
     this.solves = solves;
@@ -53,7 +50,6 @@ public class AdminModerationService {
     this.posts = posts;
     this.postComments = postComments;
     this.ipBans = ipBans;
-    this.vault = vault;
   }
 
   @Transactional(readOnly = true)
@@ -99,23 +95,6 @@ public class AdminModerationService {
         "USER",
         targetId,
         "Score " + previous + " -> " + next + "; " + request.reason().trim());
-    return userView(target);
-  }
-
-  @Transactional
-  public AdminDtos.UserView setCosmetic(
-      Long targetId, AdminDtos.CosmeticGrantRequest request, String adminUsername) {
-    User target = target(targetId);
-    ensureNotAdmin(target);
-    if (!"ACTIVE".equals(target.getStatus()))
-      throw new IllegalArgumentException("Restore the account before managing cosmetics");
-    vault.setAdminGrant(target, request.cosmeticId().trim(), request.granted());
-    audit(
-        adminUsername,
-        request.granted() ? "GRANT_COSMETIC" : "REVOKE_COSMETIC",
-        "USER",
-        targetId,
-        request.cosmeticId().trim());
     return userView(target);
   }
 

@@ -238,54 +238,6 @@ export type PublicProfile = {
   tier: string
 }
 
-export type VaultMission = {
-  id: string
-  name: string
-  description: string
-  gemReward: number
-  fragmentReward: number
-  eligible: boolean
-  completed: boolean
-}
-
-export type VaultCosmetic = {
-  id: string
-  name: string
-  description: string
-  type: 'FRAME' | 'ACCESSORY' | 'TITLE' | string
-  source: 'STORE' | 'CRAFT' | 'QUEST' | 'HIDDEN' | string
-  gemCost: number
-  fragmentCost: number
-  hidden: boolean
-  owned: boolean
-  equipped: boolean
-  consumable: boolean
-}
-
-export type VaultSummary = {
-  gems: number
-  fragments: number
-  hintCredits: number
-  dailyShopIds: string[]
-  missions: VaultMission[]
-  cosmetics: VaultCosmetic[]
-}
-
-export type HiddenMission = {
-  id: string
-  name: string
-  description: string
-  eligible: boolean
-  completed: boolean
-}
-
-export type HiddenSummary = {
-  unlocked: boolean
-  rewarded: boolean
-  missions: HiddenMission[]
-  rewards: VaultCosmetic[]
-}
-
 export type Friend = {
   username: string
   nickname: string

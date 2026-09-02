@@ -22,8 +22,6 @@ import type {
   RankingRow,
   Stats,
   User,
-  VaultSummary,
-  HiddenSummary,
   LearningOverview,
   LearningBookmark,
   PopularChallenge,
@@ -194,11 +192,6 @@ export const api = {
     notifyAdminAccountChanged(result)
     return result
   },
-  setAdminUserCosmetic: async (id: number, cosmeticId: string, granted: boolean) => {
-    const result = await request<AdminUser>(`/admin/users/${id}/cosmetics`, { method: 'POST', body: JSON.stringify({ cosmeticId, granted }) })
-    notifyAdminAccountChanged(result)
-    return result
-  },
   suspendUser: async (id: number, reason: string) => {
     const result = await request<AdminUser>(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) })
     notifyAdminAccountChanged(result)
@@ -246,14 +239,6 @@ export const api = {
     return body.data as Profile
   },
   deleteAvatar: () => request<void>('/users/me/avatar', { method: 'DELETE' }),
-  vault: () => request<VaultSummary>('/vault'),
-  discoverVault: () => request<VaultSummary>('/vault/discover', { method: 'POST' }),
-  claimVaultMission: (id: string) => request<VaultSummary>(`/vault/missions/${encodeURIComponent(id)}/claim`, { method: 'POST' }),
-  buyVaultItem: (id: string) => request<VaultSummary>('/vault/shop/buy', { method: 'POST', body: JSON.stringify({ id }) }),
-  craftVaultItem: (id: string) => request<VaultSummary>('/vault/craft', { method: 'POST', body: JSON.stringify({ id }) }),
-  equipVaultItem: (id: string) => request<VaultSummary>('/vault/equip', { method: 'PUT', body: JSON.stringify({ id }) }),
-  discoverHiddenVault: () => request<HiddenSummary>('/vault/hidden/discover', { method: 'POST' }),
-  hiddenVault: () => request<HiddenSummary>('/vault/hidden'),
   learningOverview: () => request<LearningOverview>('/learning/overview'),
   updateLearningGoal: (weeklyTarget: number) => request<LearningOverview>('/learning/goal', { method: 'PUT', body: JSON.stringify({ weeklyTarget }) }),
   learningBookmarks: () => request<LearningBookmark[]>('/learning/bookmarks'),
@@ -262,7 +247,6 @@ export const api = {
   popularChallenges: () => request<PopularChallenge[]>('/learning/popular-challenges'),
   addChallengeLike: (challengeId: number) => request<void>(`/learning/likes/${challengeId}`, { method: 'PUT' }),
   removeChallengeLike: (challengeId: number) => request<void>(`/learning/likes/${challengeId}`, { method: 'DELETE' }),
-  claimHiddenMission: (id: string) => request<HiddenSummary>(`/vault/hidden/missions/${encodeURIComponent(id)}/claim`, { method: 'POST' }),
   friends: () => request<Friend[]>('/social/friends'),
   requestFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(normalizeUsername(username))}`, { method: 'POST' }),
   acceptFriend: (username: string) => request<Friend>(`/social/friends/${encodeURIComponent(username)}/accept`, { method: 'POST' }),

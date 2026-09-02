@@ -103,13 +103,8 @@ public class ChallengeService {
   @Transactional
   public ChallengeDtos.HintView hint(Long id, String username) {
     Challenge c = getActive(id);
-    User user = users.findByUsernameForUpdate(username).orElseThrow();
-    if ("ADMIN".equals(user.getRole()))
-      return new ChallengeDtos.HintView(hintText(c), Integer.MAX_VALUE);
-    if (user.getHintCredits() < c.getHintCost())
-      throw new IllegalArgumentException("Not enough hint credits");
-    user.setHintCredits(user.getHintCredits() - c.getHintCost());
-    return new ChallengeDtos.HintView(hintText(c), user.getHintCredits());
+    users.findByUsername(username).orElseThrow();
+    return new ChallengeDtos.HintView(hintText(c), 0);
   }
 
   @Transactional
@@ -134,10 +129,8 @@ public class ChallengeService {
     solve.setChallenge(c);
     solves.save(solve);
     u.setScore(u.getScore() + c.getScore());
-    int awardedGems = gemsForDifficulty(c.getDifficulty());
-    u.setCipherGems(u.getCipherGems() + awardedGems);
     antiCheat.assessCorrectSubmission(u, c);
-    return new ChallengeDtos.SubmitResult("correct", c.getScore(), awardedGems);
+    return new ChallengeDtos.SubmitResult("correct", c.getScore(), 0);
   }
 
   @Transactional
@@ -309,17 +302,6 @@ public class ChallengeService {
     Challenge c = get(id);
     if (!c.isActive()) throw new EntityNotFoundException("Challenge not found");
     return c;
-  }
-
-  private int gemsForDifficulty(String difficulty) {
-    return switch (difficulty == null ? "" : difficulty.toUpperCase(Locale.ROOT)) {
-      case "BEGINNER" -> 1;
-      case "EASY" -> 3;
-      case "NORMAL" -> 5;
-      case "ADVANCED" -> 10;
-      case "EXPERT" -> 30;
-      default -> 0;
-    };
   }
 
   private Set<Long> solvedIds(String username) {

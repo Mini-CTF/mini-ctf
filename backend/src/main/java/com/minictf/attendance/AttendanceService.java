@@ -28,14 +28,6 @@ public class AttendanceService {
           new BadgeRule("HUNDRED_DAYS", "Century", "Reach 100 total check-in days.", 100, false),
           new BadgeRule(
               "THREE_SIXTY_FIVE_DAYS", "Year-Round", "Reach 365 total check-in days.", 365, false));
-  private static final List<TitleRule> TITLES =
-      List.of(
-          new TitleRule(FIRST_CHECK, "First Check", "1 total day", 1, false),
-          new TitleRule("WEEK_WATCH", "Week Watch", "7-day streak", 7, true),
-          new TitleRule("MONTH_OPERATOR", "Month Operator", "30-day streak", 30, true),
-          new TitleRule("CENTURY_OPERATOR", "Century Operator", "100 total days", 100, false),
-          new TitleRule("YEAR_ROUND", "Year-Round Operator", "365 total days", 365, false));
-
   private final AttendanceCheckinRepository checkins;
   private final UserRepository users;
 
@@ -73,32 +65,10 @@ public class AttendanceService {
                     rule.streak ? longestStreak >= rule.threshold : dates.size() >= rule.threshold)
             .map(rule -> new AttendanceDtos.Badge(rule.id, rule.name, rule.description))
             .toList();
-    List<AttendanceDtos.Title> earnedTitles =
-        new ArrayList<>(
-            TITLES.stream()
-                .filter(
-                    rule ->
-                        rule.streak
-                            ? longestStreak >= rule.threshold
-                            : dates.size() >= rule.threshold)
-                .map(rule -> new AttendanceDtos.Title(rule.id, rule.name, rule.requirement))
-                .toList());
     boolean admin = "ADMIN".equals(user.getRole());
-    if (admin)
-      earnedTitles.addAll(
-          UserTier.all().stream()
-              .map(
-                  tier ->
-                      new AttendanceDtos.Title(
-                          tier.id().toUpperCase(), tier.name(), tier.minimumScore() + " points"))
-              .toList());
-    if (admin)
-      earnedTitles.add(new AttendanceDtos.Title(SUPER_USER, "Super User", "Administrator title"));
-    String activeTitle = user.getAttendanceTitle();
-    String selectedTitle = activeTitle;
-    if (!"NONE".equals(selectedTitle)
-        && earnedTitles.stream().noneMatch(title -> title.id().equals(selectedTitle)))
-      activeTitle = earnedTitles.isEmpty() ? null : earnedTitles.get(earnedTitles.size() - 1).id();
+    List<AttendanceDtos.Title> earnedTitles =
+        admin ? List.of(new AttendanceDtos.Title(SUPER_USER, "Super User", "Administrator title")) : List.of();
+    String activeTitle = admin ? SUPER_USER : null;
     return new AttendanceDtos.Summary(
         dates.size(),
         currentStreak,
@@ -111,16 +81,8 @@ public class AttendanceService {
 
   @Transactional
   public AttendanceDtos.Summary selectTitle(User user, AttendanceDtos.TitleRequest request) {
-    if ("NONE".equals(request.titleId())) {
-      user.setAttendanceTitle("NONE");
-      users.save(user);
-      return summary(user);
-    }
-    AttendanceDtos.Summary current = summary(user);
-    if (current.earnedTitles().stream().noneMatch(title -> title.id().equals(request.titleId())))
-      throw new IllegalArgumentException("That title has not been earned");
-    user.setAttendanceTitle(request.titleId());
-    users.save(user);
+    if (!"ADMIN".equals(user.getRole()) || !SUPER_USER.equals(request.titleId()))
+      throw new IllegalArgumentException("Only administrators can use the Super User title");
     return summary(user);
   }
 
@@ -141,11 +103,9 @@ public class AttendanceService {
               row.getTotalDays(),
               currentStreak(dates, today()),
               avatarUrl(row.getUsername(), row.getAvatarPath()),
-              row.getEquippedFrame(),
-              row.getEquippedAccessory(),
-              row.getEquippedVaultTitle() != null
-                  ? row.getEquippedVaultTitle()
-                  : "NONE".equals(row.getAttendanceTitle()) ? null : row.getAttendanceTitle(),
+              null,
+              null,
+              "ADMIN".equals(row.getRole()) ? "SUPER_USER" : null,
               UserTier.forScore(row.getScore()).id()));
       previousTotal = row.getTotalDays();
     }
@@ -198,6 +158,4 @@ public class AttendanceService {
   private record BadgeRule(
       String id, String name, String description, int threshold, boolean streak) {}
 
-  private record TitleRule(
-      String id, String name, String requirement, int threshold, boolean streak) {}
 }

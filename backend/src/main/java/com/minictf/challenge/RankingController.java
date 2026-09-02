@@ -35,11 +35,9 @@ public class RankingController {
               u.getNickname(),
               u.getScore(),
               solves.countByUser(u.getId()),
-              u.getEquippedVaultTitle() != null
-                  ? u.getEquippedVaultTitle()
-                  : u.getAttendanceTitle(),
-              u.getEquippedFrame(),
-              u.getEquippedAccessory(),
+              "ADMIN".equals(u.getRole()) ? "SUPER_USER" : null,
+              null,
+              null,
               avatarUrl(u),
               UserTier.forScore(u.getScore()).id()));
       previousScore = u.getScore();

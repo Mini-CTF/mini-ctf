@@ -498,8 +498,6 @@ public class CommunityService {
   }
 
   private String titleFor(User user) {
-    return user.getEquippedVaultTitle() != null
-        ? user.getEquippedVaultTitle()
-        : "NONE".equals(user.getAttendanceTitle()) ? null : user.getAttendanceTitle();
+    return "ADMIN".equals(user.getRole()) ? "SUPER_USER" : null;
   }
 }

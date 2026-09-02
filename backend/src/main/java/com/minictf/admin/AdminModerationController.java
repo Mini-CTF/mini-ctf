@@ -43,14 +43,6 @@ public class AdminModerationController {
     return ApiResponse.ok(service.adjustScore(id, request, auth.getName()));
   }
 
-  @PostMapping("/users/{id}/cosmetics")
-  public ApiResponse<?> setCosmetic(
-      @PathVariable Long id,
-      @Valid @RequestBody AdminDtos.CosmeticGrantRequest request,
-      Authentication auth) {
-    return ApiResponse.ok(service.setCosmetic(id, request, auth.getName()));
-  }
-
   @PostMapping("/users/{id}/suspend")
   public ApiResponse<?> suspend(
       @PathVariable Long id,

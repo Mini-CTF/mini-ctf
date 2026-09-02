@@ -12,9 +12,8 @@ import AetherFlowHero from './components/ui/aether-flow-hero'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import FloatingQuickMenu from './components/FloatingQuickMenu'
-import type { AdminComment, AdminDashboard, AdminPost, AdminUser, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, HiddenSummary, LearningBookmark, LearningOverview, PopularChallenge, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User, VaultCosmetic, VaultSummary } from './types/api'
+import type { AdminComment, AdminDashboard, AdminPost, AdminUser, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, LearningBookmark, LearningOverview, PopularChallenge, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-cutout.png'
-import cipherVaultRelics from './assets/cipher-vault-relic-grid.png'
 import './App.css'
 import './typography.css'
 
@@ -189,8 +188,6 @@ function AppShell() {
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const localizationVersion = useRef(0)
-  const [vaultOpen, setVaultOpen] = useState(false)
-  const [headerGems, setHeaderGems] = useState<number | null>(null)
   const [showIntro, setShowIntro] = useState(() => !isPasswordResetLink && sessionStorage.getItem('flagbox-intro-seen') !== 'true')
   const [showTutorial, setShowTutorial] = useState(false)
   const [showMemberTutorial, setShowMemberTutorial] = useState(false)
@@ -279,23 +276,6 @@ function AppShell() {
       )
     }
   }, [])
-
-  const refreshWallet = useCallback(async () => {
-    if (!getAuthToken()) {
-      setHeaderGems(null)
-      return
-    }
-    try {
-      setHeaderGems((await api.vault()).gems)
-    } catch {
-      // The page can still work while the optional wallet indicator retries later.
-    }
-  }, [])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => void refreshWallet(), 0)
-    return () => window.clearTimeout(timer)
-  }, [user?.username, refreshWallet])
 
   useEffect(() => {
     const expireSession = (event: Event) => {
@@ -433,21 +413,10 @@ function AppShell() {
     setUser(result.user)
     go('/challenges')
     void refresh()
-    void refreshWallet()
-  }
-  const syncAppearance = async () => {
-    try {
-      setUser(await api.me())
-      await refresh()
-      await refreshWallet()
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not refresh your profile.')
-    }
   }
   const logout = () => {
     clearAuthToken()
     setUser(null)
-    setHeaderGems(null)
     go('/')
     void refresh()
   }
@@ -473,25 +442,24 @@ function AppShell() {
         <NavButton active={path.startsWith('/learn')} onClick={() => go('/learn')}>{text.learn}</NavButton>
         <NavButton active={path.startsWith('/profile')} onClick={() => go('/profile')}>{text.profile}</NavButton>
         {user && <NavButton active={path.startsWith('/friends')} onClick={() => go('/friends')}>Friends</NavButton>}
-        {user && <NavButton active={false} onClick={() => { setMobileNavOpen(false); setVaultOpen(true) }}>{text.shop}</NavButton>}
         {user?.role === 'ADMIN' && <NavButton active={path.startsWith('/admin')} onClick={() => go('/admin')}>{text.admin}</NavButton>}
         <button className="nav-button mobile-language" type="button" onClick={toggleLanguage} aria-label={text.language}><GlobeIcon /> {language === 'ko' ? 'EN' : 'KO'}</button>
         {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>{text.logout}</button> : <button className="nav-button mobile-auth" type="button" onClick={() => go('/login')}>{text.login}</button>}
       </nav>
-      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={toggleLanguage}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><button className="header-ruby-balance" type="button" onClick={() => setVaultOpen(true)} aria-label="레드 루비 교환소 열기"><span className="ruby-gem small" aria-hidden="true" /><strong>{headerGems ?? '—'}</strong></button><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button></> : <button className="header-login" type="button" onClick={() => go('/login')}>{text.login}</button>}</div>
+      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={toggleLanguage}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button></> : <button className="header-login" type="button" onClick={() => go('/login')}>{text.login}</button>}</div>
     </header>
     <main>
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       <Routes>
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onCommunity={() => go('/community')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
         <Route path="/challenges" element={guarded(<div className="page challenges-page"><ChallengesProgress items={challenges} total={challenges.length} /><CategoryProgressChart items={challenges} /><CombinedFieldRadar items={challenges} /><ChallengesView key={`${category}-${difficulty}`} items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} challengeSearch={challengeSearch} onSearchChange={setChallengeSearch} onOpen={(item) => go(`/challenges/${item.id}`)} /></div>)} />
-        <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh(); void refreshWallet() }} />)} />
+        <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh() }} />)} />
         <Route path="/learn" element={<LearnView lang={language} loggedIn={Boolean(user)} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
         <Route path="/users/:username" element={guarded(<PublicProfilePage />)} />
         <Route path="/bookmarks" element={user ? guarded(<BookmarksView />) : <Navigate to="/login" replace />} />
         <Route path="/popular" element={user ? guarded(<PopularChallengesView />) : <Navigate to="/login" replace />} />
-        <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} onVault={() => setVaultOpen(true)} onAppearanceChanged={syncAppearance} />)} />
+        <Route path="/profile" element={guarded(<ProfileView user={user} onChallenges={() => go('/challenges')} onLogin={() => go('/login')} />)} />
         <Route path="/friends" element={guarded(<FriendsView user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community" element={guarded(<EnhancedCommunityView key={location.search} user={user} onLogin={() => go('/login')} />)} />
         <Route path="/community/:postId" element={guarded(<CommunityPostRoute user={user} />)} />
@@ -507,14 +475,13 @@ function AppShell() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </main>
-    {vaultOpen && user && <CipherVault user={user} onClose={() => setVaultOpen(false)} onAppearanceChanged={syncAppearance} />}
     <PublicProfileDialog />
     <FloatingAssistant open={assistantOpen} onOpenChange={setAssistantOpen} user={user} language={language} path={path} onLogin={() => go('/login')} />
     {assistantFeedbackOpen && <AssistantFeedbackDialog user={user} language={language} onClose={() => setAssistantFeedbackOpen(false)} onLogin={() => go('/login')} />}
     <FloatingQuickMenu language={language} assistantOpen={assistantOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} onBookmarks={() => go(user ? '/bookmarks' : '/login')} onPopular={() => go(user ? '/popular' : '/login')} />
     <footer className="site-footer">
       <div className="footer-brand"><strong>FlagBox</strong><p>{language === 'ko' ? '보안을 처음 배우는 사람을 위한 쉽고 안전한 워게임 학습 플랫폼' : 'A safe, beginner-friendly wargame learning platform.'}</p></div>
-      <div className="footer-links"><div><b>{language === 'ko' ? '서비스' : 'Services'}</b><nav className="footer-service-links" aria-label={language === 'ko' ? '서비스 바로가기' : 'Service shortcuts'}><button type="button" onClick={() => go('/challenges')}>{language === 'ko' ? '워게임' : 'Wargames'}</button><button type="button" onClick={() => go('/learn')}>{language === 'ko' ? '학습' : 'Learn'}</button><button type="button" onClick={() => go('/ranking')}>{language === 'ko' ? '랭킹' : 'Rankings'}</button><button type="button" onClick={() => go('/community')}>{language === 'ko' ? '커뮤니티' : 'Community'}</button><button type="button" onClick={() => user ? setVaultOpen(true) : go('/login')}>{language === 'ko' ? '상점' : 'Shop'}</button></nav></div><div><b>{language === 'ko' ? '도움말' : 'Help'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '도움말 바로가기' : 'Help shortcuts'}><a href="/guide">{language === 'ko' ? '이용 안내' : 'Guide'}</a><a href="/faq">{language === 'ko' ? '자주 묻는 질문' : 'FAQ'}</a><button className="footer-text-link" data-no-specular type="button" onClick={() => setAssistantFeedbackOpen(true)}>{language === 'ko' ? '피드백' : 'Feedback'}</button></nav><a href="mailto:flagbox.contact@gmail.com">{language === 'ko' ? '문의하기: flagbox.contact@gmail.com' : 'Contact: flagbox.contact@gmail.com'}</a></div><div><b>{language === 'ko' ? '정책' : 'Policies'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '정책 바로가기' : 'Policy shortcuts'}><a href="/terms">{language === 'ko' ? '이용약관' : 'Terms'}</a><a href="/privacy">{language === 'ko' ? '개인정보처리방침' : 'Privacy'}</a><a href="/safe-learning">{language === 'ko' ? '안전한 학습 가이드' : 'Safe learning guide'}</a></nav></div></div>
+      <div className="footer-links"><div><b>{language === 'ko' ? '서비스' : 'Services'}</b><nav className="footer-service-links" aria-label={language === 'ko' ? '서비스 바로가기' : 'Service shortcuts'}><button type="button" onClick={() => go('/challenges')}>{language === 'ko' ? '워게임' : 'Wargames'}</button><button type="button" onClick={() => go('/learn')}>{language === 'ko' ? '학습' : 'Learn'}</button><button type="button" onClick={() => go('/ranking')}>{language === 'ko' ? '랭킹' : 'Rankings'}</button><button type="button" onClick={() => go('/community')}>{language === 'ko' ? '커뮤니티' : 'Community'}</button></nav></div><div><b>{language === 'ko' ? '도움말' : 'Help'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '도움말 바로가기' : 'Help shortcuts'}><a href="/guide">{language === 'ko' ? '이용 안내' : 'Guide'}</a><a href="/faq">{language === 'ko' ? '자주 묻는 질문' : 'FAQ'}</a><button className="footer-text-link" data-no-specular type="button" onClick={() => setAssistantFeedbackOpen(true)}>{language === 'ko' ? '피드백' : 'Feedback'}</button></nav><a href="mailto:flagbox.contact@gmail.com">{language === 'ko' ? '문의하기: flagbox.contact@gmail.com' : 'Contact: flagbox.contact@gmail.com'}</a></div><div><b>{language === 'ko' ? '정책' : 'Policies'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '정책 바로가기' : 'Policy shortcuts'}><a href="/terms">{language === 'ko' ? '이용약관' : 'Terms'}</a><a href="/privacy">{language === 'ko' ? '개인정보처리방침' : 'Privacy'}</a><a href="/safe-learning">{language === 'ko' ? '안전한 학습 가이드' : 'Safe learning guide'}</a></nav></div></div>
       <div className="footer-bottom"><span>© 2026 FlagBox. All rights reserved.</span><span>{language === 'ko' ? 'Mini-CTF 프로젝트를 기반으로 운영됩니다.' : 'Built on the Mini-CTF project.'}</span></div>
     </footer>
   </div>
@@ -537,8 +504,8 @@ function HelpView({ language, kind }: { language: Language; kind: HelpKind }) {
   const navigate = useNavigate()
   const ko = language === 'ko'
   const copy = kind === 'guide'
-    ? ko ? { eyebrow: 'GETTING STARTED', title: '이용 안내', intro: 'FlagBox를 처음 이용할 때 알아두면 좋은 순서입니다.', sections: [['1. 계정 만들기', '일반 회원가입 또는 Google, GitHub, Discord 계정으로 로그인할 수 있습니다. 학습 기록과 꾸미기 아이템은 계정에 안전하게 저장됩니다.'], ['2. 첫 문제 고르기', '워게임에서 첫걸음 또는 쉬움 난이도 문제를 선택하세요. 문제 설명과 가이드북을 먼저 읽으면 어떤 개념을 익히는 문제인지 알 수 있습니다.'], ['3. 막히면 도움 받기', '문제의 힌트 크레딧 또는 AI 학습 도우미를 사용해 보세요. 정답 대신 다음에 확인할 개념과 방향을 안내합니다.'], ['4. 기록과 보상 확인', '문제를 풀면 점수와 루비를 얻습니다. 마이 페이지에서 출석, 칭호, 프로필 꾸미기와 학습 기록을 확인할 수 있습니다.']] } : { eyebrow: 'GETTING STARTED', title: 'Guide', intro: 'A simple path for getting started with FlagBox.', sections: [['1. Create an account', 'Sign in with a FlagBox account or Google, GitHub, or Discord. Learning records and cosmetic items are saved to your account.'], ['2. Pick your first challenge', 'Start with a Beginner or Easy wargame. Read the challenge and guidebook first to understand the concept.'], ['3. Get help when stuck', 'Use hint credits or the AI learning helper. They provide a next step and concepts to review instead of a complete answer.'], ['4. Check progress and rewards', 'Solving challenges earns points and rubies. My Page shows attendance, titles, profile items, and learning history.']] }
-    : ko ? { eyebrow: 'FAQ', title: '자주 묻는 질문', intro: '처음 이용할 때 많이 궁금해하는 내용을 모았습니다.', sections: [['문제를 어떻게 시작하나요?', '워게임에서 첫걸음 또는 쉬움 문제를 선택한 뒤, 문제 설명과 가이드북을 순서대로 읽어 보세요.'], ['FLAG 형식이 무엇인가요?', '문제에서 찾은 정답 문자열입니다. 보통 FLAG{...} 형태이며, 문제의 제출 입력란에 그대로 넣으면 됩니다.'], ['힌트 크레딧은 어떻게 얻나요?', '상점에서 루비로 교환할 수 있으며, 문제 풀이와 출석으로 얻는 루비를 사용할 수 있습니다.'], ['로그인이나 계정에 문제가 있어요.', '로그인 화면의 아이디·비밀번호 찾기를 이용하거나 flagbox.contact@gmail.com으로 문의해 주세요.']] } : { eyebrow: 'FAQ', title: 'Frequently Asked Questions', intro: 'Answers to common questions from new learners.', sections: [['How do I start a challenge?', 'Choose a Beginner or Easy wargame, then read the challenge description and guidebook in order.'], ['What is a FLAG?', 'It is the answer string found in a challenge, commonly in the format FLAG{...}. Enter it exactly in the submission box.'], ['How do I get hint credits?', 'Exchange earned rubies in the shop. Rubies are gained through challenge solving and attendance.'], ['I have an account or sign-in problem.', 'Use the username/password recovery options on the sign-in page, or contact flagbox.contact@gmail.com.']] }
+    ? ko ? { eyebrow: 'GETTING STARTED', title: '이용 안내', intro: 'FlagBox를 처음 이용할 때 알아두면 좋은 순서입니다.', sections: [['1. 계정 만들기', '일반 회원가입 또는 Google, GitHub, Discord 계정으로 로그인할 수 있습니다. 학습 기록은 계정에 안전하게 저장됩니다.'], ['2. 첫 문제 고르기', '워게임에서 첫걸음 또는 쉬움 난이도 문제를 선택하세요. 문제 설명과 가이드북을 먼저 읽으면 어떤 개념을 익히는 문제인지 알 수 있습니다.'], ['3. 막히면 도움 받기', '문제 화면의 무료 힌트 또는 AI 학습 도우미를 사용해 보세요. 정답 대신 다음에 확인할 개념과 방향을 안내합니다.'], ['4. 기록 확인', '문제를 풀면 점수와 풀이 기록이 쌓입니다. 마이 페이지에서 출석과 학습 기록을 확인할 수 있습니다.']] } : { eyebrow: 'GETTING STARTED', title: 'Guide', intro: 'A simple path for getting started with FlagBox.', sections: [['1. Create an account', 'Sign in with a FlagBox account or Google, GitHub, or Discord. Learning records are saved to your account.'], ['2. Pick your first challenge', 'Start with a Beginner or Easy wargame. Read the challenge and guidebook first to understand the concept.'], ['3. Get help when stuck', 'Use the free hint or the AI learning helper. They provide a next step and concepts to review instead of a complete answer.'], ['4. Check your progress', 'Solving challenges earns points and builds your solve history. My Page shows attendance and learning history.']] }
+    : ko ? { eyebrow: 'FAQ', title: '자주 묻는 질문', intro: '처음 이용할 때 많이 궁금해하는 내용을 모았습니다.', sections: [['문제를 어떻게 시작하나요?', '워게임에서 첫걸음 또는 쉬움 문제를 선택한 뒤, 문제 설명과 가이드북을 순서대로 읽어 보세요.'], ['FLAG 형식이 무엇인가요?', '문제에서 찾은 정답 문자열입니다. 보통 FLAG{...} 형태이며, 문제의 제출 입력란에 그대로 넣으면 됩니다.'], ['힌트는 어떻게 확인하나요?', '문제 화면에서 힌트 버튼을 누르면 무료로 확인할 수 있습니다.'], ['로그인이나 계정에 문제가 있어요.', '로그인 화면의 아이디·비밀번호 찾기를 이용하거나 flagbox.contact@gmail.com으로 문의해 주세요.']] } : { eyebrow: 'FAQ', title: 'Frequently Asked Questions', intro: 'Answers to common questions from new learners.', sections: [['How do I start a challenge?', 'Choose a Beginner or Easy wargame, then read the challenge description and guidebook in order.'], ['What is a FLAG?', 'It is the answer string found in a challenge, commonly in the format FLAG{...}. Enter it exactly in the submission box.'], ['How do I use hints?', 'Open the hint on a challenge page to see it for free.'], ['I have an account or sign-in problem.', 'Use the username/password recovery options on the sign-in page, or contact flagbox.contact@gmail.com.']] }
   return <section className="policy-page"><div className="policy-card"><button className="back-link" type="button" onClick={() => navigate(-1)}>← {ko ? '이전 페이지' : 'Back'}</button><div className="info-page-heading"><div><p className="eyebrow">{copy.eyebrow}</p><h1>{copy.title}</h1><p className="policy-intro">{copy.intro}</p></div><span>{ko ? '도움말' : 'Help center'}</span></div><InfoPageNav ko={ko} current={kind} /><p className="info-page-updated">{ko ? '최종 업데이트 · 2026. 09. 01.' : 'Last updated · Sep 01, 2026'}</p><div className="policy-sections">{copy.sections.map(([heading, body], index) => <article key={heading}><span className="info-section-number">{String(index + 1).padStart(2, '0')}</span><h2>{heading}</h2><p>{body}</p></article>)}</div></div></section>
 }
 function InfoPageNav({ ko, current }: { ko: boolean; current: PolicyKind | HelpKind }) {
@@ -911,111 +878,6 @@ function Home({ language, challenges, onExplore, onCommunity, onRanking, onOpen 
   */
 }
 
-function VaultOpening() {
-  return <div className="vault-opening" role="status" aria-label="Opening hidden operation"><div className="vault-opening-scan" /><div className="vault-rings" aria-hidden="true"><i /><i /><i /></div><div className="vault-opening-mark">◆</div><p>SEQUENCE ACCEPTED</p><strong>ACCESS GRANTED</strong><small>OPENING HIDDEN OPERATION</small></div>
-}
-
-function HiddenOperation({ user, language, onClose }: { user: User; language: Language; onClose: () => void }) {
-  const [summary, setSummary] = useState<HiddenSummary | null>(null)
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState<string | null>(null)
-  const refresh = useCallback(async () => {
-    try { setError(''); setSummary(await api.discoverHiddenVault()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not open the hidden operation.') }
-  }, [])
-  useEffect(() => { const timer = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(timer) }, [refresh])
-  const claim = async (id: string) => {
-    try { setBusy(id); setError(''); setSummary(await api.claimHiddenMission(id)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Hidden mission failed.') } finally { setBusy(null) }
-  }
-  const ko = language === 'ko'
-  const completedCount = summary?.missions.filter((mission) => mission.completed).length ?? 0
-  return <div className="hidden-operation-backdrop" role="dialog" aria-modal="true" aria-label={ko ? '히든 미션' : 'Hidden operation'}><section className="hidden-operation"><header><div><p className="eyebrow">{ko ? '비공개 작전 // 05' : 'UNLISTED CHANNEL // 05'}</p><h2>{ko ? '숨겨진 신호를 찾았어요.' : 'Signal recovered.'}</h2><p>{ko ? '로고는 입구였어요. 아래 미션 3개를 모두 완료하면 전용 프로필 보상을 받을 수 있어요.' : 'The logo was the entrance. Complete all three missions to claim the exclusive profile rewards.'}</p></div><button className="vault-close" type="button" onClick={onClose} aria-label={ko ? '닫기' : 'Close hidden operation'}>×</button></header>{!summary ? <LoadingState label={ko ? '숨겨진 신호를 해독하는 중...' : 'Decrypting the recovered signal...'} /> : <><div className="hidden-operation-status"><span className="ruby-gem" aria-hidden="true" /><div><strong>{summary.rewarded ? (ko ? '작전 완료' : 'Operation complete') : (ko ? `${completedCount}/3 미션 완료` : `${completedCount}/3 missions complete`)}</strong><small>{summary.rewarded ? (ko ? '전용 테두리, 장식, 칭호가 내 꾸미기에 추가됐어요.' : 'The exclusive frame, accent, and title are now in your loadout.') : user.role === 'ADMIN' ? (ko ? '관리자 계정은 모든 보상을 바로 사용할 수 있어요.' : 'Administrator access: all rewards available.') : (ko ? '세 가지 조각을 모아 전용 보상을 해제하세요.' : 'Collect all three fragments to unlock the reward set.')}</small></div></div><section className="hidden-section"><div className="hidden-section-heading"><h3>{ko ? '미션' : 'Missions'}</h3><small>{ko ? '완료 조건을 확인하고 보상을 받으세요.' : 'Check each requirement and claim its fragment.'}</small></div><div className="hidden-mission-list">{summary.missions.map((mission, index) => { const text = hiddenMissionText(mission.id, mission.name, mission.description, ko); return <article className={`hidden-mission ${mission.completed ? 'complete' : ''}`} key={mission.id}><span className="hidden-mission-number">0{index + 1}</span><div><span className="vault-kicker">{ko ? '비밀 미션' : 'CLASSIFIED TASK'}</span><h3>{text.name}</h3><p>{text.description}</p></div><button className="button primary" type="button" disabled={mission.completed || !mission.eligible || busy === mission.id} onClick={() => void claim(mission.id)}>{mission.completed ? (ko ? '완료' : 'Complete') : mission.eligible ? (ko ? '조각 받기' : 'Claim fragment') : (ko ? '조건 미달' : 'Locked')}</button></article> })}</div></section><section className="hidden-section hidden-rewards"><div className="hidden-section-heading"><h3>{ko ? '완료 보상' : 'Completion rewards'}</h3><small>{ko ? '미션을 모두 완료하면 3개 보상을 한 번에 획득해요.' : 'Finish every mission to unlock all three rewards.'}</small></div><div className="hidden-reward-grid">{summary.rewards.map((reward) => { const text = hiddenRewardText(reward.id, reward.name, ko); return <div className={`hidden-reward ${reward.owned ? 'owned' : ''}`} key={reward.id}><span>{reward.type === 'FRAME' ? '▣' : reward.type === 'TITLE' ? '✦' : '◇'}</span><div><strong>{text.name}</strong><small>{reward.type === 'TITLE' ? (ko ? '칭호 보상' : 'TITLE REWARD') : reward.type === 'FRAME' ? (ko ? '프로필 테두리' : 'PROFILE FRAME') : (ko ? '프로필 장식' : 'PROFILE ACCENT')}</small></div><em>{reward.owned ? (ko ? '획득 완료' : 'Unlocked') : (ko ? '미션 완료 후 해제' : 'Unlock after all missions')}</em></div> })}</div></section>{error && <p className="alert error vault-error">{error}</p>}</>}</section></div>
-}
-
-function hiddenMissionText(id: string, name: string, description: string, ko: boolean) {
-  if (!ko) return { name, description }
-  const copy: Record<string, { name: string; description: string }> = {
-    hidden_signal: { name: '숨겨진 신호 발견', description: '로고를 통해 이 비밀 작전을 처음 열어 보세요.' },
-    hidden_pulse: { name: '신호에 맞추기', description: '오늘 출석 체크를 완료하세요.' },
-    hidden_breaker: { name: '암호 해독', description: '플랫폼의 워게임 문제를 하나 이상 해결하세요.' },
-  }
-  return copy[id] ?? { name, description }
-}
-
-function hiddenRewardText(id: string, name: string, ko: boolean) {
-  if (!ko) return { name }
-  const copy: Record<string, string> = { crimson_lock_frame: '크림슨 락', ruby_signal: '루비 시그널', zero_day_title: '제로데이 탐험가' }
-  return { name: copy[id] ?? name }
-}
-
-function LegacyCipherVault({ user, onClose }: { user: User; onClose: () => void }) {
-  const [summary, setSummary] = useState<VaultSummary | null>(null)
-  const [tab, setTab] = useState<'missions' | 'shop' | 'craft' | 'collection'>('shop')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState<string | null>(null)
-  const refresh = useCallback(async () => {
-    try { setError(''); setSummary(await api.discoverVault()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not open Cipher Vault.') }
-  }, [])
-  useEffect(() => { const timer = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(timer) }, [refresh])
-  const run = async (key: string, action: () => Promise<VaultSummary>) => {
-    try { setBusy(key); setError(''); setSummary(await action()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Vault action failed.') } finally { setBusy(null) }
-  }
-  const visible = (item: VaultCosmetic) => !item.hidden || item.owned || user.role === 'ADMIN'
-  const cosmetics = summary?.cosmetics.filter(visible) ?? []
-  const shop = cosmetics.filter((item) => item.source === 'STORE')
-  const craft = cosmetics.filter((item) => item.source === 'CRAFT')
-  const collection = cosmetics.filter((item) => item.owned)
-  return <div className="vault-backdrop" role="dialog" aria-modal="true" aria-label="Cipher Vault"><section className="cipher-vault"><header className="vault-header"><div><p className="eyebrow">CLASSIFIED COLLECTION // VAULT-05</p><h2>Cipher Vault</h2><p>Complete daily operations. Collect fragments. Wear the proof.</p></div><button className="vault-close" type="button" onClick={onClose} aria-label="Close Cipher Vault">×</button></header>{!summary ? <LoadingState label="Decrypting your vault..." /> : <><div className="vault-wallet"><div><span>◈</span><strong>{summary.gems}</strong><small>Cipher Gems</small></div><div><span>◇</span><strong>{summary.fragments}</strong><small>Vault Fragments</small></div><div className="vault-admin-status">{user.role === 'ADMIN' ? 'ADMIN ACCESS: ALL COSMETICS UNLOCKED' : 'Daily rewards reset at midnight (KST)'}</div></div><nav className="vault-tabs" aria-label="Cipher Vault sections">{([['missions', 'Today'], ['shop', 'Shop'], ['craft', 'Forge'], ['collection', 'Collection']] as const).map(([id, label]) => <button key={id} className={tab === id ? 'active' : ''} type="button" onClick={() => setTab(id)}>{label}</button>)}</nav>{tab === 'missions' && <div className="vault-grid mission-grid">{summary.missions.map((mission) => <article className={`vault-card mission-card ${mission.completed ? 'complete' : ''}`} key={mission.id}><div className="vault-card-icon">{mission.completed ? '✓' : '◌'}</div><div><span className="vault-kicker">DAILY MISSION</span><h3>{mission.name}</h3><p>{mission.description}</p><div className="vault-reward">◈ {mission.gemReward}{mission.fragmentReward > 0 && <> <b>+</b> ◇ {mission.fragmentReward}</>}</div></div><button className="button primary" type="button" disabled={mission.completed || !mission.eligible || busy === mission.id} onClick={() => void run(mission.id, () => api.claimVaultMission(mission.id))}>{mission.completed ? 'Claimed' : mission.eligible ? 'Claim reward' : 'In progress'}</button></article>)}</div>}{tab === 'shop' && <VaultItems items={shop} gems={summary.gems} busy={busy} action={(item) => run(item.id, () => api.buyVaultItem(item.id))} actionLabel="Buy" />}{tab === 'craft' && <VaultItems items={craft} fragments={summary.fragments} busy={busy} action={(item) => run(item.id, () => api.craftVaultItem(item.id))} actionLabel="Craft" />}{tab === 'collection' && <VaultItems items={collection} busy={busy} action={(item) => run(item.id, () => api.equipVaultItem(item.id))} actionLabel="Equip" />}{error && <p className="alert error vault-error">{error}</p>}</>}</section></div>
-}
-
-function CipherVault({ user, onClose, onAppearanceChanged }: { user: User; onClose: () => void; onAppearanceChanged: () => Promise<void> }) {
-  const [summary, setSummary] = useState<VaultSummary | null>(null)
-  const [tab, setTab] = useState<'exchange' | 'shop' | 'missions'>('exchange')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState<string | null>(null)
-  const [previewItem, setPreviewItem] = useState<VaultCosmetic | null>(null)
-  const equippedKey = summary?.cosmetics.filter((item) => item.equipped).map((item) => item.id).sort().join('|') ?? ''
-  const previousEquippedKey = useRef<string | null>(null)
-  const refresh = useCallback(async () => {
-    try { setError(''); setSummary(await api.vault()) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not open Cipher Vault.') }
-  }, [])
-  useEffect(() => { const timer = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(timer) }, [refresh])
-  useEffect(() => {
-    if (previousEquippedKey.current !== null && previousEquippedKey.current !== equippedKey) void onAppearanceChanged()
-    previousEquippedKey.current = equippedKey
-  }, [equippedKey, onAppearanceChanged])
-  const run = async (key: string, action: () => Promise<VaultSummary>, appearanceChanged = false) => {
-    try { setBusy(key); setError(''); setSummary(await action()); if (appearanceChanged) await onAppearanceChanged() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Vault action failed.') } finally { setBusy(null) }
-  }
-  const items = summary?.cosmetics.filter((item) => !item.hidden || item.owned || user.role === 'ADMIN') ?? []
-  const exchangeItems = items.filter((item) => item.source === 'STORE')
-  const shop = exchangeItems.filter((item) => item.type === 'CREDIT' || summary?.dailyShopIds?.includes(item.id))
-  const preview = previewItem ?? (tab === 'exchange' ? exchangeItems[0] : shop[0]) ?? null
-  return <div className="vault-backdrop" role="dialog" aria-modal="true" aria-label="레드 루비 교환소"><section className="cipher-vault vault-redesign"><header className="vault-header"><div><p className="eyebrow">CIPHER VAULT</p><h2>레드 루비 교환소</h2><p>학습으로 얻은 루비로 프로필을 나답게 꾸며 보세요.</p></div><button className="vault-close" type="button" onClick={onClose} aria-label="상점 닫기">×</button></header>{!summary ? <LoadingState label="보관함을 불러오는 중..." /> : <><div className="vault-wallet vault-wallet-redesigned"><div className="ruby-wallet"><span className="ruby-gem" aria-hidden="true" /><strong>{summary.gems}</strong><small>보유 루비</small></div><div className="vault-balance"><strong>{summary.hintCredits}</strong><small>힌트 크레딧</small></div><p className="vault-admin-status">{user.role === 'ADMIN' ? '관리자 계정은 모든 아이템을 자유롭게 사용할 수 있어요.' : '출석과 미션을 완료하면 루비를 얻을 수 있어요.'}</p></div><nav className="vault-tabs" aria-label="레드 루비 교환소 메뉴"><button className={tab === 'exchange' ? 'active' : ''} type="button" onClick={() => setTab('exchange')}>교환소</button><button className={tab === 'shop' ? 'active' : ''} type="button" onClick={() => setTab('shop')}>오늘의 상점</button><button className={tab === 'missions' ? 'active' : ''} type="button" onClick={() => setTab('missions')}>오늘의 미션</button></nav>{(tab === 'exchange' || tab === 'shop') && <><div className="vault-shop-heading"><div><span className="vault-kicker">TODAY'S SHOP</span><h3>{tab === 'exchange' ? '교환소' : '오늘의 상점'}</h3><p>{tab === 'exchange' ? '보유 루비로 원하는 꾸미기 아이템을 교환하세요.' : '매일 자정에 새로운 6개의 꾸미기 아이템이 바뀝니다.'}</p></div><span>{tab === 'exchange' ? '전체 상품' : '매일 00:00 갱신'}</span></div><div className="vault-shop-layout"><div className="vault-grid item-grid vault-shop-grid">{(tab === 'exchange' ? exchangeItems : shop).map((item) => <article className={`vault-card item-card vault-shop-card ${item.equipped ? 'equipped' : ''}`} key={item.id} onMouseEnter={() => setPreviewItem(item)} onFocus={() => setPreviewItem(item)}><span className="vault-kicker">{item.type === 'FRAME' ? '프로필 테두리' : item.type === 'ACCESSORY' ? '프로필 장식' : item.type === 'TITLE' ? '칭호' : '힌트 크레딧'}</span><div className="vault-item-glyph">{item.type === 'FRAME' ? '▣' : item.type === 'ACCESSORY' ? '◇' : item.type === 'TITLE' ? '✦' : '+'}</div><h3>{item.name}</h3><p>{item.description}</p><VaultItemHoverPreview user={user} item={item} equipped={summary.cosmetics.filter((cosmetic) => cosmetic.equipped)} /><div className="item-footer"><span className="ruby-price"><span className="ruby-gem small" aria-hidden="true" />{item.gemCost}</span><button className="button primary" type="button" disabled={(!item.consumable && item.owned) || busy === item.id || (user.role !== 'ADMIN' && summary.gems < item.gemCost)} onClick={() => void run(item.id, () => api.buyVaultItem(item.id))}>{item.consumable ? '크레딧 추가' : item.owned ? '보유 중' : '교환하기'}</button></div></article>)}</div><VaultCosmeticPreview user={user} item={preview} equipped={summary.cosmetics.filter((item) => item.equipped)} /></div></>}{tab === 'missions' && <div className="vault-grid mission-grid">{summary.missions.map((mission) => <article className={`vault-card mission-card ${mission.completed ? 'complete' : ''}`} key={mission.id}><div className="vault-card-icon">{mission.completed ? '✓' : '◌'}</div><div><span className="vault-kicker">오늘의 미션</span><h3>{mission.name}</h3><p>{mission.description}</p></div><button className="button primary" type="button" disabled={mission.completed || !mission.eligible || busy === mission.id} onClick={() => void run(mission.id, () => api.claimVaultMission(mission.id))}>{mission.completed ? '완료' : mission.eligible ? '보상 받기' : '진행 중'}</button></article>)}</div>}{error && <p className="alert error vault-error">{error}</p>}</>}</section></div>
-}
-
-function VaultItemHoverPreview({ user, item, equipped }: { user: User; item: VaultCosmetic; equipped: VaultCosmetic[] }) {
-  const selected = (type: VaultCosmetic['type']) => item.type === type ? item.id : equipped.find((cosmetic) => cosmetic.type === type)?.id
-  const frame = selected('FRAME')
-  const title = selected('TITLE')
-  const accessory = selected('ACCESSORY')
-  if (item.type === 'CREDIT') return <div className="vault-hover-preview vault-hover-credit" aria-hidden="true"><span className="vault-preview-tag">구매 효과</span><strong>힌트 크레딧</strong><span>막힌 문제에서 힌트를 열 수 있어요.</span></div>
-  return <div className="vault-hover-preview" aria-hidden="true"><span className="vault-preview-tag">착용 미리보기</span><span className={`vault-preview-avatar ${frame ? `equipped-${frame}` : ''}`}>{(user.nickname || user.username).slice(0, 2).toUpperCase()}</span><strong>{user.nickname || user.username}{accessory && <i className="profile-accessory">◈</i>}</strong>{title && <span className={`profile-title vault-profile-title ${titleTone(title)}`}>{cosmeticLabel(title)}</span>}<small>내 프로필에 적용된 모습</small></div>
-}
-
-function VaultCosmeticPreview({ user, item, equipped }: { user: User; item: VaultCosmetic | null; equipped: VaultCosmetic[] }) {
-  const selected = (type: VaultCosmetic['type']) => item?.type === type ? item.id : equipped.find((cosmetic) => cosmetic.type === type)?.id
-  const frame = selected('FRAME')
-  const accessory = selected('ACCESSORY')
-  const title = selected('TITLE')
-  const isCredit = item?.type === 'CREDIT'
-  return <aside className="vault-cosmetic-preview" aria-live="polite"><p className="eyebrow">{isCredit ? '구매 효과' : '착용 미리보기'}</p>{isCredit ? <div className="vault-credit-preview"><strong>힌트 크레딧</strong><span>문제 풀이 중 막혔을 때 힌트를 열 수 있어요.</span></div> : <><div className={`vault-preview-avatar ${frame ? `equipped-${frame}` : ''}`}>{(user.nickname || user.username).slice(0, 2).toUpperCase()}</div><div className="vault-preview-identity"><strong>{user.nickname || user.username}{accessory && <i className="profile-accessory">◈</i>}</strong>{title && <span className={`profile-title vault-profile-title ${titleTone(title)}`}>{cosmeticLabel(title)}</span>}<small>@{user.username}</small></div><p>상품 위에 커서를 올리면 실제 프로필에 적용될 모습을 확인할 수 있어요.</p></>}</aside>
-}
-
-function VaultItems({ items, gems = 0, fragments = 0, busy, action, actionLabel }: { items: VaultCosmetic[]; gems?: number; fragments?: number; busy: string | null; action: (item: VaultCosmetic) => Promise<void>; actionLabel: string }) {
-  if (items.length === 0) return <div className="vault-empty"><span>◇</span><h3>Nothing here yet.</h3><p>Complete missions to fill this collection.</p></div>
-  return <div className="vault-grid item-grid">{items.map((item) => { const canAfford = item.source === 'STORE' ? gems >= item.gemCost : item.source === 'CRAFT' ? fragments >= item.fragmentCost : true; const disabled = item.owned && actionLabel !== 'Equip' || !canAfford || busy === item.id; const hasArt = ['blue_terminal_frame', 'violet_circuit_frame', 'signal_orbit', 'vault_key', 'neon_cipher_frame', 'spectral_core'].includes(item.id); return <article className={`vault-card item-card ${hasArt ? 'has-art' : ''} ${item.hidden ? 'hidden-item' : ''} ${item.equipped ? 'equipped' : ''}`} key={item.id}>{hasArt ? <div className={`item-art art-${item.id}`} style={{ backgroundImage: `url(${cipherVaultRelics})` }} aria-hidden="true" /> : <div className="item-emblem">{item.type === 'FRAME' ? '▣' : item.type === 'TITLE' ? '✦' : '◈'}</div>}<span className="vault-kicker">{item.hidden ? 'CLASSIFIED' : item.source}</span><h3>{item.name}</h3><p>{item.description}</p><div className="item-footer"><span>{item.source === 'STORE' ? `◈ ${item.gemCost}` : item.source === 'CRAFT' ? `◇ ${item.fragmentCost}` : item.type === 'TITLE' ? 'Quest reward' : 'Secret unlock'}</span><button className="button secondary" type="button" disabled={disabled} onClick={() => void action(item)}>{item.equipped ? 'Equipped' : item.owned && actionLabel !== 'Equip' ? 'Owned' : actionLabel}</button></div></article> })}</div>
-}
-
 function Stat({ value, label, detail }: { value: number; label: string; detail: string }) { return <div className="stat"><strong>{value}</strong><div><span>{label}</span><small>{detail}</small></div></div> }
 function cosmeticLabel(id: string) { return id.split('_').map((word) => word[0].toUpperCase() + word.slice(1)).join(' ') }
 function difficultyLabel(difficulty: string) {
@@ -1025,7 +887,7 @@ function difficultyLabel(difficulty: string) {
     : { BEGINNER: 'Beginner', EASY: 'Easy', NORMAL: 'Normal', ADVANCED: 'Advanced', EXPERT: 'Expert' }
   return (labels as Record<string, string>)[difficulty] ?? difficulty
 }
-function titleTone(id: string) { return ['beginner', 'rookie', 'junior', 'senior', 'veteran', 'master', 'root'].includes(id.toLowerCase()) ? `tier-title-${id.toLowerCase()}` : '' }
+function isSuperUserTitle(title: string | null | undefined) { return title?.toLowerCase() === 'super_user' }
 function ChallengeRow({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <button className="challenge-row" type="button" onClick={() => onOpen(item)}><span className={`category-mark ${item.category.toLowerCase()}`} /><span className="row-main"><strong>{item.title}</strong><small>{item.category} · {item.difficulty}</small></span><span className="row-meta"><b>{item.score} pts</b>{item.solved && <span className="solved">SOLVED</span>}</span></button> }
 
 function ChallengesProgress({ items, total }: { items: ChallengeSummary[]; total: number }) {
@@ -1113,8 +975,6 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
   const [error, setError] = useState('')
   const [hintBusy, setHintBusy] = useState(false)
   const [awarded, setAwarded] = useState<number | null>(null)
-  const [awardedGems, setAwardedGems] = useState<number | null>(null)
-  const [hintCredits, setHintCredits] = useState<number | null>(null)
   const [guideOpen, setGuideOpen] = useState(false)
   const [bookmarked, setBookmarked] = useState(false)
   const [bookmarkBusy, setBookmarkBusy] = useState(false)
@@ -1135,12 +995,6 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
       .catch(() => undefined)
     return () => { active = false }
   }, [id, loggedIn])
-  useEffect(() => {
-    if (!loggedIn || !item?.hintAvailable) return
-    let active = true
-    api.vault().then((summary) => { if (active) setHintCredits(summary.hintCredits) }).catch(() => undefined)
-    return () => { active = false }
-  }, [loggedIn, item?.hintAvailable])
   useEffect(() => {
     if (!loggedIn || !item) return
     const target = document.querySelector('.detail-page .detail-score')
@@ -1202,14 +1056,13 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setAwarded(null)
-    setAwardedGems(null)
-    try { const result = await api.submitFlag(item.id, flag.trim()); if (result.result === 'correct') { setMessage('Correct!'); setAwarded(result.awardedScore); setAwardedGems(result.awardedGems) } else if (result.result === 'already_solved') { setMessage('You have already solved this challenge.') } else { setMessage(result.result) } setFlag(''); onSubmitted() } catch (cause) { const reason = cause instanceof Error ? cause.message : ''; setError(/rate|limit|too many/i.test(reason) ? 'Too many attempts. Please wait a moment and try again.' : /connect|network|failed/i.test(reason) ? reason || 'Submission failed.' : 'Not the correct flag. Double-check the format and try again.') }
+    try { const result = await api.submitFlag(item.id, flag.trim()); if (result.result === 'correct') { setMessage('Correct!'); setAwarded(result.awardedScore) } else if (result.result === 'already_solved') { setMessage('You have already solved this challenge.') } else { setMessage(result.result) } setFlag(''); onSubmitted() } catch (cause) { const reason = cause instanceof Error ? cause.message : ''; setError(/rate|limit|too many/i.test(reason) ? 'Too many attempts. Please wait a moment and try again.' : /connect|network|failed/i.test(reason) ? reason || 'Submission failed.' : 'Not the correct flag. Double-check the format and try again.') }
   }
   const revealHint = async () => {
-    try { setHintBusy(true); setError(''); const result = await api.challengeHint(item.id); setHint(result.hint); setHintCredits(result.remainingCredits) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reveal the hint.') } finally { setHintBusy(false) }
+    try { setHintBusy(true); setError(''); const result = await api.challengeHint(item.id); setHint(result.hint) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reveal the hint.') } finally { setHintBusy(false) }
   }
   const download = async () => { try { await api.downloadArtifact(item.id) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Download failed.') } }
-  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>📚 Study guide — concept · tools · steps {guideOpen ? 'Collapse ▲' : 'Expand ▼'}</button>{guideOpen && <><div className="guide-block"><strong>The concept</strong><p>{guide.concept}</p></div><div className="guide-block"><strong>Tools you need</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>Step-by-step approach</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>Reveal a hint for {item.hintCost} credit{item.hintCost === 1 ? '' : 's'}.</small>{hintCredits !== null && (hintCredits < item.hintCost ? <small>Not enough hint credits.</small> : <small> · {hintCredits} <span>credits</span></small>)}</div><button type="button" className="button secondary" disabled={hintBusy || hint !== null || (hintCredits !== null && hintCredits < item.hintCost)} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span>{awardedGems !== null && <> · <span className="earned-rubies"><span className="ruby-gem small" aria-hidden="true" />+{awardedGems} 루비</span></>}</>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
+  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>📚 Study guide — concept · tools · steps {guideOpen ? 'Collapse ▲' : 'Expand ▼'}</button>{guideOpen && <><div className="guide-block"><strong>The concept</strong><p>{guide.concept}</p></div><div className="guide-block"><strong>Tools you need</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>Step-by-step approach</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>힌트는 무료로 제공됩니다.</small></div><button type="button" className="button secondary" disabled={hintBusy || hint !== null} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
 }
 
 function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; onSubmitted: () => void }) {
@@ -1258,7 +1111,7 @@ function EnhancedRankingView({ rows, attendanceRows }: { rows: RankingRow[]; att
 
 function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' | 'avatarUrl' | 'equippedFrame' | 'equippedAccessory' | 'equippedTitle' | 'tier'> }) {
   const name = row.nickname || row.username
-  return <button className="operator public-profile-trigger" type="button" onClick={() => openPublicProfile(row.username)} aria-label={`${name} profile`}><span className={`mini-avatar ranking-avatar ${row.equippedFrame ? `equipped-${row.equippedFrame}` : ''}`}>{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}{row.equippedAccessory && <i className="profile-accessory" aria-label={cosmeticLabel(row.equippedAccessory)}>◈</i>}</strong><TierEmblem tier={row.tier} />{row.equippedTitle && <small className={row.equippedTitle.toLowerCase() === 'super_user' ? 'ranking-title super-user-title' : `ranking-title ${titleTone(row.equippedTitle)}`}>{cosmeticLabel(row.equippedTitle)}</small>}</span></button>
+  return <button className="operator public-profile-trigger" type="button" onClick={() => openPublicProfile(row.username)} aria-label={`${name} profile`}><span className="mini-avatar ranking-avatar">{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}</strong><TierEmblem tier={row.tier} />{isSuperUserTitle(row.equippedTitle) && <small className="ranking-title super-user-title">Super User</small>}</span></button>
 }
 
 function TierEmblem({ tier }: { tier: string }) {
@@ -1312,7 +1165,7 @@ function PublicProfileDialog() {
   }, [profile])
   if (!username) return null
   const name = profile?.nickname || username
-  return <div className="public-profile-backdrop" role="dialog" aria-modal="true" aria-label="Public profile" onMouseDown={() => setUsername(null)}><section className="public-profile-card" onMouseDown={(event) => event.stopPropagation()}><button className="vault-close" type="button" onClick={() => setUsername(null)} aria-label="Close profile">×</button>{!profile && !error && <LoadingState label="Loading profile..." />}{error && <p className="alert error">{error}</p>}{profile && <><div className={`public-profile-hero ${profile.equippedFrame ? `equipped-${profile.equippedFrame}` : ''} ${profile.equippedTitle?.toLowerCase() === 'super_user' ? 'super-user-profile' : ''}`}><span className="profile-avatar avatar-large">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><div><p className="eyebrow">PUBLIC PROFILE</p><h2>{name}{profile.equippedAccessory && <i className="profile-accessory">◈</i>}<TierEmblem tier={profile.tier} /></h2>{profile.equippedTitle && <p className="profile-title vault-profile-title">{cosmeticLabel(profile.equippedTitle)}</p>}<p className="muted">@{profile.username}</p></div></div><p className="public-profile-status">{profile.statusMessage || 'No status message yet.'}</p><div className="public-profile-stats"><span><b>{profile.score}</b> Score</span><span><b>{profile.solvedCount}</b> Solves</span></div><section className="public-profile-friends"><h3>Friends <span>{profile.friends.length}</span></h3>{profile.friends.length === 0 ? <p className="muted">No public friends yet.</p> : <div>{profile.friends.map((friend) => <button type="button" key={friend.username} onClick={() => openPublicProfile(friend.username)}><span className={`mini-avatar ${friend.equippedFrame ? `equipped-${friend.equippedFrame}` : ''}`}>{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}{friend.equippedAccessory && <i className="profile-accessory">◈</i>}</strong>{friend.equippedTitle && <small className="ranking-title">{cosmeticLabel(friend.equippedTitle)}</small>}</span></button>)}</div>}</section></>}</section></div>
+  return <div className="public-profile-backdrop" role="dialog" aria-modal="true" aria-label="Public profile" onMouseDown={() => setUsername(null)}><section className="public-profile-card" onMouseDown={(event) => event.stopPropagation()}><button className="vault-close" type="button" onClick={() => setUsername(null)} aria-label="Close profile">×</button>{!profile && !error && <LoadingState label="Loading profile..." />}{error && <p className="alert error">{error}</p>}{profile && <><div className={`public-profile-hero ${isSuperUserTitle(profile.equippedTitle) ? 'super-user-profile' : ''}`}><span className="profile-avatar avatar-large">{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><div><p className="eyebrow">PUBLIC PROFILE</p><h2>{name}<TierEmblem tier={profile.tier} /></h2>{isSuperUserTitle(profile.equippedTitle) && <p className="profile-title">Super User</p>}<p className="muted">@{profile.username}</p></div></div><p className="public-profile-status">{profile.statusMessage || 'No status message yet.'}</p><div className="public-profile-stats"><span><b>{profile.score}</b> Score</span><span><b>{profile.solvedCount}</b> Solves</span></div><section className="public-profile-friends"><h3>Friends <span>{profile.friends.length}</span></h3>{profile.friends.length === 0 ? <p className="muted">No public friends yet.</p> : <div>{profile.friends.map((friend) => <button type="button" key={friend.username} onClick={() => openPublicProfile(friend.username)}><span className="mini-avatar">{friend.avatarUrl ? <img src={friend.avatarUrl} alt="" /> : friend.nickname.slice(0, 2).toUpperCase()}</span><span><strong>{friend.nickname}</strong>{isSuperUserTitle(friend.equippedTitle) && <small className="ranking-title">Super User</small>}</span></button>)}</div>}</section></>}</section></div>
 }
 
 function RankingView({ rows, attendanceRows }: { rows: RankingRow[]; attendanceRows: AttendanceRankingRow[] }) {
@@ -1621,7 +1474,7 @@ function PublicProfilePage() {
         ← 홈으로
       </button>
       <section
-        className={`public-profile-page-hero ${profile.equippedFrame ? `equipped-${profile.equippedFrame}` : ""}`}
+        className="public-profile-page-hero"
       >
         <span className="profile-avatar avatar-large">
           {profile.avatarUrl ? (
@@ -1635,9 +1488,9 @@ function PublicProfilePage() {
           <h1>
             {name} <TierEmblem tier={profile.tier} />
           </h1>
-          {profile.equippedTitle && (
+          {isSuperUserTitle(profile.equippedTitle) && (
             <p className="profile-title">
-              {cosmeticLabel(profile.equippedTitle)}
+              Super User
             </p>
           )}
           <p className="muted">@{profile.username}</p>
@@ -1657,31 +1510,21 @@ function PublicProfilePage() {
   );
 }
 
-void LegacyCipherVault;
 void LegacyChallengeDetailView;
 void LegacyRankingView;
 void RankingView;
-void VaultOpening;
-void HiddenOperation;
-void hiddenMissionText;
-void hiddenRewardText;
 
 function ProfileView({
   user,
   onChallenges,
   onLogin,
-  onVault,
-  onAppearanceChanged,
 }: {
   user: User | null;
   onChallenges: () => void;
   onLogin: () => void;
-  onVault: () => void;
-  onAppearanceChanged: () => Promise<void>;
 }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
-  const [vault, setVault] = useState<VaultSummary | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
   const [messages, setMessages] = useState<DirectMessage[]>([]);
@@ -1691,12 +1534,11 @@ function ProfileView({
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const refresh = useCallback(async () => {
-    const [profileResult, friendsResult, attendanceResult, vaultResult] =
+    const [profileResult, friendsResult, attendanceResult] =
       await Promise.allSettled([
         api.profile(),
         api.friends(),
         api.attendance(),
-        api.vault(),
       ]);
     if (profileResult.status === "fulfilled") setProfile(profileResult.value);
     else
@@ -1719,13 +1561,6 @@ function ProfileView({
         attendanceResult.reason instanceof Error
           ? attendanceResult.reason.message
           : "Could not load attendance.",
-      );
-    if (vaultResult.status === "fulfilled") setVault(vaultResult.value);
-    else
-      setError(
-        vaultResult.reason instanceof Error
-          ? vaultResult.reason.message
-          : "Could not load cosmetics.",
       );
   }, []);
   useEffect(() => {
@@ -1856,7 +1691,6 @@ function ProfileView({
           statusMessage: String(form.get("statusMessage")),
         }),
       );
-      await onAppearanceChanged();
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Could not save profile.",
@@ -1874,23 +1708,12 @@ function ProfileView({
       );
     }
   };
-  const selectTitle = async (event: ChangeEvent<HTMLSelectElement>) => {
-    try {
-      setAttendance(await api.selectAttendanceTitle(event.target.value));
-      await onAppearanceChanged();
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Could not update the title.",
-      );
-    }
-  };
   const uploadAvatar = async (file: File) => {
     setError("");
     setAvatarPreview(URL.createObjectURL(file));
     try {
       setProfile(await api.uploadAvatar(file));
       setAvatarRevision(Date.now());
-      await onAppearanceChanged();
     } catch (cause) {
       setAvatarPreview(null);
       setError(
@@ -1983,37 +1806,15 @@ function ProfileView({
       );
     }
   };
-  const equipItem = async (item: VaultCosmetic) => {
-    try {
-      setVault(await api.equipVaultItem(item.id));
-      await onAppearanceChanged();
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Could not update loadout.",
-      );
-    }
-  };
-  const ownedCosmetics = vault?.cosmetics.filter((item) => item.owned) ?? [];
-  const ownedFrames = ownedCosmetics.filter((i) => i.type === "FRAME");
-  const ownedAccessories = ownedCosmetics.filter((i) => i.type === "ACCESSORY");
-  const ownedTitles = ownedCosmetics.filter((i) => i.type === "TITLE");
-  const loadoutGroups = [
-    { label: "프레임", items: ownedFrames },
-    { label: "액세서리", items: ownedAccessories },
-    { label: "칭호", items: ownedTitles },
-  ].filter((g) => g.items.length > 0);
   const avatarSrc =
     avatarPreview ??
     (current.avatarUrl
       ? `${current.avatarUrl}${current.avatarUrl.includes("?") ? "&" : "?"}view=${avatarRevision}`
       : null);
-  const activeTitle = attendance?.earnedTitles.find(
-    (title) => title.id === attendance.activeTitle,
-  );
   return (
     <div className="page profile-page">
       <div
-        className={`profile-hero ${current.equippedFrame ? `equipped-${current.equippedFrame}` : ""} ${current.equippedTitle === "super_user" || attendance?.activeTitle === "SUPER_USER" ? "super-user-profile" : ""}`}
+        className={current.role === "ADMIN" ? "profile-hero super-user-profile" : "profile-hero"}
       >
         <button
           className="profile-avatar avatar-large avatar-picker"
@@ -2038,30 +1839,9 @@ function ProfileView({
         <div>
           <p className="eyebrow">OPERATOR PROFILE</p>
           <h1>
-            {current.nickname || current.username}{" "}
-            {current.equippedAccessory && (
-              <span
-                className="profile-accessory"
-                title={cosmeticLabel(current.equippedAccessory)}
-              >
-                ◈
-              </span>
-            )}
-            <TierEmblem tier={current.tier} />
+            {current.nickname || current.username} <TierEmblem tier={current.tier} />
           </h1>
-          {current.equippedTitle ? (
-            <p
-              className={`profile-title vault-profile-title ${titleTone(current.equippedTitle)}`}
-            >
-              {cosmeticLabel(current.equippedTitle)}
-            </p>
-          ) : (
-            activeTitle && (
-              <p className={`profile-title ${titleTone(activeTitle.id)}`}>
-                {activeTitle.name}
-              </p>
-            )
-          )}
+          {current.role === "ADMIN" && <p className="profile-title">Super User</p>}
           <p className="muted">@{current.username}</p>
           <p className="status-message">
             {current.statusMessage || "No status message yet."}
@@ -2110,23 +1890,6 @@ function ProfileView({
                   <small>Total days</small>
                 </div>
               </div>
-              <label className="attendance-title-select">
-                Profile title
-                <select
-                  value={attendance.activeTitle ?? ""}
-                  onChange={selectTitle}
-                  disabled={attendance.earnedTitles.length === 0}
-                >
-                  <option value="" disabled>
-                    Earn a title to equip it
-                  </option>
-                  {attendance.earnedTitles.map((title) => (
-                    <option key={title.id} value={title.id}>
-                      {title.name} · {title.requirement}
-                    </option>
-                  ))}
-                </select>
-              </label>
               <div className="attendance-badges">
                 {attendance.badges.map((badge) => (
                   <span
@@ -2164,60 +1927,8 @@ function ProfileView({
                 Save profile
               </button>
             </form>
-            <button
-              className="button secondary profile-vault-button"
-              type="button"
-              onClick={onVault}
-            >
-              상점에서 구매
-            </button>
           </section>
           <ProfileHeatmap activity={solveActivity} className="my-profile-activity" />
-          {loadoutGroups.length > 0 && (
-            <section className="panel loadout-panel">
-              <p className="eyebrow">MY LOADOUT</p>
-              <h2>꾸미기</h2>
-              {loadoutGroups.map(({ label, items }) => (
-                <div className="loadout-group" key={label}>
-                  <h3>{label}</h3>
-                  <div className="loadout-grid">
-                    {items.map((item) => (
-                      <button
-                        className={`loadout-item ${item.equipped ? "equipped" : ""}`}
-                        key={item.id}
-                        type="button"
-                        onClick={() => void equipItem(item)}
-                      >
-                        <span className="loadout-glyph">
-                          {item.type === "FRAME"
-                            ? "▣"
-                            : item.type === "ACCESSORY"
-                              ? "◈"
-                              : "✦"}
-                        </span>
-                        <span className="loadout-name">{item.name}</span>
-                        {item.equipped && (
-                          <span className="loadout-badge">장착 중</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              <div className="loadout-footer">
-                <small>
-                  {vault?.gems} <span>루비</span>
-                </small>
-                <button
-                  className="button secondary"
-                  type="button"
-                  onClick={onVault}
-                >
-                  상점에서 더 보기
-                </button>
-              </div>
-            </section>
-          )}
           <section className="content-section">
             <button
               className="button secondary"
@@ -2718,7 +2429,7 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   return <div className="page community-page"><PageIntro eyebrow="COMMUNITY" title="Learn together." description="Ask questions, share safe write-ups, and discuss the Mini CTF training labs." />
     {category !== 'NOTICE' && notices.length > 0 && <section className="pinned-notices"><div className="pinned-notices-heading"><p className="eyebrow">PINNED NOTICES</p><span>{notices.length}</span></div>{notices.map((notice) => <button type="button" className="pinned-notice" key={notice.id} onClick={() => openPost(notice.id)}><Badge tone="NOTICE">NOTICE</Badge><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleDateString()}</small></button>)}</section>}
     <div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0, likeCount: 0, dislikeCount: 0, recommendCount: 0, viewerReactions: [] }, ...current]); routerNavigate(`/community/${post.id}`) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>
-    {error && <p className="alert error">{error}</p>}<div className="community-list">{visiblePosts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span data-profile-username={post.author}>{post.authorNickname || post.author}{post.authorTitle && <small className="community-title">{cosmeticLabel(post.authorTitle)}</small>}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{visiblePosts.length === 0 && <EmptyState />}</div>
+    {error && <p className="alert error">{error}</p>}<div className="community-list">{visiblePosts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span data-profile-username={post.author}>{post.authorNickname || post.author}{isSuperUserTitle(post.authorTitle) && <small className="community-title">Super User</small>}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{visiblePosts.length === 0 && <EmptyState />}</div>
   </div>
 }
 
@@ -2933,11 +2644,6 @@ function AdminConsole({ language }: { language: Language }) {
     if (!reason) return
     try { applyAccountChange(await api.adjustAdminUserScore(id, amount, reason)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not adjust score.') }
   }
-  const setCosmetic = async (id: number, granted: boolean) => {
-    const cosmeticId = window.prompt(granted ? 'Cosmetic ID to grant (for example: steady_solver)' : 'Cosmetic ID to remove')?.trim()
-    if (!cosmeticId) return
-    try { applyAccountChange(await api.setAdminUserCosmetic(id, cosmeticId, granted)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update cosmetic ownership.') }
-  }
   const removePost = async (id: number, title: string) => {
     if (!window.confirm(`Delete “${title}”?`)) return
     try { await api.deleteAdminPost(id); await Promise.all([refresh(), loadContent()]) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete the post.') }
@@ -3009,7 +2715,7 @@ function AdminConsole({ language }: { language: Language }) {
   if (!dashboard) return <div className="page admin-page"><PageIntro eyebrow="ADMIN CONSOLE" title="Administrator console" description="Loading platform status and moderation controls." />{error && <p className="alert error">{error}</p>}<p className="muted">Loading administrator data...</p></div>
 
   const notices = posts.filter((post) => post.category === 'NOTICE')
-  const accountPowerTools = tab === 'accounts' && <section className="admin-section admin-card admin-account-power-tools"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT POWERS</p><h2>Score and cosmetic controls</h2></div><small>Permanent deletion is available only after a reversible deletion.</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={`powers-${item.id}`}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.status}</small></div><div className="inline-actions">{item.status === 'DELETED' ? <button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(item.id, item.username)}>Permanent delete</button> : <><button type="button" className="button secondary" onClick={() => void adjustScore(item.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost danger-button" onClick={() => void adjustScore(item.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button>{item.role !== 'ADMIN' && <><button type="button" className="button secondary" onClick={() => void setCosmetic(item.id, true)}>Grant cosmetic</button><button type="button" className="button ghost" onClick={() => void setCosmetic(item.id, false)}>Remove cosmetic</button></>}</>}</div></div>)}</div></section>
+  const accountPowerTools = tab === 'accounts' && <section className="admin-section admin-card admin-account-power-tools"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT POWERS</p><h2>Account controls</h2></div><small>Permanent deletion is available only after a reversible deletion.</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={`powers-${item.id}`}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.status}</small></div><div className="inline-actions">{item.status === 'DELETED' ? <button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(item.id, item.username)}>Permanent delete</button> : <><button type="button" className="button secondary" onClick={() => void adjustScore(item.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost danger-button" onClick={() => void adjustScore(item.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button></>}</div></div>)}</div></section>
   const tabs: { id: AdminTab; label: string; count?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'accounts', label: 'Accounts', count: dashboard.users.length },
