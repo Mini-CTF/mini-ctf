@@ -2678,44 +2678,9 @@ function AdminConsole({ language }: { language: Language }) {
     }
   }
 
-  const banIp = async () => {
-    const ipAddress = window.prompt('차단할 IP 주소를 입력하세요.')?.trim()
-    if (!ipAddress) return
-    const reason = window.prompt('차단 사유를 입력하세요.')?.trim()
-    if (!reason) return
-    try { await api.banIp(ipAddress, reason); window.alert(`${ipAddress} IP를 차단했습니다.`) }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'IP를 차단하지 못했습니다.') }
-  }
-  void banIp
-
-  const banRegisteredIp = async () => {
-    const username = window.prompt('차단할 사용자 아이디를 입력하세요.')?.trim()
-    if (!username) return
-    const reason = window.prompt('차단 사유를 입력하세요.')?.trim()
-    if (!reason) return
-    try {
-      await api.banRegisteredIp(username, reason)
-      window.alert(`${username} 계정의 가입 IP를 차단했습니다.`)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '계정의 가입 IP를 차단하지 못했습니다.')
-    }
-  }
-  const manageIpBans = async () => {
-    try {
-      const bans = await api.ipBans()
-      if (bans.length === 0) { window.alert('현재 차단된 IP가 없습니다.'); return }
-      const selected = window.prompt(`차단 목록\n${bans.map((ban) => `${ban.id}. ${ban.ipAddress} — ${ban.reason}`).join('\n')}\n\n해제할 번호를 입력하세요.`)?.trim()
-      if (!selected) return
-      const id = Number(selected)
-      if (!Number.isInteger(id) || !bans.some((ban) => ban.id === id)) { setError('목록에 있는 번호를 입력해 주세요.'); return }
-      await api.unbanIp(id)
-      window.alert('IP 차단을 해제했습니다.')
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'IP 차단 목록을 불러오지 못했습니다.') }
-  }
   if (!dashboard) return <div className="page admin-page"><PageIntro eyebrow="ADMIN CONSOLE" title="Administrator console" description="Loading platform status and moderation controls." />{error && <p className="alert error">{error}</p>}<p className="muted">Loading administrator data...</p></div>
 
   const notices = posts.filter((post) => post.category === 'NOTICE')
-  const accountPowerTools = tab === 'accounts' && <section className="admin-section admin-card admin-account-power-tools"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT POWERS</p><h2>Account controls</h2></div><small>Permanent deletion is available only after a reversible deletion.</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={`powers-${item.id}`}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.status}</small></div><div className="inline-actions">{item.status === 'DELETED' ? <button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(item.id, item.username)}>Permanent delete</button> : <><button type="button" className="button secondary" onClick={() => void adjustScore(item.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost danger-button" onClick={() => void adjustScore(item.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button></>}</div></div>)}</div></section>
   const tabs: { id: AdminTab; label: string; count?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'accounts', label: 'Accounts', count: dashboard.users.length },
@@ -2728,8 +2693,6 @@ function AdminConsole({ language }: { language: Language }) {
 
   return <div className="page admin-page admin-console">
     <PageIntro eyebrow="ADMIN CONSOLE" title="Run the platform clearly." description="Manage accounts, community content, notices, and security records in focused workspaces." />
-    <div className="admin-quick-actions admin-ip-ban-actions"><button type="button" className="button ghost danger-button" onClick={() => void banRegisteredIp()}>계정 IP 차단</button><button type="button" className="button secondary" onClick={() => void manageIpBans()}>IP 차단 관리</button></div>
-    {accountPowerTools}
     {error && <p className="alert error">{error}</p>}
     <div className="admin-summary-grid">
       <div><small>ACTIVE ACCOUNTS</small><strong>{dashboard.users.filter((item) => item.status === 'ACTIVE').length}</strong></div>
@@ -2749,7 +2712,7 @@ function AdminConsole({ language }: { language: Language }) {
       <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">RECENT ACTIVITY</p><h2>Recent submissions</h2></div><button type="button" className="text-button" onClick={() => setTab('security')}>View all</button></div><AdminSubmissionList items={dashboard.recentSubmissions.slice(0, 5)} /></section>
     </div>}
 
-    {tab === 'accounts' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>Account management</h2></div><small>Edit names, suspend, restore, or delete accounts. Deleted accounts keep a private restore snapshot.</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.role} · {item.status}</small>{item.suspensionReason && <small className="danger-text">Suspension reason: {item.suspensionReason}</small>}</div>{item.role !== 'ADMIN' && <div className="inline-actions">{item.status !== 'DELETED' && <button type="button" className="button secondary" onClick={() => void editUser(item.id, item.nickname)}>Edit name</button>}{item.status === 'ACTIVE' ? <button type="button" className="button ghost danger-button" onClick={() => void suspend(item.id)}>Suspend</button> : <button type="button" className="button secondary" onClick={() => void reinstate(item.id)}>{item.status === 'DELETED' ? 'Restore account' : 'Restore'}</button>}{item.status !== 'DELETED' && <button type="button" className="text-button danger-text" onClick={() => void deactivate(item.id, item.username)}>Delete account</button>}</div>}</div>)}</div></section>}
+    {tab === 'accounts' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>Account controls</h2></div><small>Edit names, adjust scores, suspend, restore, or delete accounts from one list.</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.role} · {item.status}</small>{item.suspensionReason && <small className="danger-text">Suspension reason: {item.suspensionReason}</small>}</div><div className="inline-actions">{item.status !== 'DELETED' && item.role !== 'ADMIN' && <button type="button" className="button secondary" onClick={() => void editUser(item.id, item.nickname)}>Edit name</button>}{item.status === 'ACTIVE' && <><button type="button" className="button secondary" onClick={() => void adjustScore(item.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost" onClick={() => void adjustScore(item.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button></>}{item.role !== 'ADMIN' && (item.status === 'DELETED' ? <><button type="button" className="button secondary" onClick={() => void reinstate(item.id)}>Restore account</button><button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(item.id, item.username)}>Permanent delete</button></> : <><button type="button" className="button secondary" onClick={() => void (item.status === 'ACTIVE' ? suspend(item.id) : reinstate(item.id))}>{item.status === 'ACTIVE' ? 'Suspend' : 'Restore'}</button><button type="button" className="text-button danger-text" onClick={() => void deactivate(item.id, item.username)}>Delete account</button></>)}</div></div>)}</div></section>}
 
     {tab === 'content' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMUNITY POSTS</p><h2>Post management</h2></div><small>Latest {posts.length}</small></div><div className="admin-table">{posts.filter((post) => post.category !== 'NOTICE').map((post) => <div className="admin-row" key={post.id}><div><strong>{post.title}</strong><small><Badge tone={post.category}>{post.category}</Badge> @{post.authorNickname || post.author} · {post.commentCount} comments · {new Date(post.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removePost(post.id, post.title)}>Delete</button></div>)}</div></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMENTS</p><h2>Comment management</h2></div><small>Latest {comments.length}</small></div><div className="admin-table">{comments.map((comment) => <div className="admin-row" key={comment.id}><div><strong>{comment.content}</strong><small>“{comment.postTitle}” · @{comment.authorNickname || comment.author} · {new Date(comment.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removeComment(comment.id)}>Delete</button></div>)}</div></section></div>}
 
