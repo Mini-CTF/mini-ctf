@@ -4970,7 +4970,9 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
 }
 .challenge-progress-overview {
   max-width: none;
-  margin-top: 0;
+  width: 100%;
+  align-self: stretch;
+  margin-top: 48px;
 }
 .challenge-progress-stats strong {
   font-size: 38px;

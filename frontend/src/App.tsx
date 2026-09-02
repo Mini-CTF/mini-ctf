@@ -1018,7 +1018,8 @@ function ChallengesProgress({ items, total }: { items: ChallengeSummary[]; total
 
 function ChallengeSearch({ value, onChange, compact }: { value: string; onChange: (value: string) => void; compact?: boolean }) {
   const ko = document.documentElement.lang !== 'en'
-  return <label className={`challenge-search ${compact ? 'compact' : ''}`}><span>{ko ? '문제 제목 검색' : 'Search challenge titles'}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={ko ? '문제 제목을 입력하세요' : 'Type a challenge title'} autoComplete="off" /></label>
+  const [draft, setDraft] = useState(value)
+  return <label className={`challenge-search ${compact ? 'compact' : ''}`}><span>{ko ? '문제 제목 검색' : 'Search challenge titles'}</span><input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); onChange(draft) } }} placeholder={ko ? '제목 입력 후 Enter' : 'Type a title, then press Enter'} autoComplete="off" /></label>
 }
 
 function CategoryProgressChart({ items }: { items: ChallengeSummary[] }) {
