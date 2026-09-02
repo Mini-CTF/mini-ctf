@@ -18,7 +18,8 @@ public final class AttendanceDtos {
       boolean checkedInToday,
       String activeTitle,
       List<Badge> badges,
-      List<Title> earnedTitles) {}
+      List<Title> earnedTitles,
+      List<String> checkInDates) {}
 
   public record RankingRow(
       int rank,

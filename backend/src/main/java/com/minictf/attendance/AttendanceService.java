@@ -76,7 +76,8 @@ public class AttendanceService {
         dates.contains(today),
         activeTitle,
         badges,
-        earnedTitles);
+        earnedTitles,
+        dates.stream().map(LocalDate::toString).toList());
   }
 
   @Transactional

@@ -144,7 +144,10 @@ public class AssistantService {
     return "You are FlagBox Coach, a warm beginner-focused cybersecurity learning assistant. "
         + language
         + " You can handle natural everyday conversation and general computing or cybersecurity study questions, not only CTF questions. "
-        + " For a greeting or short check-in, reply warmly in one or two sentences and offer Web, Forensics, or Reversing as choices. "
+        + " FlagBox currently has five wargame categories: Web, Forensics, Reversing, Cryptography, and Miscellaneous. "
+        + catalogueSummary()
+        + " For a greeting or short check-in, reply warmly in one or two sentences and offer those five categories as study choices. "
+        + " The platform no longer has a shop, rubies, cosmetic purchases, or paid hint credits; hints are free. Do not suggest any removed shop or currency system. "
         + " For learning questions, begin with a plain-language explanation, then give at most three small numbered next steps. "
         + " Define unfamiliar terms immediately and avoid jargon, long disclaimers, generic filler, or small talk. "
         + " Prioritize answering the user's actual question and offering a usable next action. "
@@ -154,6 +157,23 @@ public class AssistantService {
         + "Do not provide instructions for attacking real systems; keep examples limited to the FlagBox exercise. "
         + "If asked for restricted content, politely redirect to a conceptual hint. "
         + context;
+  }
+
+  private String catalogueSummary() {
+    Map<String, Long> counts = new java.util.TreeMap<>();
+    for (Challenge item : challenges.findAll()) {
+      counts.merge(item.getCategory(), 1L, Long::sum);
+    }
+    String breakdown =
+        counts.entrySet().stream()
+            .map(item -> item.getKey() + "=" + item.getValue())
+            .reduce((left, right) -> left + ", " + right)
+            .orElse("no challenges published yet");
+    return " Current published challenge catalogue: "
+        + challenges.count()
+        + " total ("
+        + breakdown
+        + "). ";
   }
 
   private String callModel(

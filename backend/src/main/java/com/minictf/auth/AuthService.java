@@ -119,38 +119,35 @@ public class AuthService {
   @Transactional
   public AuthDtos.RecoveryMessage recoverUsername(AuthDtos.UsernameRecoveryRequest request) {
     String email = request.email().trim().toLowerCase();
-    users
+    var user = users
         .findByEmailIgnoreCase(email)
-        .filter(user -> user.getPasswordHash() != null)
-        .ifPresent(
-            user ->
-                sendMail(
-                    email,
-                    "FlagBox 아이디 안내",
-                    "FlagBox에서 사용하는 아이디는 @" + user.getUsername() + " 입니다."));
+        .filter(candidate -> candidate.getPasswordHash() != null)
+        .orElseThrow(() -> new IllegalArgumentException("등록된 일반 계정을 찾을 수 없습니다."));
+    sendMail(
+        email,
+        "FlagBox 아이디 안내",
+        "FlagBox에서 사용하는 아이디는 @" + user.getUsername() + " 입니다.");
     return new AuthDtos.RecoveryMessage("아이디 안내를 이메일로 보냈습니다. 이메일을 확인해 주세요.");
   }
 
   @Transactional
   public AuthDtos.RecoveryMessage requestPasswordReset(AuthDtos.PasswordRecoveryRequest request) {
     String email = request.email().trim().toLowerCase();
-    users
+    var user = users
         .findByUsernameIgnoreCase(request.username().trim())
-        .filter(user -> user.getPasswordHash() != null && email.equalsIgnoreCase(user.getEmail()))
-        .ifPresent(
-            user -> {
-              resetTokens.deleteByUserId(user.getId());
-              String raw = newResetToken();
-              PasswordResetToken token = new PasswordResetToken();
-              token.setUser(user);
-              token.setTokenHash(sha256(raw));
-              token.setExpiresAt(Instant.now().plus(20, ChronoUnit.MINUTES));
-              resetTokens.save(token);
-              sendMail(
-                  email,
-                  "FlagBox 비밀번호 재설정",
-                  "아래 링크는 20분 동안만 유효합니다.\n" + resetUrl + "?resetToken=" + raw);
-            });
+        .filter(candidate -> candidate.getPasswordHash() != null && email.equalsIgnoreCase(candidate.getEmail()))
+        .orElseThrow(() -> new IllegalArgumentException("아이디와 이메일이 일치하는 일반 계정을 찾을 수 없습니다."));
+    resetTokens.deleteByUserId(user.getId());
+    String raw = newResetToken();
+    PasswordResetToken token = new PasswordResetToken();
+    token.setUser(user);
+    token.setTokenHash(sha256(raw));
+    token.setExpiresAt(Instant.now().plus(20, ChronoUnit.MINUTES));
+    resetTokens.save(token);
+    sendMail(
+        email,
+        "FlagBox 비밀번호 재설정",
+        "아래 링크는 20분 동안만 유효합니다.\n" + resetUrl + "?resetToken=" + raw);
     return new AuthDtos.RecoveryMessage("비밀번호 재설정 링크를 이메일로 보냈습니다. 이메일을 확인해 주세요.");
   }
 
