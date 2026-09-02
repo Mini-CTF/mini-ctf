@@ -822,6 +822,17 @@ html[data-theme='dark'] .app-shell .button.primary { color: #fff !important; }
   white-space: nowrap;
   animation: super-user-rgb 3s linear infinite, super-user-border-rgb 2.4s linear infinite;
 }
+
+/* Keep the FlagBox wordmark independent from the platform UI font. */
+.app-shell .brand,
+.app-shell .hero-banner-wordmark,
+.app-shell .auth-showcase__wordmark,
+.app-shell .flagbox-intro-wordmark,
+.app-shell .flagbox-stroke-intro__wordmark .stroke-text__stroke,
+.app-shell .flagbox-stroke-intro__wordmark .stroke-text__fill,
+.app-shell .flagbox-intro-watermark text {
+  font-family: var(--font-brand) !important;
+}
 @keyframes super-user-border-rgb {
   0%, 100% { border-color: #ff477e; box-shadow: 0 0 10px rgba(255, 71, 126, .38); }
   16% { border-color: #ff9d2e; box-shadow: 0 0 10px rgba(255, 157, 46, .38); }
