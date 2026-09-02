@@ -484,7 +484,7 @@ function AppShell() {
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       <Routes>
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onCommunity={() => go('/community')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
-        <Route path="/challenges" element={guarded(<div className="page challenges-page"><ChallengesProgress items={challenges} total={challenges.length} /><CategoryProgressChart items={challenges} /><CombinedFieldRadar items={challenges} /><ChallengesView key={`${category}-${difficulty}-${challengeSearch}`} items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} challengeSearch={challengeSearch} onSearchChange={setChallengeSearch} onOpen={(item) => go(`/challenges/${item.id}`)} /></div>)} />
+        <Route path="/challenges" element={guarded(<div className="page challenges-page"><ChallengesProgress items={challenges} total={challenges.length} /><CategoryProgressChart items={challenges} /><CombinedFieldRadar items={challenges} /><ChallengesView key={`${category}-${difficulty}`} items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} challengeSearch={challengeSearch} onSearchChange={setChallengeSearch} onOpen={(item) => go(`/challenges/${item.id}`)} /></div>)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh(); void refreshWallet() }} />)} />
         <Route path="/learn" element={<LearnView lang={language} loggedIn={Boolean(user)} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
@@ -1036,8 +1036,7 @@ function ChallengesProgress({ items, total }: { items: ChallengeSummary[]; total
 
 function ChallengeSearch({ value, onChange, compact }: { value: string; onChange: (value: string) => void; compact?: boolean }) {
   const ko = document.documentElement.lang !== 'en'
-  const [draft, setDraft] = useState(value)
-  return <label className={`challenge-search ${compact ? 'compact' : ''}`}><span>{ko ? '문제 제목 검색' : 'Search challenge titles'}</span><input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); onChange(draft) } }} placeholder={ko ? '제목 입력 후 Enter' : 'Type a title, then press Enter'} autoComplete="off" /></label>
+  return <label className={`challenge-search ${compact ? 'compact' : ''}`}><span>{ko ? '문제 제목 검색' : 'Search challenge titles'}</span><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={ko ? '문제 제목 입력' : 'Search by title'} autoComplete="off" /></label>
 }
 
 function CategoryProgressChart({ items }: { items: ChallengeSummary[] }) {
