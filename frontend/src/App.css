@@ -486,33 +486,33 @@
   font-weight: 750;
 }
 .badge.web {
-  color: #53c7ff;
-  border-color: rgba(83, 199, 255, 0.45);
-  background: rgba(83, 199, 255, 0.14);
+  color: #4d99ff;
+  border-color: rgba(77, 153, 255, 0.55);
+  background: rgba(77, 153, 255, 0.16);
 }
 .badge.crypto {
-  color: #86c9ff;
-  border-color: rgba(108, 184, 255, 0.3);
-  background: rgba(108, 184, 255, 0.14);
+  color: #ff9f5a;
+  border-color: rgba(255, 159, 90, 0.55);
+  background: rgba(255, 159, 90, 0.16);
 }
 .badge.forensics {
   color: #ffc088;
   border-color: rgba(255, 173, 102, 0.3);
 }
 .badge.forensic {
-  color: #ffab66;
-  border-color: rgba(255, 171, 102, 0.45);
-  background: rgba(255, 171, 102, 0.13);
+  color: #b38cff;
+  border-color: rgba(179, 140, 255, 0.55);
+  background: rgba(179, 140, 255, 0.16);
 }
 .badge.reversing {
-  color: #c9a2ff;
-  border-color: rgba(201, 162, 255, 0.45);
-  background: rgba(201, 162, 255, 0.15);
+  color: #45d6b0;
+  border-color: rgba(69, 214, 176, 0.55);
+  background: rgba(69, 214, 176, 0.16);
 }
 .badge.misc {
-  color: #c3adff;
-  border-color: rgba(161, 132, 255, 0.3);
-  background: rgba(161, 132, 255, 0.14);
+  color: #f06fa8;
+  border-color: rgba(240, 111, 168, 0.55);
+  background: rgba(240, 111, 168, 0.16);
 }
 .row-meta > b {
   font-family: var(--mono);
@@ -3199,29 +3199,29 @@ html[data-theme="light"] .primary-nav.is-open {
 
 /* ── 라이트 테마 배지: 전역 스팬 가드보다 우선 적용 ── */
 html[data-theme="light"] .app-shell span.badge.web {
-  color: #0b69a3 !important;
-  border-color: rgba(11, 105, 163, 0.4) !important;
-  background: rgba(11, 105, 163, 0.08) !important;
+  color: #4d99ff !important;
+  border-color: rgba(77, 153, 255, 0.55) !important;
+  background: rgba(77, 153, 255, 0.12) !important;
 }
 html[data-theme="light"] .app-shell span.badge.forensic {
-  color: #c2410c !important;
-  border-color: rgba(194, 65, 12, 0.4) !important;
-  background: rgba(194, 65, 12, 0.08) !important;
+  color: #8a63d2 !important;
+  border-color: rgba(138, 99, 210, 0.55) !important;
+  background: rgba(179, 140, 255, 0.18) !important;
 }
 html[data-theme="light"] .app-shell span.badge.reversing {
-  color: #6d28d9 !important;
-  border-color: rgba(109, 40, 217, 0.4) !important;
-  background: rgba(109, 40, 217, 0.08) !important;
+  color: #168d70 !important;
+  border-color: rgba(22, 141, 112, 0.55) !important;
+  background: rgba(69, 214, 176, 0.16) !important;
 }
 html[data-theme="light"] .app-shell span.badge.crypto {
-  color: #0369a1 !important;
-  border-color: rgba(3, 105, 161, 0.4) !important;
-  background: rgba(3, 105, 161, 0.08) !important;
+  color: #d36a22 !important;
+  border-color: rgba(211, 106, 34, 0.55) !important;
+  background: rgba(255, 159, 90, 0.18) !important;
 }
 html[data-theme="light"] .app-shell span.badge.misc {
-  color: #7e22ce !important;
-  border-color: rgba(126, 34, 206, 0.4) !important;
-  background: rgba(126, 34, 206, 0.08) !important;
+  color: #c13d79 !important;
+  border-color: rgba(193, 61, 121, 0.55) !important;
+  background: rgba(240, 111, 168, 0.16) !important;
 }
 html[data-theme="light"] .app-shell span.badge.beginner {
   color: #0f766e !important;
@@ -3837,7 +3837,7 @@ html[data-theme="dark"] .bookmark-ribbon-icon.is-filled {
   stroke: #45d6b0;
 }
 .category-crypto .category-progress-ring-value {
-  stroke: #4d99ff;
+  stroke: #ff9f5a;
 }
 .category-misc .category-progress-ring-value {
   stroke: #f06fa8;
