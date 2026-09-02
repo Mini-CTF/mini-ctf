@@ -5036,8 +5036,8 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
   overflow: visible;
 }
 .field-radar-grid {
-  fill: color-mix(in srgb, var(--surface-strong) 32%, transparent);
-  stroke: var(--line);
+  fill: color-mix(in srgb, var(--surface) 70%, transparent);
+  stroke: var(--bklit-chart-grid);
   stroke-width: 1;
 }
 .field-radar-axis {
@@ -5045,14 +5045,14 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
   opacity: 0.65;
 }
 .field-radar-area {
-  fill: rgba(77, 153, 255, 0.2);
-  stroke: #82c3ff;
+  fill: var(--bklit-chart-area);
+  stroke: var(--bklit-chart-stroke);
   stroke-width: 3;
   stroke-linejoin: round;
   transition: all 0.4s ease;
 }
 .field-radar-dot {
-  stroke: var(--surface);
+  stroke: var(--bklit-chart-dot-ring);
   stroke-width: 3;
 }
 .field-radar-label {
@@ -5158,7 +5158,7 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
 .heatmap-legend i {
   display: block;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--line) 78%, transparent);
+  background: var(--bklit-heatmap-empty);
 }
 .heatmap-cell {
   min-width: 10px;
@@ -5166,19 +5166,19 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
 }
 .heatmap-cell.level-1,
 .heatmap-legend .level-1 {
-  background: #1f6f4e;
+  background: var(--bklit-heatmap-1);
 }
 .heatmap-cell.level-2,
 .heatmap-legend .level-2 {
-  background: #279d68;
+  background: var(--bklit-heatmap-2);
 }
 .heatmap-cell.level-3,
 .heatmap-legend .level-3 {
-  background: #3fca82;
+  background: var(--bklit-heatmap-3);
 }
 .heatmap-cell.level-4,
 .heatmap-legend .level-4 {
-  background: #8af3ae;
+  background: var(--bklit-heatmap-4);
 }
 .heatmap-legend {
   display: flex;
@@ -5219,6 +5219,82 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
 .contribution-grid { margin-top: 0; min-width: 620px; grid-auto-columns: minmax(10px, 1fr); }
 .heatmap-cell.future { opacity: .28; }
 @media (max-width: 620px) { .heatmap-heading { flex-direction: column; } .heatmap-range { width: 100%; } .heatmap-range button { flex: 1; } }
+
+/* Bklit chart treatment: the same readable UI face and theme-aware chart tokens. */
+.bklit-radar,
+.contribution-heatmap {
+  color: var(--text);
+  font-family: var(--sans);
+}
+.bklit-radar .vault-kicker,
+.contribution-heatmap .vault-kicker,
+.bklit-radar .field-radar-label,
+.contribution-heatmap .heatmap-months,
+.contribution-heatmap .heatmap-weekdays,
+.contribution-heatmap .heatmap-legend {
+  font-family: var(--sans);
+}
+.bklit-radar .field-radar-label {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+.bklit-radar-chart .field-radar-axis {
+  stroke: var(--bklit-chart-axis);
+}
+.bklit-radar-metric.active .field-radar-axis {
+  stroke: var(--accent);
+}
+.contribution-heatmap {
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--bg) 58%, transparent);
+}
+.contribution-heatmap .heatmap-range {
+  background: color-mix(in srgb, var(--surface-raised) 84%, transparent);
+}
+.contribution-heatmap .heatmap-range button {
+  color: var(--muted);
+  font-family: var(--sans);
+}
+.contribution-heatmap .heatmap-range button.active {
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+.contribution-heatmap .heatmap-cell {
+  border: 1px solid color-mix(in srgb, var(--bklit-heatmap-empty) 82%, var(--line));
+  animation: heatmap-cell-in .42s cubic-bezier(.22, 1, .36, 1) both;
+  transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+.contribution-heatmap .heatmap-cell:nth-child(5n + 1) { animation-delay: 20ms; }
+.contribution-heatmap .heatmap-cell:nth-child(5n + 2) { animation-delay: 45ms; }
+.contribution-heatmap .heatmap-cell:nth-child(5n + 3) { animation-delay: 70ms; }
+.contribution-heatmap .heatmap-cell:nth-child(5n + 4) { animation-delay: 95ms; }
+.contribution-heatmap .heatmap-cell:nth-child(5n) { animation-delay: 120ms; }
+.contribution-heatmap .heatmap-cell:not(.future):hover {
+  position: relative;
+  z-index: 1;
+  transform: scale(1.28);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--accent);
+  filter: saturate(1.12);
+}
+.contribution-heatmap .heatmap-months,
+.contribution-heatmap .heatmap-weekdays,
+.contribution-heatmap .heatmap-legend {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+@keyframes heatmap-cell-in {
+  from { opacity: 0; transform: scale(.56); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bklit-radar-chart .field-radar-grid,
+  .bklit-radar-area,
+  .contribution-heatmap .heatmap-cell {
+    animation: none;
+    transition: none;
+  }
+}
 .public-profile-detail-link {
   width: 100%;
   margin-top: 20px;
