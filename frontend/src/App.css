@@ -5851,6 +5851,25 @@ pre,
   margin-left: auto;
 }
 
+/* Keep the category filter colors in the same order as the category badges and charts. */
+.challenge-toolbar > .filter-tabs:first-child .filter-tab:nth-child(2) { --category-filter-color: #4d99ff; }
+.challenge-toolbar > .filter-tabs:first-child .filter-tab:nth-child(3) { --category-filter-color: #b38cff; }
+.challenge-toolbar > .filter-tabs:first-child .filter-tab:nth-child(4) { --category-filter-color: #45d6b0; }
+.challenge-toolbar > .filter-tabs:first-child .filter-tab:nth-child(5) { --category-filter-color: #ff9f5a; }
+.challenge-toolbar > .filter-tabs:first-child .filter-tab:nth-child(6) { --category-filter-color: #f06fa8; }
+.challenge-toolbar > .filter-tabs:first-child .filter-tab:not(:first-child) {
+  color: color-mix(in srgb, var(--category-filter-color) 72%, var(--muted));
+  border-color: color-mix(in srgb, var(--category-filter-color) 34%, transparent);
+  background: color-mix(in srgb, var(--category-filter-color) 7%, transparent);
+}
+.challenge-toolbar > .filter-tabs:first-child .filter-tab:not(:first-child):hover,
+.challenge-toolbar > .filter-tabs:first-child .filter-tab:not(:first-child).active {
+  color: var(--category-filter-color);
+  border-color: color-mix(in srgb, var(--category-filter-color) 72%, transparent);
+  background: color-mix(in srgb, var(--category-filter-color) 17%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--category-filter-color) 18%, transparent);
+}
+
 @media (max-width: 820px) {
   .challenge-toolbar .difficulty-tabs {
     margin-left: 0;
