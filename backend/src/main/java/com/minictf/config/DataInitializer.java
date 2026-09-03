@@ -24,37 +24,45 @@ public class DataInitializer {
       @Value("${ADMIN_USERNAME:}") String username,
       @Value("${ADMIN_PASSWORD:}") String password) {
     return args -> {
-      if (username == null || username.isBlank() || password == null || password.isBlank()) return;
-      if (password.length() < 12)
-        throw new IllegalStateException("ADMIN_PASSWORD must contain at least 12 characters");
-      if (!username.matches("[A-Za-z0-9_]{3,50}"))
-        throw new IllegalStateException("ADMIN_USERNAME format is invalid");
-      User u = users.findByUsernameIgnoreCase(username).orElseGet(User::new);
-      if (u.getId() == null) {
-        u.setUsername(username);
-        u.setNickname(username);
+      if (username != null && !username.isBlank() && password != null && !password.isBlank()) {
+        if (password.length() < 12)
+          throw new IllegalStateException("ADMIN_PASSWORD must contain at least 12 characters");
+        if (!username.matches("[A-Za-z0-9_]{3,50}"))
+          throw new IllegalStateException("ADMIN_USERNAME format is invalid");
+        User u = users.findByUsernameIgnoreCase(username).orElseGet(User::new);
+        if (u.getId() == null) {
+          u.setUsername(username);
+          u.setNickname(username);
+          u.setScore(20_000);
+        }
+        u.setPasswordHash(encoder.encode(password));
+        u.setRole("ADMIN");
+        // Keep the platform administrator at the top tier even after restarts.
         u.setScore(20_000);
+        if ("super_user".equals(u.getEquippedVaultTitle())) u.setEquippedVaultTitle(null);
+        u.setStatus("ACTIVE");
+        u.setSuspensionReason(null);
+        u.setSuspendedAt(null);
+        users.save(u);
       }
-      u.setPasswordHash(encoder.encode(password));
-      u.setRole("ADMIN");
-      // Keep the platform administrator at the top tier even after restarts.
-      u.setScore(20_000);
-      if ("super_user".equals(u.getEquippedVaultTitle())) u.setEquippedVaultTitle(null);
-      u.setStatus("ACTIVE");
-      u.setSuspensionReason(null);
-      u.setSuspendedAt(null);
-      users.save(u);
 
-      // The platform account is a showcase and moderation account: keep its solve history in
-      // sync with every active challenge without fabricating regular submission attempts.
-      Set<Long> solvedChallengeIds = solves.findChallengeIdsByUserId(u.getId());
-      var missingSolves =
-          challenges.findByActiveTrueOrderByIdAsc().stream()
-              .filter(challenge -> !solvedChallengeIds.contains(challenge.getId()))
-              .map(challenge -> adminSolve(u, challenge))
-              .toList();
-      if (!missingSolves.isEmpty()) solves.saveAll(missingSolves);
+      // Existing production administrators may predate ADMIN_USERNAME. Keep every ADMIN user's
+      // showcase history synchronized without fabricating normal submission attempts.
+      for (User admin : users.findByRole("ADMIN")) {
+        syncAdminSolves(admin, challenges, solves);
+      }
     };
+  }
+
+  private static void syncAdminSolves(
+      User admin, ChallengeRepository challenges, SolveRepository solves) {
+    Set<Long> solvedChallengeIds = solves.findChallengeIdsByUserId(admin.getId());
+    var missingSolves =
+        challenges.findByActiveTrueOrderByIdAsc().stream()
+            .filter(challenge -> !solvedChallengeIds.contains(challenge.getId()))
+            .map(challenge -> adminSolve(admin, challenge))
+            .toList();
+    if (!missingSolves.isEmpty()) solves.saveAll(missingSolves);
   }
 
   private static Solve adminSolve(User user, Challenge challenge) {
