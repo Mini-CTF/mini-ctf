@@ -35,6 +35,14 @@ public class AdminModerationController {
     return ApiResponse.ok(service.updateNickname(id, request, auth.getName()));
   }
 
+  @PatchMapping("/users/{id}/role")
+  public ApiResponse<?> updateRole(
+      @PathVariable Long id,
+      @Valid @RequestBody AdminDtos.RoleUpdateRequest request,
+      Authentication auth) {
+    return ApiResponse.ok(service.updateModeratorRole(id, request, auth.getName()));
+  }
+
   @PostMapping("/users/{id}/score")
   public ApiResponse<?> adjustScore(
       @PathVariable Long id,

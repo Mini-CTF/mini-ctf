@@ -33,7 +33,7 @@ public class AssistantController {
   }
 
   @GetMapping("/feedback")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
   public ApiResponse<java.util.List<AssistantDtos.FeedbackView>> feedback() {
     return ApiResponse.ok(service.feedback());
   }

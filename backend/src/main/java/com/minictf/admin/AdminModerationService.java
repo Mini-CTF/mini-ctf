@@ -70,6 +70,7 @@ public class AdminModerationService {
   public AdminDtos.UserView updateNickname(
       Long targetId, AdminDtos.UserUpdateRequest request, String adminUsername) {
     User target = target(targetId);
+    ensureCanManage(adminUsername, target, false);
     if ("DELETED".equals(target.getStatus()))
       throw new IllegalArgumentException("Restore the account before editing it");
     target.setNickname(request.nickname().trim());
@@ -78,9 +79,28 @@ public class AdminModerationService {
   }
 
   @Transactional
+  public AdminDtos.UserView updateModeratorRole(
+      Long targetId, AdminDtos.RoleUpdateRequest request, String adminUsername) {
+    User target = targetForUpdate(targetId);
+    if (target.getUsername().equalsIgnoreCase(adminUsername))
+      throw new IllegalArgumentException("You cannot change your own administrator role");
+    ensureNotAdmin(target);
+    target.setRole(request.role());
+    target.setAuthSessionVersion(target.getAuthSessionVersion() + 1);
+    audit(
+        adminUsername,
+        "UPDATE_MODERATOR_ROLE",
+        "USER",
+        targetId,
+        "Role changed to " + request.role());
+    return userView(target);
+  }
+
+  @Transactional
   public AdminDtos.UserView adjustScore(
       Long targetId, AdminDtos.ScoreAdjustmentRequest request, String adminUsername) {
     User target = targetForUpdate(targetId);
+    ensureCanManage(adminUsername, target, false);
     if (!"ACTIVE".equals(target.getStatus()))
       throw new IllegalArgumentException("Restore the account before adjusting its score");
     int previous = target.getScore();
@@ -102,7 +122,7 @@ public class AdminModerationService {
   public AdminDtos.UserView suspend(
       Long targetId, AdminDtos.SuspensionRequest request, String adminUsername) {
     User target = target(targetId);
-    ensureNotAdmin(target);
+    ensureCanManage(adminUsername, target, false);
     target.setStatus("SUSPENDED");
     target.setSuspensionReason(request.reason().trim());
     target.setSuspendedAt(Instant.now());
@@ -114,7 +134,7 @@ public class AdminModerationService {
   @Transactional
   public AdminDtos.UserView reinstate(Long targetId, String adminUsername) {
     User target = target(targetId);
-    ensureNotAdmin(target);
+    ensureCanManage(adminUsername, target, "DELETED".equals(target.getStatus()));
     if ("DELETED".equals(target.getStatus())) {
       restoreDeletedAccount(target);
       audit(adminUsername, "RESTORE_USER", "USER", targetId, "Account and user data restored");
@@ -479,6 +499,15 @@ public class AdminModerationService {
   private void ensureNotAdmin(User user) {
     if ("ADMIN".equals(user.getRole()))
       throw new AccessDeniedException("Administrators cannot be moderated");
+  }
+
+  private void ensureCanManage(String actorUsername, User target, boolean deletedAccount) {
+    User actor = users.findByUsernameIgnoreCase(actorUsername).orElseThrow();
+    ensureNotAdmin(target);
+    if ("MODERATOR".equals(actor.getRole())
+        && (deletedAccount || !"USER".equals(target.getRole()))) {
+      throw new AccessDeniedException("Limited administrators can only moderate active users");
+    }
   }
 
   private void audit(

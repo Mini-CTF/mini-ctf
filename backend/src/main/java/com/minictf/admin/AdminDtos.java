@@ -20,6 +20,8 @@ public final class AdminDtos {
 
   public record UserUpdateRequest(@NotBlank @Size(max = 80) String nickname) {}
 
+  public record RoleUpdateRequest(@Pattern(regexp = "^(USER|MODERATOR)$") String role) {}
+
   public record SuspensionRequest(@NotBlank @Size(max = 500) String reason) {}
 
   public record ScoreAdjustmentRequest(
