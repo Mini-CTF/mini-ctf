@@ -9,6 +9,8 @@ import { articleBySlug, LEARN_FIELDS, learnArticles, learnEn } from './learnCont
 import StrokeText from './components/StrokeText'
 import Beams from './components/Beams'
 import AetherFlowHero from './components/ui/aether-flow-hero'
+import { StreakCalendar } from './components/ui/streak-calendar'
+import { Pencil, X } from 'lucide-react'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import FloatingQuickMenu from './components/FloatingQuickMenu'
@@ -41,6 +43,7 @@ const initialLanguage: Language = localStorage.getItem('flagbox-language') === '
 const oauthBaseUrl = import.meta.env.VITE_OAUTH_BASE_URL ?? 'http://localhost:8080'
 const publicSiteUrl = 'https://flagbox.vercel.app'
 const publicProfileEvent = 'flagbox:open-public-profile'
+const attendanceChangedEvent = 'flagbox:attendance-changed'
 function openPublicProfile(username: string) { window.dispatchEvent(new CustomEvent<string>(publicProfileEvent, { detail: username })) }
 
 const uiCopy = {
@@ -476,6 +479,7 @@ function AppShell() {
       </Routes>
     </main>
     <PublicProfileDialog />
+    <GlobalCheckInPopup user={user} />
     <FloatingAssistant open={assistantOpen} onOpenChange={setAssistantOpen} user={user} language={language} path={path} onLogin={() => go('/login')} />
     {assistantFeedbackOpen && <AssistantFeedbackDialog user={user} language={language} onClose={() => setAssistantFeedbackOpen(false)} onLogin={() => go('/login')} />}
     <FloatingQuickMenu language={language} assistantOpen={assistantOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} onBookmarks={() => go(user ? '/bookmarks' : '/login')} onPopular={() => go(user ? '/popular' : '/login')} />
@@ -667,11 +671,13 @@ function LoadingState({ label }: { label: string }) {
 }
 
 function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
+  const [fillComplete, setFillComplete] = useState(false)
+  const showKeywords = useCallback(() => setFillComplete(true), [])
   return <div className="flagbox-intro flagbox-stroke-intro" role="status" aria-label="FlagBox is loading.">
     <Beams className="flagbox-stroke-intro__beams" beamWidth={2} beamHeight={42} beamNumber={18} rotation={90} />
     <button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button>
-    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={230} letterSpacing={-19} strokeColor="#f8fafc" fillColor="#f8fafc" strokeWidth={1.7} drawDuration={2.2} fillDelay={0.4} fillDuration={0.45} />
-    <p className="flagbox-stroke-intro__copy">LEARN · ANALYZE · CAPTURE</p>
+    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={265} letterSpacing={-7} characterOffsets={{ 5: -6, 6: -6 }} strokeColor="#f8fafc" fillColor="#f8fafc" strokeWidth={1.7} drawDuration={2.2} fillDelay={0.28} fillDuration={0.45} onFillComplete={showKeywords} />
+    <p className={fillComplete ? 'flagbox-stroke-intro__copy is-visible' : 'flagbox-stroke-intro__copy'}>LEARN · ANALYZE · CAPTURE</p>
   </div>
 }
 
@@ -870,7 +876,7 @@ function Home({ language, challenges, onExplore, onCommunity, onRanking, onOpen 
   }, [activeBanner])
   const banner = localizedBanners[activeBanner]
   const moveBanner = (direction: -1 | 1) => setActiveBanner((current) => (current + direction + localizedBanners.length) % localizedBanners.length)
-  return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox banner"><button className="hero-banner-arrow previous" type="button" aria-label="Previous banner" onClick={() => moveBanner(-1)} /><div className="hero-banner-content banner-slide" ref={bannerContentRef}><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><span className="hero-banner-wordmark" aria-hidden="true">FlagBox</span><button className="hero-banner-arrow next" type="button" aria-label="Next banner" onClick={() => moveBanner(1)} /><div className="hero-banner-dots" role="tablist" aria-label="Banner selection">{localizedBanners.map((item, index) => <button key={item.label} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`Banner ${index + 1}`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>{language === 'en' ? 'Challenges to try now' : '지금 도전할 문제'}</h2></div><button type="button" className="text-link" onClick={onExplore}>{language === 'en' ? 'View all wargames' : '워게임 전체 보기'}</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
+  return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox banner"><button className="hero-banner-arrow previous" type="button" aria-label="Previous banner" onClick={() => moveBanner(-1)} /><div className="hero-banner-content banner-slide" ref={bannerContentRef}><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><span className="hero-banner-wordmark" aria-hidden="true">Flag<span className="hero-banner-wordmark__box">Box</span></span><button className="hero-banner-arrow next" type="button" aria-label="Next banner" onClick={() => moveBanner(1)} /><div className="hero-banner-dots" role="tablist" aria-label="Banner selection">{localizedBanners.map((item, index) => <button key={item.label} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`Banner ${index + 1}`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>{language === 'en' ? 'Challenges to try now' : '지금 도전할 문제'}</h2></div><button type="button" className="text-link" onClick={onExplore}>{language === 'en' ? 'View all wargames' : '워게임 전체 보기'}</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   /*
   return <div className="page home-page"><section className="hero-section hero-banner" aria-roledescription="carousel" aria-label="FlagBox 안내 배너"><div className="hero-banner-content"><p className="eyebrow">{banner.label}</p><h1>{banner.title.split('\n').map((line, index) => <span key={line}>{line}{index === 0 && <br />}</span>)}</h1><p>{banner.description}</p><button className="button primary" type="button" onClick={banner.onClick}>{banner.action}</button></div><div className="hero-banner-dots" role="tablist" aria-label="배너 선택">{banners.map((item, index) => <button key={lang === 'ko' ? (item.key === 'ALL' ? '전체' : item.label) : item.key === 'ALL' ? 'All' : item.key} className={index === activeBanner ? 'active' : ''} type="button" role="tab" aria-selected={index === activeBanner} aria-label={`${index + 1}번 배너`} onClick={() => setActiveBanner(index)} />)}</div></section><section className="stat-strip" aria-label="플랫폼 현황"><Stat value={stats.challenges} label="워게임 문제" detail="천천히 도전해 보세요" /><Stat value={stats.solves} label="문제 해결" detail="함께 쌓은 기록" /><Stat value={stats.users} label="학습 중인 사람" detail="FlagBox 동료" /><div className="live-badge">함께 배우는 중</div></section><section className="content-section featured-section"><div className="section-heading"><div><p className="eyebrow">START HERE</p><h2>지금 도전할 문제</h2></div><button type="button" className="text-link" onClick={onExplore}>워게임 전체 보기</button></div><div className="featured-list">{challenges.slice(0, 3).map((item) => <ChallengeRow key={item.id} item={item} onOpen={onOpen} />)}{challenges.length === 0 && <EmptyState />}</div></section></div>
   /*
@@ -1234,13 +1240,15 @@ function BklitStyleRadar({ items, metrics }: { items: ChallengeSummary[]; metric
   return <section className="combined-field-radar bklit-radar" aria-label="분야별 성취율 레이더 차트"><div className="combined-field-radar-copy"><span className="vault-kicker">ALL FIELDS</span><h2>분야별 성취율 종합</h2><p>각 축은 문제 분야이고, 해결 비율이 바깥쪽에 가까울수록 높습니다.</p></div><div className="radar-layout"><svg className="field-radar bklit-radar-chart" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={ariaLabel} onMouseLeave={() => setHoveredIndex(null)}>{[20, 40, 60, 80, 100].map((level) => <polygon key={level} points={polygon(level)} className="field-radar-grid bklit-radar-grid" />)}{metrics.map((metric, index) => { const outer = point(index, 100); const label = point(index, 122); const dot = point(index, values[metric] as number); const active = hoveredIndex === index; return <g key={metric} className={active ? 'bklit-radar-metric active' : 'bklit-radar-metric'} onMouseEnter={() => setHoveredIndex(index)}><line x1={center} y1={center} x2={outer[0]} y2={outer[1]} className="field-radar-axis" /><circle cx={dot[0]} cy={dot[1]} r={active ? 8 : 6} fill={categoryColors[index % categoryColors.length]} className="field-radar-dot" /><text x={label[0]} y={label[1]} className="field-radar-label" tabIndex={0} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}>{metric}</text></g>})}<polygon points={area} className="field-radar-area bklit-radar-area" /></svg><div className="field-radar-legend">{metrics.map((metric, index) => <button key={metric} type="button" className={hoveredIndex === index ? 'active' : ''} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}><i style={{ background: categoryColors[index % categoryColors.length] }} />{metric}<b>{values[metric]}%</b></button>)}</div></div></section>
 }
 
-function ContributionHeatmap({
+function LegacyContributionHeatmap({
   activity,
+  attendanceDates,
   range,
   onRangeChange,
   className = "",
 }: {
   activity: PublicProfile["solveActivity"];
+  attendanceDates?: string[];
   range: "week" | "month" | "year";
   onRangeChange: (range: "week" | "month" | "year") => void;
   className?: string;
@@ -1267,6 +1275,8 @@ function ContributionHeatmap({
   const formatKey = (date: Date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   const counts = new Map(activity.map((item) => [item.date, item.count]));
+  const checkIns = new Set(attendanceDates ?? []);
+  const hasAttendance = attendanceDates !== undefined;
   const days = Array.from(
     {
       length: calendarYear ? Math.ceil(daysToShow / 7) * 7 : Math.ceil((daysToShow + (today.getDay() - start.getDay())) / 7) * 7,
@@ -1278,6 +1288,7 @@ function ContributionHeatmap({
         date,
         key: formatKey(date),
         count: date > today ? 0 : (counts.get(formatKey(date)) ?? 0),
+        checkedIn: date <= today && checkIns.has(formatKey(date)),
         future: date > today,
       };
     },
@@ -1356,11 +1367,12 @@ function ContributionHeatmap({
                   day.future || day.count === 0
                     ? 0
                     : Math.min(4, Math.ceil((day.count / maximum) * 4));
+                const activityLabel = day.count > 0 && day.checkedIn ? "Solved and checked in" : day.count > 0 ? "Solved" : day.checkedIn ? "Checked in" : "No activity";
                 return (
                   <span
                     key={day.key}
-                    className={`heatmap-cell level-${level}${day.future ? " future" : ""}`}
-                    title={`${day.key} · ${day.date.toLocaleDateString(ko ? "ko-KR" : "en-US", { weekday: "long" })}: ${day.count} solved`}
+                    className={`heatmap-cell level-${level}${day.checkedIn ? " checked-in" : ""}${day.count > 0 && day.checkedIn ? " solved-and-checked" : ""}${day.future ? " future" : ""}`}
+                    title={`${day.key} · ${day.date.toLocaleDateString(ko ? "ko-KR" : "en-US", { weekday: "long" })}: ${activityLabel}${day.count > 0 ? ` · ${day.count} solved` : ""}`}
                   />
                 );
               }),
@@ -1374,22 +1386,26 @@ function ContributionHeatmap({
           <i key={level} className={`level-${level}`} />
         ))}
         <span>More</span>
+        {hasAttendance && <><i className="checked-in" /><span>Check-in</span></>}
       </div>
     </section>
   );
 }
 
-function ProfileHeatmap({
+function LegacyProfileHeatmap({
   activity,
+  attendanceDates,
   className,
 }: {
   activity: PublicProfile["solveActivity"];
+  attendanceDates?: string[];
   className?: string;
 }) {
   const [range, setRange] = useState<"week" | "month" | "year">("year");
   return (
-    <ContributionHeatmap
+    <LegacyContributionHeatmap
       activity={activity}
+      attendanceDates={attendanceDates}
       range={range}
       onRangeChange={setRange}
       className={className}
@@ -1440,6 +1456,8 @@ function ProfileHeatmap({
     </section>
   );
 }
+
+void LegacyProfileHeatmap;
 
 function PublicProfilePage() {
   const { username = "" } = useParams();
@@ -1508,7 +1526,6 @@ function PublicProfilePage() {
           </span>
         </div>
       </section>
-      <ProfileHeatmap activity={profile.solveActivity} />
     </div>
   );
 }
@@ -1516,6 +1533,66 @@ function PublicProfilePage() {
 void LegacyChallengeDetailView;
 void LegacyRankingView;
 void RankingView;
+
+function GlobalCheckInPopup({ user }: { user: User | null }) {
+  const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
+  const [popupFor, setPopupFor] = useState<string | null>(null);
+  const [justCompleted, setJustCompleted] = useState(false);
+  const username = user?.username;
+  useEffect(() => {
+    if (!username) return;
+    let active = true;
+    void api.attendance().then((summary) => {
+      if (!active) return;
+      setAttendance(summary);
+      if (summary.checkedInToday) return;
+      const day = new Date().toLocaleDateString("en-CA");
+      const storageKey = `flagbox-check-in-popup-${username}-${day}`;
+      if (sessionStorage.getItem(storageKey)) return;
+      sessionStorage.setItem(storageKey, "shown");
+      setPopupFor(username);
+      setJustCompleted(false);
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [username]);
+  const completeCheckIn = async () => {
+    try {
+      const summary = await api.checkIn();
+      setAttendance(summary);
+      setJustCompleted(true);
+      window.dispatchEvent(new Event(attendanceChangedEvent));
+    } catch {
+      // The normal profile view will surface attendance errors on its next refresh.
+    }
+  };
+  if (!user || popupFor !== user.username || !attendance) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+  const checkIns = new Set(attendance.checkInDates);
+  const dateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const week = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + index);
+    return { date, checkedIn: checkIns.has(dateKey(date)), today: date.getTime() === today.getTime(), future: date > today };
+  });
+  return <div className="check-in-modal-backdrop" role="presentation">
+    <section className="check-in-modal" role="dialog" aria-modal="true" aria-labelledby="check-in-modal-title">
+      <span className="vault-kicker">DAILY CHECK-IN</span>
+      <h2 id="check-in-modal-title">출석체크하기</h2>
+      <p>{justCompleted ? "오늘의 출석이 기록되었습니다. 내일도 이어가 보세요!" : "이번 주 학습 기록을 이어가 보세요."}</p>
+      <div className="check-in-week" role="list" aria-label="이번 주 출석 기록">
+        {week.map(({ date, checkedIn, today: isToday, future }) => {
+          const completed = checkedIn || (isToday && justCompleted);
+          return <div key={dateKey(date)} className={`check-in-week__day${completed ? " is-complete" : ""}${isToday ? " is-today" : ""}${future ? " is-future" : ""}`} role="listitem"><span className="check-in-week__circle">{completed && <span>✓</span>}</span><small>{date.toLocaleDateString("en-US", { weekday: "short" })}</small></div>;
+        })}
+      </div>
+      <div className="check-in-modal__stats"><span><b>{attendance.currentStreak}</b>현재 연속</span><span><b>{attendance.totalDays}</b>누적 출석</span></div>
+      <div className="check-in-modal__actions">{justCompleted ? <button className="button primary" type="button" onClick={() => setPopupFor(null)}>확인</button> : <><button className="button ghost" type="button" onClick={() => setPopupFor(null)}>나중에</button><button className="button primary" type="button" onClick={() => void completeCheckIn()}>출석하기</button></>}</div>
+    </section>
+  </div>;
+}
 
 function ProfileView({
   user,
@@ -1535,6 +1612,8 @@ function ProfileView({
   const [error, setError] = useState("");
   const [avatarRevision, setAvatarRevision] = useState(() => Date.now());
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+  const [profileEdit, setProfileEdit] = useState<"nickname" | "status" | null>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const refresh = useCallback(async () => {
     const [profileResult, friendsResult, attendanceResult] =
@@ -1557,8 +1636,7 @@ function ProfileView({
           ? friendsResult.reason.message
           : "Could not load friends.",
       );
-    if (attendanceResult.status === "fulfilled")
-      setAttendance(attendanceResult.value);
+    if (attendanceResult.status === "fulfilled") setAttendance(attendanceResult.value);
     else
       setError(
         attendanceResult.reason instanceof Error
@@ -1591,6 +1669,11 @@ function ProfileView({
       active = false;
     };
   }, [user]);
+  useEffect(() => {
+    const syncAttendance = () => void api.attendance().then(setAttendance).catch(() => undefined);
+    window.addEventListener(attendanceChangedEvent, syncAttendance);
+    return () => window.removeEventListener(attendanceChangedEvent, syncAttendance);
+  }, []);
   useEffect(() => {
     if (selectedFriend)
       void api
@@ -1649,17 +1732,6 @@ function ProfileView({
     },
     [avatarPreview],
   );
-  useEffect(() => {
-    const select = document.querySelector<HTMLSelectElement>(
-      ".attendance-title-select select",
-    );
-    if (!select || select.querySelector('option[value="NONE"]')) return;
-    const option = document.createElement("option");
-    option.value = "NONE";
-    option.textContent = "Unequip title";
-    select.append(option);
-    return () => option.remove();
-  }, [attendance]);
   if (!user)
     return (
       <div className="page">
@@ -1694,20 +1766,10 @@ function ProfileView({
           statusMessage: String(form.get("statusMessage")),
         }),
       );
+      setProfileEdit(null);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Could not save profile.",
-      );
-    }
-  };
-  const checkIn = async () => {
-    try {
-      setAttendance(await api.checkIn());
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Could not complete the daily check-in.",
       );
     }
   };
@@ -1841,14 +1903,28 @@ function ProfileView({
         />
         <div>
           <p className="eyebrow">OPERATOR PROFILE</p>
-          <h1>
-            {current.nickname || current.username} <TierEmblem tier={current.tier} />
-          </h1>
+          <div className="profile-edit-line profile-edit-line--name">
+            {profileEdit === "nickname" ? (
+              <form className="profile-inline-editor" onSubmit={(event) => void saveProfile(event)}>
+                <input name="nickname" defaultValue={current.nickname || current.username} maxLength={80} autoFocus aria-label="표시 이름" />
+                <input type="hidden" name="statusMessage" value={current.statusMessage || ""} />
+                <button className="button primary" type="submit">저장</button>
+                <button className="icon-button" type="button" onClick={() => setProfileEdit(null)} aria-label="이름 편집 취소"><X size={17} /></button>
+              </form>
+            ) : <><h1>{current.nickname || current.username} <TierEmblem tier={current.tier} /></h1><button className="profile-edit-button" type="button" onClick={() => setProfileEdit("nickname")} aria-label="표시 이름 수정"><Pencil size={16} /></button></>}
+          </div>
           {current.role === "ADMIN" && <p className="profile-title">Super User</p>}
           <p className="muted">@{current.username}</p>
-          <p className="status-message">
-            {current.statusMessage || "No status message yet."}
-          </p>
+          <div className="profile-edit-line profile-edit-line--status">
+            {profileEdit === "status" ? (
+              <form className="profile-inline-editor" onSubmit={(event) => void saveProfile(event)}>
+                <input type="hidden" name="nickname" value={current.nickname || ""} />
+                <input name="statusMessage" defaultValue={current.statusMessage || ""} maxLength={160} placeholder="상태 메시지를 입력하세요" autoFocus aria-label="상태 메시지" />
+                <button className="button primary" type="submit">저장</button>
+                <button className="icon-button" type="button" onClick={() => setProfileEdit(null)} aria-label="상태 메시지 편집 취소"><X size={17} /></button>
+              </form>
+            ) : <><p className="status-message">{current.statusMessage || "No status message yet."}</p><button className="profile-edit-button" type="button" onClick={() => setProfileEdit("status")} aria-label="상태 메시지 수정"><Pencil size={15} /></button></>}
+          </div>
         </div>
       </div>
       <div className="profile-stats">
@@ -1861,77 +1937,13 @@ function ProfileView({
       </div>
       <section className="profile-layout">
         <div>
-          {attendance && (
-            <section className="panel attendance-panel">
-              <div className="attendance-heading">
-                <div>
-                  <p className="eyebrow">DAILY OPERATIONS</p>
-                  <h2>Attendance</h2>
-                </div>
-                <button
-                  type="button"
-                  className="button primary"
-                  disabled={attendance.checkedInToday}
-                  onClick={() => void checkIn()}
-                >
-                  {attendance.checkedInToday
-                    ? "Checked in today"
-                    : "Check in today"}
-                </button>
-              </div>
-              <div className="attendance-stats">
-                <div>
-                  <strong>{attendance.currentStreak}</strong>
-                  <small>Current streak</small>
-                </div>
-                <div>
-                  <strong>{attendance.longestStreak}</strong>
-                  <small>Longest streak</small>
-                </div>
-                <div>
-                  <strong>{attendance.totalDays}</strong>
-                  <small>Total days</small>
-                </div>
-              </div>
-              <div className="attendance-badges">
-                {attendance.badges.map((badge) => (
-                  <span
-                    className="attendance-badge"
-                    key={badge.id}
-                    title={badge.description}
-                  >
-                    ✦ {badge.name}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="panel profile-editor">
-            <h2>Customize profile</h2>
-            <form onSubmit={(event) => void saveProfile(event)}>
-              <label>
-                Display name
-                <input
-                  name="nickname"
-                  defaultValue={current.nickname}
-                  maxLength={80}
-                />
-              </label>
-              <label>
-                Status message
-                <textarea
-                  name="statusMessage"
-                  defaultValue={current.statusMessage || ""}
-                  maxLength={160}
-                  placeholder="What are you working on?"
-                />
-              </label>
-              <button className="button primary" type="submit">
-                Save profile
-              </button>
-            </form>
-          </section>
-          <ProfileHeatmap activity={solveActivity} className="my-profile-activity" />
+          {attendance && <StreakCalendar
+            streak={attendance.checkInDates.map((date) => ({ periodStart: date, periodEnd: date }))}
+            solveActivity={solveActivity}
+            month={calendarMonth}
+            onMonthChange={setCalendarMonth}
+            className="my-profile-calendar"
+          />}
           <section className="content-section">
             <button
               className="button secondary"
@@ -2557,6 +2569,9 @@ function AdminConsole({ language }: { language: Language }) {
   const [contentLoaded, setContentLoaded] = useState(false)
   const [feedbackLoaded, setFeedbackLoaded] = useState(false)
   const [tab, setTab] = useState<AdminTab>('overview')
+  const [accountQuery, setAccountQuery] = useState('')
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
+  const [accountPage, setAccountPage] = useState(1)
   const [error, setError] = useState('')
 
   const refresh = useCallback(async () => {
@@ -2684,6 +2699,13 @@ function AdminConsole({ language }: { language: Language }) {
   if (!dashboard) return <div className="page admin-page"><PageIntro eyebrow="ADMIN CONSOLE" title="Administrator console" description="Loading platform status and moderation controls." />{error && <p className="alert error">{error}</p>}<p className="muted">Loading administrator data...</p></div>
 
   const notices = posts.filter((post) => post.category === 'NOTICE')
+  const normalizedAccountQuery = accountQuery.trim().toLocaleLowerCase()
+  const filteredAccounts = dashboard.users.filter((item) => !normalizedAccountQuery || item.username.toLocaleLowerCase().includes(normalizedAccountQuery) || item.nickname.toLocaleLowerCase().includes(normalizedAccountQuery))
+  const accountsPerPage = 15
+  const accountPageCount = Math.max(1, Math.ceil(filteredAccounts.length / accountsPerPage))
+  const visibleAccountPage = Math.min(accountPage, accountPageCount)
+  const visibleAccounts = filteredAccounts.slice((visibleAccountPage - 1) * accountsPerPage, visibleAccountPage * accountsPerPage)
+  const selectedAccount = filteredAccounts.find((item) => item.id === selectedAccountId) ?? null
   const tabs: { id: AdminTab; label: string; count?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'accounts', label: 'Accounts', count: dashboard.users.length },
@@ -2715,7 +2737,7 @@ function AdminConsole({ language }: { language: Language }) {
       <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">RECENT ACTIVITY</p><h2>Recent submissions</h2></div><button type="button" className="text-button" onClick={() => setTab('security')}>View all</button></div><AdminSubmissionList items={dashboard.recentSubmissions.slice(0, 5)} /></section>
     </div>}
 
-    {tab === 'accounts' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>Account controls</h2></div><small>Edit names, adjust scores, suspend, restore, or delete accounts from one list.</small></div><div className="admin-table">{dashboard.users.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.nickname || item.username}</strong><small>@{item.username} · {item.score} pts · {item.role} · {item.status}</small>{item.suspensionReason && <small className="danger-text">Suspension reason: {item.suspensionReason}</small>}</div><div className="inline-actions">{item.status !== 'DELETED' && item.role !== 'ADMIN' && <button type="button" className="button secondary" onClick={() => void editUser(item.id, item.nickname)}>Edit name</button>}{item.status === 'ACTIVE' && <><button type="button" className="button secondary" onClick={() => void adjustScore(item.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost" onClick={() => void adjustScore(item.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button></>}{item.role !== 'ADMIN' && (item.status === 'DELETED' ? <><button type="button" className="button secondary" onClick={() => void reinstate(item.id)}>Restore account</button><button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(item.id, item.username)}>Permanent delete</button></> : <><button type="button" className="button secondary" onClick={() => void (item.status === 'ACTIVE' ? suspend(item.id) : reinstate(item.id))}>{item.status === 'ACTIVE' ? 'Suspend' : 'Restore'}</button><button type="button" className="text-button danger-text" onClick={() => void deactivate(item.id, item.username)}>Delete account</button></>)}</div></div>)}</div></section>}
+    {tab === 'accounts' && <section className="admin-section admin-card"><div className="admin-section-heading admin-account-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>Account controls</h2></div><label className="admin-account-search"><span className="sr-only">Search accounts</span><input value={accountQuery} onChange={(event) => { setAccountQuery(event.target.value); setAccountPage(1) }} placeholder={ko ? '아이디 또는 닉네임 검색' : 'Search ID or nickname'} /></label></div><div className="admin-account-grid">{visibleAccounts.map((item) => <button type="button" key={item.id} className={`admin-account-tile ${item.status === 'SUSPENDED' ? 'suspended' : item.status === 'DELETED' ? 'deleted' : ''} ${selectedAccount?.id === item.id ? 'active' : ''}`} onClick={() => setSelectedAccountId(item.id)} title={`@${item.username}`}><span>{item.nickname || item.username}</span>{item.status === 'SUSPENDED' && <b className="admin-account-status suspended">{ko ? '정지' : 'Suspended'}</b>}{item.status === 'DELETED' && <b className="admin-account-status deleted">{ko ? '삭제됨' : 'Deleted'}</b>}</button>)}</div>{filteredAccounts.length === 0 && <p className="muted admin-account-empty">{ko ? '검색 결과가 없습니다.' : 'No matching accounts.'}</p>}{accountPageCount > 1 && <nav className="admin-account-pagination" aria-label="Account pages">{Array.from({ length: accountPageCount }, (_, index) => index + 1).map((page) => <button type="button" key={page} className={visibleAccountPage === page ? 'active' : ''} onClick={() => setAccountPage(page)} aria-current={visibleAccountPage === page ? 'page' : undefined}>{page}</button>)}</nav>}{selectedAccount && <div className="admin-account-controls"><div><strong>{selectedAccount.nickname || selectedAccount.username}</strong><small>@{selectedAccount.username} · {selectedAccount.score} pts · {selectedAccount.role} · {selectedAccount.status}</small>{selectedAccount.suspensionReason && <small className="danger-text">Suspension reason: {selectedAccount.suspensionReason}</small>}</div><div className="inline-actions">{selectedAccount.status !== 'DELETED' && selectedAccount.role !== 'ADMIN' && <button type="button" className="button secondary" onClick={() => void editUser(selectedAccount.id, selectedAccount.nickname)}>Edit name</button>}{selectedAccount.status === 'ACTIVE' && <><button type="button" className="button secondary" onClick={() => void adjustScore(selectedAccount.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost" onClick={() => void adjustScore(selectedAccount.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button></>}{selectedAccount.role !== 'ADMIN' && (selectedAccount.status === 'DELETED' ? <><button type="button" className="button secondary" onClick={() => void reinstate(selectedAccount.id)}>Restore account</button><button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(selectedAccount.id, selectedAccount.username)}>Permanent delete</button></> : <><button type="button" className="button secondary" onClick={() => void (selectedAccount.status === 'ACTIVE' ? suspend(selectedAccount.id) : reinstate(selectedAccount.id))}>{selectedAccount.status === 'ACTIVE' ? 'Suspend' : 'Restore'}</button><button type="button" className="text-button danger-text" onClick={() => void deactivate(selectedAccount.id, selectedAccount.username)}>Delete account</button></>)}</div></div>}</section>}
 
     {tab === 'content' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMUNITY POSTS</p><h2>Post management</h2></div><small>Latest {posts.length}</small></div><div className="admin-table">{posts.filter((post) => post.category !== 'NOTICE').map((post) => <div className="admin-row" key={post.id}><div><strong>{post.title}</strong><small><Badge tone={post.category}>{post.category}</Badge> @{post.authorNickname || post.author} · {post.commentCount} comments · {new Date(post.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removePost(post.id, post.title)}>Delete</button></div>)}</div></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMENTS</p><h2>Comment management</h2></div><small>Latest {comments.length}</small></div><div className="admin-table">{comments.map((comment) => <div className="admin-row" key={comment.id}><div><strong>{comment.content}</strong><small>“{comment.postTitle}” · @{comment.authorNickname || comment.author} · {new Date(comment.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removeComment(comment.id)}>Delete</button></div>)}</div></section></div>}
 
@@ -2805,7 +2827,7 @@ function LegacyLoginView({ onBack, onAuth }: { onBack: () => void; onAuth: (resu
   return <div className="auth-page"><button className="back-link" type="button" onClick={onBack}>← 홈으로</button><div className="auth-card"><p className="eyebrow">SECURE ACCESS</p><h1>{title}</h1>{isRecovery && <p className="auth-recovery-copy">{mode === 'username' ? '일반 회원가입 때 등록한 이메일로 아이디를 안내합니다. OAuth 계정은 제외됩니다.' : mode === 'password' ? '아이디와 가입 이메일이 일치하면 안전한 비밀번호 재설정 링크를 보냅니다.' : '새 비밀번호를 입력해 주세요. 링크는 한 번만 사용할 수 있습니다.'}</p>}<form className="auth-form" onSubmit={submit}>{(mode === 'login' || mode === 'register' || mode === 'password') && <label>아이디<input name="username" placeholder="예: flagbox_01 (영문·숫자·_)" required minLength={3} maxLength={50} pattern="[A-Za-z0-9_]+" autoComplete="username" /></label>}{mode === 'register' && <label>표시 이름 (선택)<input name="nickname" placeholder="예: 플래그박스 새싹" maxLength={80} /></label>}{(mode === 'register' || mode === 'username' || mode === 'password') && <label>가입 이메일<input name="email" type="email" placeholder="예: flagbox@example.com" required maxLength={254} autoComplete="email" /></label>}{(mode === 'login' || mode === 'register' || mode === 'reset') && <label>{mode === 'reset' ? '새 비밀번호' : '비밀번호'}<input name="password" type="password" placeholder={mode === 'login' ? '비밀번호 입력' : '8자 이상 비밀번호 입력'} required minLength={mode === 'login' ? undefined : 8} maxLength={100} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} /></label>}{(mode === 'register' || mode === 'reset') && <label>비밀번호 확인<input name="passwordConfirmation" type="password" placeholder="비밀번호를 한 번 더 입력" required minLength={8} maxLength={100} autoComplete="new-password" /></label>}<button className="button primary" type="submit">{mode === 'register' ? '계정 만들기' : mode === 'username' ? '아이디 안내 받기' : mode === 'password' ? '재설정 링크 받기' : mode === 'reset' ? '비밀번호 변경' : '로그인'}</button></form>{notice && <p className="alert success">{notice}</p>}{error && <p className="alert error">{error}</p>}{(mode === 'login' || mode === 'register') && <><div className="auth-divider"><span>또는</span></div><div className="social-buttons">{providers.map((provider) => <button className={`social-button oauth-${provider}`} type="button" key={provider} onClick={() => { window.location.href = `${oauthBaseUrl}/api/auth/oauth/${provider}/authorize` }}><ProviderIcon provider={provider} /><span>{provider[0].toUpperCase() + provider.slice(1)}로 계속하기</span></button>)}</div></>}<div className="auth-footnote auth-links">{mode === 'login' && <><button type="button" onClick={() => switchMode('username')}>아이디를 잊으셨나요?</button><button type="button" onClick={() => switchMode('password')}>비밀번호를 잊으셨나요?</button><span>처음이신가요? <button type="button" onClick={() => switchMode('register')}>회원가입</button></span></>}{mode === 'register' && <span>이미 계정이 있으신가요? <button type="button" onClick={() => switchMode('login')}>로그인</button></span>}{isRecovery && <button type="button" onClick={() => switchMode('login')}>로그인으로 돌아가기</button>}</div></div></div>
 }
 function LoginView({ onBack, onAuth, language }: { onBack: () => void; onAuth: (result: { token: string; user: User }) => void; language: Language }) {
-  return <div className="auth-login-shell"><section className="auth-showcase" aria-label="Interactive constellation background"><AetherFlowHero className="auth-showcase__aether" showContent={false} /><span className="auth-showcase__wordmark" aria-hidden="true">FlagBox</span></section><LegacyLoginView onBack={onBack} onAuth={onAuth} language={language} /></div>
+  return <div className="auth-login-shell"><section className="auth-showcase" aria-label="Interactive constellation background"><AetherFlowHero className="auth-showcase__aether" showContent={false} /><span className="auth-showcase__wordmark" aria-hidden="true">Flag<span className="auth-showcase__wordmark-box">Box</span></span></section><LegacyLoginView onBack={onBack} onAuth={onAuth} language={language} /></div>
 }
 
 function ProviderIcon({ provider }: { provider: string }) {

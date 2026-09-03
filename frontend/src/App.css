@@ -1454,7 +1454,7 @@ html[lang="en"] .site-footer::before {
   color: var(--text);
   font-family: var(--display);
   font-size: 22px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 .footer-brand p {
   max-width: 440px;
@@ -3574,7 +3574,7 @@ html[data-theme="light"] .guide-block li {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px 28px;
   align-items: center;
-  margin: 0 0 24px;
+  margin: 48px 0 24px;
   padding: 22px 24px;
   border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
   border-radius: 20px;
@@ -4116,10 +4116,13 @@ html[data-theme="light"] .learn-check li {
   font-size: clamp(64px, 9vw, 142px);
   font-weight: 800;
   line-height: 0.9;
-  letter-spacing: -0.085em;
+  letter-spacing: -0.025em;
   transform: translate(-50%, -50%);
   pointer-events: none;
   user-select: none;
+}
+.auth-showcase__wordmark-box {
+  letter-spacing: -0.05em;
 }
 html[data-theme="light"] .auth-showcase {
   background: #f8fafc;
@@ -5133,6 +5136,9 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
   border-radius: 20px;
   background: var(--surface);
 }
+.combined-activity-calendar { margin-top: 18px; }
+.combined-activity-calendar .profile-heatmap { margin-top: 8px; }
+.combined-activity-calendar__hint { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 .profile-heatmap h2,
 .profile-heatmap p {
   margin: 0;
@@ -5182,6 +5188,15 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
 .heatmap-legend .level-4 {
   background: var(--bklit-heatmap-4);
 }
+.contribution-heatmap .heatmap-cell.checked-in,
+.contribution-heatmap .heatmap-legend .checked-in {
+  background: #f0ad4e;
+  border-color: #f7c16d;
+}
+.contribution-heatmap .heatmap-cell.solved-and-checked {
+  background: linear-gradient(135deg, var(--bklit-heatmap-4) 0 52%, #f0ad4e 52% 100%);
+  border-color: color-mix(in srgb, var(--bklit-heatmap-4) 54%, #f0ad4e);
+}
 .heatmap-legend {
   display: flex;
   align-items: center;
@@ -5211,6 +5226,7 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
 @keyframes radar-grid-in { from { opacity: 0; transform: scale(.35); } to { opacity: 1; transform: scale(1); } }
 @keyframes radar-area-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
 .heatmap-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.combined-activity-note { align-self: center; color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .heatmap-range { display: inline-flex; flex: 0 0 auto; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-strong); }
 .heatmap-range button { padding: 6px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
 .heatmap-range button.active { background: var(--accent); color: #fff; }
@@ -5302,6 +5318,85 @@ html[data-theme="light"] .vault-redesign .vault-kicker {
   width: 100%;
   margin-top: 20px;
 }
+
+/* Unified learning and attendance calendar. */
+.profile-page .profile-layout > div {
+  grid-template-columns: minmax(0, 1fr);
+}
+.profile-page .profile-editor {
+  display: grid;
+  grid-template-columns: minmax(180px, .44fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+  padding: 4px 0 24px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.profile-editor__heading h2 { margin: 5px 0 0; color: var(--text); font-size: 24px; }
+.profile-page .profile-editor form { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto; align-items: end; gap: 14px; }
+.profile-page .profile-editor label { color: var(--muted); font-size: 13px; font-weight: 700; }
+.profile-page .profile-editor input,
+.profile-page .profile-editor textarea { min-height: 44px; box-sizing: border-box; border-radius: 10px; background: var(--surface-strong); color: var(--text); }
+.profile-page .profile-editor textarea { min-height: 44px; height: 44px; resize: none; }
+.profile-page .profile-editor .button { min-height: 44px; white-space: nowrap; }
+
+.profile-edit-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.profile-edit-line--name { margin: 0; }
+.profile-edit-line--status { margin-top: 1px; }
+.profile-edit-line .status-message { min-width: 0; }
+.profile-edit-button, .icon-button { display: grid; flex: 0 0 auto; width: 28px; height: 28px; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.profile-edit-button:hover, .profile-edit-button:focus-visible, .icon-button:hover, .icon-button:focus-visible { background: var(--accent-dim); color: var(--accent); outline: none; }
+.profile-inline-editor { display: flex; width: min(100%, 520px); align-items: center; gap: 7px; }
+.profile-inline-editor input:not([type="hidden"]) { min-width: 0; flex: 1; height: 38px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-strong); color: var(--text); padding: 0 10px; font: inherit; font-size: 16px; font-weight: 700; }
+.profile-inline-editor .button { min-height: 38px; padding: 8px 12px; font-size: 13px; }
+
+.streak-calendar { margin-top: 22px; padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line); border-radius: 20px; background: var(--surface); color: var(--text); box-shadow: 0 12px 30px color-mix(in srgb, var(--bg) 58%, transparent); }
+.profile-page .profile-layout > div > .my-profile-calendar { grid-column: 1 / -1; width: 100%; min-width: 0; box-sizing: border-box; }
+.streak-calendar__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.streak-calendar__header h2, .streak-calendar__header p { margin: 0; }
+.streak-calendar__header h2 { margin-top: 5px; font-size: 24px; color: var(--text); }
+.streak-calendar__header p { margin-top: 6px; color: var(--muted); font-size: 14px; }
+.streak-calendar__navigation { display: inline-flex; align-items: center; gap: 12px; padding: 5px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-strong); }
+.streak-calendar__navigation strong { min-width: 145px; color: var(--text); font-size: 14px; text-align: center; }
+.streak-calendar__navigation button { display: grid; width: 30px; height: 30px; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.streak-calendar__navigation button:hover { background: var(--accent-dim); color: var(--accent); }
+.streak-calendar__weekdays, .streak-calendar__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 11px; }
+.streak-calendar__weekdays { margin-top: 28px; padding: 0 2px; color: var(--muted); font-size: 14px; font-weight: 800; text-align: center; }
+.streak-calendar__grid { margin-top: 9px; animation: streak-calendar-month-in .32s ease both; }
+.streak-calendar__empty { min-width: 0; aspect-ratio: 1 / .86; }
+.streak-calendar__day { display: flex; min-width: 0; aspect-ratio: 1 / .88; min-height: 100px; flex-direction: column; align-items: flex-start; justify-content: space-between; overflow: hidden; border: 1px solid color-mix(in srgb, var(--line) 88%, transparent); border-radius: 13px; background: color-mix(in srgb, var(--surface-strong) 72%, transparent); color: var(--text); padding: 11px; text-align: left; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; cursor: pointer; }
+.streak-calendar__day:hover { z-index: 1; transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 16%, transparent); }
+.streak-calendar__day.is-today { border-color: var(--accent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
+.streak-calendar__day.is-future { opacity: .42; cursor: not-allowed; }
+.streak-calendar__date { font-size: 15px; font-weight: 800; }
+.streak-calendar__details { display: flex; min-width: 0; min-height: 31px; flex-wrap: wrap; align-items: center; gap: 6px; }
+.streak-calendar__check, .streak-calendar__solves { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 6px 10px; font-family: var(--sans); font-size: 16px; font-weight: 700; letter-spacing: -.025em; line-height: 1; }
+.streak-calendar__check { background: color-mix(in srgb, #35c978 23%, transparent); color: #65eaa0; }
+.streak-calendar__solves { background: color-mix(in srgb, #9b7bff 25%, transparent); color: #c0aeff; }
+.streak-calendar__day.is-checked-in.has-solves { background: linear-gradient(135deg, color-mix(in srgb, #35c978 13%, var(--surface-strong)) 0 49%, color-mix(in srgb, #9b7bff 14%, var(--surface-strong)) 49% 100%); }
+.streak-calendar__legend { display: flex; flex-wrap: wrap; gap: 14px; justify-content: flex-end; margin-top: 18px; color: var(--muted); font-size: 12px; }
+.streak-calendar__legend span { display: inline-flex; align-items: center; gap: 5px; }
+.streak-calendar__legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; }
+.streak-calendar__legend .check { background: #35c978; }.streak-calendar__legend .solve { background: #9b7bff; }.streak-calendar__legend .both { background: linear-gradient(135deg, #35c978 0 50%, #9b7bff 50% 100%); }
+@keyframes streak-calendar-month-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.check-in-modal-backdrop { position: fixed; inset: 0; z-index: 220; display: grid; place-items: center; padding: 20px; background: rgba(2, 6, 12, .68); backdrop-filter: blur(7px); }
+.check-in-modal { width: min(480px, 100%); padding: 30px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: 0 26px 80px rgba(0, 0, 0, .45); animation: check-in-modal-in .25s ease both; }
+.check-in-modal h2 { margin: 6px 0 8px; color: var(--text); font-size: 28px; }.check-in-modal > p { margin: 0; color: var(--muted); line-height: 1.65; }
+.check-in-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin: 28px 0 22px; }
+.check-in-week__day { display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: 11px; font-weight: 750; }
+.check-in-week__circle { display: grid; width: 38px; height: 38px; place-items: center; box-sizing: border-box; border: 1px solid var(--line); border-radius: 50%; background: color-mix(in srgb, var(--surface-strong) 82%, transparent); color: #fff; font-size: 19px; font-weight: 900; transition: background .22s ease, border-color .22s ease, transform .22s ease; }
+.check-in-week__day.is-complete:not(.is-today) .check-in-week__circle { border-color: color-mix(in srgb, var(--text) 22%, var(--line)); background: color-mix(in srgb, var(--text) 13%, var(--surface-strong)); }
+.check-in-week__day.is-today .check-in-week__circle { border: 2px solid var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
+.check-in-week__day.is-today.is-complete .check-in-week__circle { border-color: #35c978; background: #35c978; box-shadow: 0 0 0 3px rgba(53, 201, 120, .15), 0 8px 20px rgba(53, 201, 120, .25); transform: scale(1.08); }
+.check-in-week__day.is-future { opacity: .36; }.check-in-week__day.is-today { color: var(--text); }
+.check-in-modal__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 22px 0; }.check-in-modal__stats span { padding: 12px; border-radius: 12px; background: var(--surface-strong); color: var(--muted); font-size: 12px; }.check-in-modal__stats b { display: block; margin-bottom: 3px; color: var(--accent); font-size: 22px; }
+.check-in-modal__actions { display: flex; justify-content: flex-end; gap: 9px; }
+@keyframes check-in-modal-in { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 720px) { .profile-inline-editor { width: 100%; }.streak-calendar__header { flex-direction: column; }.streak-calendar__navigation { width: 100%; justify-content: space-between; }.streak-calendar__day { min-height: 88px; padding: 7px; border-radius: 9px; }.streak-calendar__check, .streak-calendar__solves { gap: 4px; padding: 5px 7px; font-size: 14px; }.streak-calendar__weekdays { font-size: 12px; }.streak-calendar__weekdays, .streak-calendar__grid { gap: 5px; } }
+@media (prefers-reduced-motion: reduce) { .streak-calendar__grid, .check-in-modal { animation: none; }.streak-calendar__day { transition: none; } }
 
 /* Titles and ranking identities deliberately use the same readable base font. */
 .app-shell

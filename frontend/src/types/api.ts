@@ -66,6 +66,7 @@ export type AttendanceSummary = {
   activeTitle: string | null
   badges: AttendanceBadge[]
   earnedTitles: AttendanceTitle[]
+  checkInDates: string[]
 }
 
 export type AttendanceRankingRow = {
