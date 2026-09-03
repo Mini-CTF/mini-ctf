@@ -1,7 +1,12 @@
 package com.minictf.config;
 
+import com.minictf.challenge.Challenge;
+import com.minictf.challenge.ChallengeRepository;
+import com.minictf.challenge.Solve;
+import com.minictf.challenge.SolveRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +18,8 @@ public class DataInitializer {
   @Bean
   CommandLineRunner createAdmin(
       UserRepository users,
+      ChallengeRepository challenges,
+      SolveRepository solves,
       PasswordEncoder encoder,
       @Value("${ADMIN_USERNAME:}") String username,
       @Value("${ADMIN_PASSWORD:}") String password) {
@@ -37,6 +44,23 @@ public class DataInitializer {
       u.setSuspensionReason(null);
       u.setSuspendedAt(null);
       users.save(u);
+
+      // The platform account is a showcase and moderation account: keep its solve history in
+      // sync with every active challenge without fabricating regular submission attempts.
+      Set<Long> solvedChallengeIds = solves.findChallengeIdsByUserId(u.getId());
+      var missingSolves =
+          challenges.findByActiveTrueOrderByIdAsc().stream()
+              .filter(challenge -> !solvedChallengeIds.contains(challenge.getId()))
+              .map(challenge -> adminSolve(u, challenge))
+              .toList();
+      if (!missingSolves.isEmpty()) solves.saveAll(missingSolves);
     };
+  }
+
+  private static Solve adminSolve(User user, Challenge challenge) {
+    Solve solve = new Solve();
+    solve.setUser(user);
+    solve.setChallenge(challenge);
+    return solve;
   }
 }
