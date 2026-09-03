@@ -27,6 +27,11 @@ public class ModeratorController {
     return ApiResponse.ok(service.users());
   }
 
+  @GetMapping("/users/{id}/logs")
+  public ApiResponse<?> accountLogs(@PathVariable Long id, Authentication auth) {
+    return ApiResponse.ok(service.accountLogs(id, auth.getName()));
+  }
+
   @GetMapping("/notices")
   public ApiResponse<?> notices() {
     return ApiResponse.ok(

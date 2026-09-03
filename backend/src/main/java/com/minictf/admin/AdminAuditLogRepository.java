@@ -9,4 +9,7 @@ public interface AdminAuditLogRepository extends JpaRepository<AdminAuditLog, Lo
   @Query(
       "select log from AdminAuditLog log join fetch log.admin where log.hidden = false order by log.createdAt desc")
   List<AdminAuditLog> findVisibleWithAdmin(Pageable pageable);
+
+  List<AdminAuditLog> findTop25ByTargetTypeAndTargetIdAndHiddenFalseOrderByCreatedAtDesc(
+      String targetType, Long targetId);
 }

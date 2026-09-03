@@ -27,6 +27,11 @@ public class AdminModerationController {
     return ApiResponse.ok(service.users());
   }
 
+  @GetMapping("/users/{id}/logs")
+  public ApiResponse<?> accountLogs(@PathVariable Long id, Authentication auth) {
+    return ApiResponse.ok(service.accountLogs(id, auth.getName()));
+  }
+
   @PatchMapping("/users/{id}")
   public ApiResponse<?> updateUser(
       @PathVariable Long id,

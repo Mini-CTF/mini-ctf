@@ -1,6 +1,7 @@
 package com.minictf.admin;
 
 import com.minictf.anticheat.AntiCheatEventRepository;
+import com.minictf.attendance.AttendanceCheckinRepository;
 import com.minictf.challenge.SolveRepository;
 import com.minictf.challenge.SubmissionRepository;
 import com.minictf.community.Post;
@@ -11,6 +12,8 @@ import com.minictf.user.User;
 import com.minictf.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +33,7 @@ public class AdminModerationService {
   private final PostRepository posts;
   private final PostCommentRepository postComments;
   private final IpBanRepository ipBans;
+  private final AttendanceCheckinRepository attendanceCheckins;
 
   public AdminModerationService(
       UserRepository users,
@@ -40,7 +44,8 @@ public class AdminModerationService {
       SecurityEventRepository securityEvents,
       PostRepository posts,
       PostCommentRepository postComments,
-      IpBanRepository ipBans) {
+      IpBanRepository ipBans,
+      AttendanceCheckinRepository attendanceCheckins) {
     this.users = users;
     this.submissions = submissions;
     this.solves = solves;
@@ -50,6 +55,7 @@ public class AdminModerationService {
     this.posts = posts;
     this.postComments = postComments;
     this.ipBans = ipBans;
+    this.attendanceCheckins = attendanceCheckins;
   }
 
   @Transactional(readOnly = true)
@@ -63,6 +69,58 @@ public class AdminModerationService {
     return users.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
         .limit(100)
         .map(this::userView)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<AdminDtos.AccountLogView> accountLogs(Long targetId, String actorUsername) {
+    User target = target(targetId);
+    ensureCanViewAccountLogs(actorUsername, target);
+    List<AdminDtos.AccountLogView> logs = new ArrayList<>();
+    submissions
+        .findByUserId(targetId, PageRequest.of(0, 25))
+        .forEach(
+            submission ->
+                logs.add(
+                    new AdminDtos.AccountLogView(
+                        submission.isCorrect() ? "SUBMISSION_CORRECT" : "SUBMISSION_INCORRECT",
+                        submission.getChallengeTitle(),
+                        submission.getSubmittedAt())));
+    solves.findByUserId(targetId).stream()
+        .limit(25)
+        .forEach(
+            solve ->
+                logs.add(
+                    new AdminDtos.AccountLogView(
+                        "SOLVED", solve.getChallengeTitle(), solve.getSolvedAt())));
+    attendanceCheckins.findByUserIdOrderByCheckinDateDesc(targetId).stream()
+        .limit(25)
+        .forEach(
+            checkin ->
+                logs.add(
+                    new AdminDtos.AccountLogView(
+                        "CHECK_IN",
+                        checkin.getCheckinDate().toString(),
+                        checkin.getCheckedInAt())));
+    securityEvents
+        .findTop25ByUserIdAndHiddenFalseOrderByCreatedAtDesc(targetId)
+        .forEach(
+            event ->
+                logs.add(
+                    new AdminDtos.AccountLogView(
+                        "SECURITY_" + event.getEventType(),
+                        event.getDetail(),
+                        event.getCreatedAt())));
+    auditLogs
+        .findTop25ByTargetTypeAndTargetIdAndHiddenFalseOrderByCreatedAtDesc("USER", targetId)
+        .forEach(
+            log ->
+                logs.add(
+                    new AdminDtos.AccountLogView(
+                        "ADMIN_" + log.getAction(), log.getDetail(), log.getCreatedAt())));
+    return logs.stream()
+        .sorted(Comparator.comparing(AdminDtos.AccountLogView::occurredAt).reversed())
+        .limit(50)
         .toList();
   }
 
@@ -100,7 +158,7 @@ public class AdminModerationService {
   public AdminDtos.UserView adjustScore(
       Long targetId, AdminDtos.ScoreAdjustmentRequest request, String adminUsername) {
     User target = targetForUpdate(targetId);
-    ensureCanManage(adminUsername, target, false);
+    ensureCanAdjustScore(adminUsername, target);
     if (!"ACTIVE".equals(target.getStatus()))
       throw new IllegalArgumentException("Restore the account before adjusting its score");
     int previous = target.getScore();
@@ -508,6 +566,21 @@ public class AdminModerationService {
         && (deletedAccount || !"USER".equals(target.getRole()))) {
       throw new AccessDeniedException("Limited administrators can only moderate active users");
     }
+  }
+
+  private void ensureCanAdjustScore(String actorUsername, User target) {
+    User actor = users.findByUsernameIgnoreCase(actorUsername).orElseThrow();
+    if ("ADMIN".equals(target.getRole())) {
+      if ("ADMIN".equals(actor.getRole()) && actor.getId().equals(target.getId())) return;
+      throw new AccessDeniedException("Only the primary administrator can adjust their own score");
+    }
+    ensureCanManage(actorUsername, target, false);
+  }
+
+  private void ensureCanViewAccountLogs(String actorUsername, User target) {
+    User actor = users.findByUsernameIgnoreCase(actorUsername).orElseThrow();
+    if ("MODERATOR".equals(actor.getRole()) && !"USER".equals(target.getRole()))
+      throw new AccessDeniedException("Limited administrators can only view user activity logs");
   }
 
   private void audit(

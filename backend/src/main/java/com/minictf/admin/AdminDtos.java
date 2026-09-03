@@ -18,6 +18,8 @@ public final class AdminDtos {
       Instant createdAt,
       Instant suspendedAt) {}
 
+  public record AccountLogView(String type, String detail, Instant occurredAt) {}
+
   public record UserUpdateRequest(@NotBlank @Size(max = 80) String nickname) {}
 
   public record RoleUpdateRequest(@Pattern(regexp = "^(USER|MODERATOR)$") String role) {}
