@@ -15,6 +15,7 @@ public class AttendanceService {
   private static final ZoneId PLATFORM_ZONE = ZoneId.of("Asia/Seoul");
   private static final String FIRST_CHECK = "FIRST_CHECK";
   private static final String SUPER_USER = "SUPER_USER";
+  private static final String SUB_ADMIN = "SUB_ADMIN";
   private static final List<BadgeRule> BADGES =
       List.of(
           new BadgeRule(
@@ -65,10 +66,16 @@ public class AttendanceService {
                     rule.streak ? longestStreak >= rule.threshold : dates.size() >= rule.threshold)
             .map(rule -> new AttendanceDtos.Badge(rule.id, rule.name, rule.description))
             .toList();
-    boolean admin = "ADMIN".equals(user.getRole());
+    String roleTitle = roleTitle(user);
     List<AttendanceDtos.Title> earnedTitles =
-        admin ? List.of(new AttendanceDtos.Title(SUPER_USER, "Super User", "Administrator title")) : List.of();
-    String activeTitle = admin ? SUPER_USER : null;
+        roleTitle == null
+            ? List.of()
+            : List.of(
+                new AttendanceDtos.Title(
+                    roleTitle,
+                    SUPER_USER.equals(roleTitle) ? "Super User" : "Sub-admin",
+                    "Administrator title"));
+    String activeTitle = roleTitle;
     return new AttendanceDtos.Summary(
         dates.size(),
         currentStreak,
@@ -106,7 +113,7 @@ public class AttendanceService {
               avatarUrl(row.getUsername(), row.getAvatarPath()),
               null,
               null,
-              "ADMIN".equals(row.getRole()) ? "SUPER_USER" : null,
+              roleTitle(row.getRole()),
               UserTier.forScore(row.getScore()).id()));
       previousTotal = row.getTotalDays();
     }
@@ -156,7 +163,15 @@ public class AttendanceService {
         + Integer.toUnsignedString(avatarPath.hashCode());
   }
 
+  private static String roleTitle(User user) {
+    return roleTitle(user.getRole());
+  }
+
+  private static String roleTitle(String role) {
+    if ("ADMIN".equals(role)) return SUPER_USER;
+    return "MODERATOR".equals(role) ? SUB_ADMIN : null;
+  }
+
   private record BadgeRule(
       String id, String name, String description, int threshold, boolean streak) {}
-
 }

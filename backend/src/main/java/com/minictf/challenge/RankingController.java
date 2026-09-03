@@ -35,7 +35,7 @@ public class RankingController {
               u.getNickname(),
               u.getScore(),
               solves.countByUser(u.getId()),
-              "ADMIN".equals(u.getRole()) ? "SUPER_USER" : null,
+              titleForRole(u.getRole()),
               null,
               null,
               avatarUrl(u),
@@ -63,5 +63,10 @@ public class RankingController {
         + user.getUsername()
         + "/avatar?v="
         + Integer.toUnsignedString(user.getAvatarPath().hashCode());
+  }
+
+  private static String titleForRole(String role) {
+    if ("ADMIN".equals(role)) return "SUPER_USER";
+    return "MODERATOR".equals(role) ? "SUB_ADMIN" : null;
   }
 }

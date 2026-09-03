@@ -193,7 +193,8 @@ public class UserProfileService {
   }
 
   private String displayTitle(User user) {
-    return "ADMIN".equals(user.getRole()) ? "SUPER_USER" : null;
+    if ("ADMIN".equals(user.getRole())) return "SUPER_USER";
+    return "MODERATOR".equals(user.getRole()) ? "SUB_ADMIN" : null;
   }
 
   private String cleanOptional(String value, int max) {
