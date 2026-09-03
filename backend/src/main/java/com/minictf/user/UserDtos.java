@@ -45,6 +45,7 @@ public final class UserDtos {
       String equippedTitle,
       List<PublicFriend> friends,
       List<SolveActivity> solveActivity,
+      List<String> attendanceDates,
       String tier) {}
 
   public record SolveActivity(String date, long count) {}

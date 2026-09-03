@@ -1,5 +1,6 @@
 package com.minictf.user;
 
+import com.minictf.attendance.AttendanceCheckinRepository;
 import com.minictf.challenge.SolveRepository;
 import com.minictf.common.AccountNameSafety;
 import com.minictf.social.FriendshipRepository;
@@ -24,6 +25,7 @@ public class UserProfileService {
   private static final Set<String> IMAGE_EXTENSIONS = Set.of("png", "jpg", "jpeg");
   private final UserRepository users;
   private final SolveRepository solves;
+  private final AttendanceCheckinRepository attendanceCheckins;
   private final FriendshipRepository friendships;
   private final AvatarStorage avatars;
   private final AccountNameSafety accountNameSafety;
@@ -31,11 +33,13 @@ public class UserProfileService {
   public UserProfileService(
       UserRepository users,
       SolveRepository solves,
+      AttendanceCheckinRepository attendanceCheckins,
       FriendshipRepository friendships,
       AvatarStorage avatars,
       AccountNameSafety accountNameSafety) {
     this.users = users;
     this.solves = solves;
+    this.attendanceCheckins = attendanceCheckins;
     this.friendships = friendships;
     this.avatars = avatars;
     this.accountNameSafety = accountNameSafety;
@@ -138,6 +142,9 @@ public class UserProfileService {
         solveActivity.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
             .map(entry -> new UserDtos.SolveActivity(entry.getKey(), entry.getValue()))
+            .toList(),
+        attendanceCheckins.findByUserIdOrderByCheckinDateDesc(user.getId()).stream()
+            .map(checkin -> checkin.getCheckinDate().toString())
             .toList(),
         UserTier.forScore(user.getScore()).id());
   }
