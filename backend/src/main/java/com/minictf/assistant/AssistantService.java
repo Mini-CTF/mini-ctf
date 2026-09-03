@@ -65,7 +65,12 @@ public class AssistantService {
   public AssistantDtos.ChatReply reply(String username, AssistantDtos.ChatRequest request) {
     boolean korean = !"en".equalsIgnoreCase(request.language());
     rateLimits.check("assistant-chat", username, 12, 600);
-    if (apiKey.isBlank()) throw new AssistantUnavailableException();
+    if (apiKey.isBlank()) {
+      log.warn("Gemini API key is not configured; using the FlagBox learning fallback");
+      return new AssistantDtos.ChatReply(
+          fallbackReply(korean, request.message(), request.challengeId()),
+          contextLabel(request.challengeId()));
+    }
     if (asksForRestrictedAnswer(request.message()))
       return new AssistantDtos.ChatReply(
           korean ? SAFE_REPLY_KO : SAFE_REPLY_EN, contextLabel(request.challengeId()));
@@ -79,7 +84,10 @@ public class AssistantService {
       response =
           callModel(
               fallbackModel, systemPrompt(korean, challenge), request.message(), request.history());
-    if (response == null || response.isBlank()) throw new AssistantUnavailableException();
+    if (response == null || response.isBlank()) {
+      log.warn("Gemini models were unavailable; using the FlagBox learning fallback");
+      response = fallbackReply(korean, request.message(), request.challengeId());
+    }
     return new AssistantDtos.ChatReply(
         response.trim(), challenge == null ? null : challenge.getTitle());
   }
@@ -118,6 +126,53 @@ public class AssistantService {
     return challengeId == null
         ? null
         : challenges.findById(challengeId).map(Challenge::getTitle).orElse(null);
+  }
+
+  private String fallbackReply(boolean korean, String message, Long challengeId) {
+    Challenge challenge =
+        challengeId == null ? null : challenges.findById(challengeId).orElse(null);
+    String category = challenge == null ? null : challenge.getCategory();
+    String title = challenge == null ? null : challenge.getTitle();
+    String tools =
+        switch (category == null ? "" : category) {
+          case "WEB" ->
+              korean
+                  ? "브라우저 개발자 도구(F12)의 Elements·Network 탭"
+                  : "browser developer tools (Elements and Network)";
+          case "FORENSIC" ->
+              korean
+                  ? "텍스트 검색과 CyberChef 또는 파일 분석 도구"
+                  : "text search plus CyberChef or a file-analysis tool";
+          case "REVERSING" -> korean ? "텍스트 편집기와 Python" : "a text editor and Python";
+          case "CRYPTO" ->
+              korean ? "CyberChef와 Python 또는 계산기" : "CyberChef plus Python or a calculator";
+          case "MISC" -> korean ? "텍스트 편집기와 CyberChef" : "a text editor and CyberChef";
+          default -> korean ? "문제 설명과 무료 힌트" : "the challenge brief and free hint";
+        };
+    String focus =
+        message == null || message.isBlank()
+            ? (korean ? "문제의 설명" : "the challenge brief")
+            : message.trim();
+    if (korean) {
+      return (title == null ? "" : "현재 문제: " + title + "\n")
+          + "다음 순서로 시작해 보세요.\n"
+          + "1. "
+          + focus
+          + "에서 형식·파일명·반복되는 단서를 표시하세요.\n"
+          + "2. "
+          + tools
+          + "로 가장 단순한 확인부터 해 보세요.\n"
+          + "3. 결과가 예상과 다르면 한 단계만 되돌아가 무료 힌트와 비교하세요.";
+    }
+    return (title == null ? "" : "Current challenge: " + title + "\n")
+        + "Try this small, safe starting plan.\n"
+        + "1. Mark formats, file names, and repeated clues in "
+        + focus
+        + ".\n"
+        + "2. Start with "
+        + tools
+        + ".\n"
+        + "3. If the result is unexpected, step back once and compare it with the free hint.";
   }
 
   private static String normalizeModel(String model) {
