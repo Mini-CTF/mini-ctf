@@ -1075,7 +1075,13 @@ html[lang='en'] .hero-banner-content h1 { letter-spacing: -.048em; }
   .hero-banner-content h1 span { white-space: normal; }
   html[lang='en'] .hero-banner-content h1 { font-size: clamp(31px, 8.8vw, 43px); letter-spacing: -.045em; }
   .hero-banner-content p:not(.eyebrow) { font-size: 16px; }
-  .hero-banner-wordmark { right: 24px; bottom: 92px; max-width: 62%; font-size: clamp(69px, 20.7vw, 120px); }
+  .hero-banner-wordmark {
+    z-index: 0;
+    right: 20px;
+    bottom: 96px;
+    max-width: none;
+    font-size: clamp(54px, 14.5vw, 70px);
+  }
   .home-page .hero-banner-dots { right: auto; left: 30px; bottom: 28px; }
   .site-footer { margin-top: 56px; padding-bottom: 28px; }
 }
