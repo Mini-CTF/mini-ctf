@@ -1219,3 +1219,48 @@ html[data-theme='light'] .page-number.active { color: #fff; }
     font-size: 11px;
   }
 }
+
+@media (max-width: 620px) {
+  /* Keep the banner on phones, but constrain its decorative wordmark to the viewport. */
+  .home-page .hero-banner {
+    display: flex;
+    width: 100%;
+    min-height: 440px;
+    margin: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+  .hero-banner-wordmark {
+    right: 16px;
+    bottom: 94px;
+    max-width: none;
+    font-size: clamp(48px, 12vw, 60px);
+  }
+
+  /* Footer shortcuts duplicate the mobile menu; keep only the compact footer information. */
+  .site-footer {
+    margin-top: 40px;
+    padding: 20px 16px 18px;
+  }
+  .site-footer .footer-links {
+    display: none;
+  }
+  .site-footer .footer-brand p {
+    margin: 5px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .site-footer .footer-bottom {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .site-footer .footer-bottom span {
+    min-width: 0;
+  }
+}
