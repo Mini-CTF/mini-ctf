@@ -1303,4 +1303,7 @@ html[data-theme='light'] .page-number.active { color: #fff; }
   .challenge-card .badge {
     font-size: 10px;
   }
+  .ranking-row.is-empty-ranking {
+    display: none;
+  }
 }
