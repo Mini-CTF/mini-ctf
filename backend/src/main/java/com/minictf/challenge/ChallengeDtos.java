@@ -28,16 +28,15 @@ public final class ChallengeDtos {
       boolean solved,
       boolean artifactAvailable,
       boolean hintAvailable,
-      int hintCost,
       long solveCount,
       long likeCount,
       boolean liked) {}
 
-  public record HintView(String hint, int remainingCredits) {}
+  public record HintView(String hint) {}
 
   public record SubmitRequest(@NotBlank @Size(max = 200) String flag) {}
 
-  public record SubmitResult(String result, int awardedScore, int awardedGems) {}
+  public record SubmitResult(String result, int awardedScore) {}
 
   public record ActivityRequest(
       @NotBlank @Pattern(regexp = "OPENED|FOCUS_LOST|FOCUS_RESTORED") String type) {}
@@ -51,8 +50,7 @@ public final class ChallengeDtos {
       @Size(max = 200) String flag,
       @Size(max = 500) String artifactPath,
       boolean active,
-      @Size(max = 2_000) String hintText,
-      @Min(1) @Max(100) int hintCost) {
+      @Size(max = 2_000) String hintText) {
     public AdminRequest(
         String title,
         String description,
@@ -62,7 +60,7 @@ public final class ChallengeDtos {
         String flag,
         String artifactPath,
         boolean active) {
-      this(title, description, category, difficulty, score, flag, artifactPath, active, null, 1);
+      this(title, description, category, difficulty, score, flag, artifactPath, active, null);
     }
   }
 

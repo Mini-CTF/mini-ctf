@@ -94,7 +94,6 @@ public class ChallengeService {
         solvedIds.contains(id),
         hasArtifact(c),
         c.getHintText() != null && !c.getHintText().isBlank(),
-        c.getHintCost(),
         solves.countByChallengeId(id),
         likeCount,
         username != null && likes.existsByUserIdAndChallengeId(userId(username), id));
@@ -104,7 +103,7 @@ public class ChallengeService {
   public ChallengeDtos.HintView hint(Long id, String username) {
     Challenge c = getActive(id);
     users.findByUsername(username).orElseThrow();
-    return new ChallengeDtos.HintView(hintText(c), 0);
+    return new ChallengeDtos.HintView(hintText(c));
   }
 
   @Transactional
@@ -121,7 +120,7 @@ public class ChallengeService {
     User u = users.findByUsernameForUpdate(username).orElseThrow();
     if (solves.findByUserAndChallenge(u.getId(), id).isPresent()) {
       recordInCurrentTransaction(u, c, true);
-      return new ChallengeDtos.SubmitResult("already_solved", 0, 0);
+      return new ChallengeDtos.SubmitResult("already_solved", 0);
     }
     recordInCurrentTransaction(u, c, true);
     Solve solve = new Solve();
@@ -130,7 +129,7 @@ public class ChallengeService {
     solves.save(solve);
     u.setScore(u.getScore() + c.getScore());
     antiCheat.assessCorrectSubmission(u, c);
-    return new ChallengeDtos.SubmitResult("correct", c.getScore(), 0);
+    return new ChallengeDtos.SubmitResult("correct", c.getScore());
   }
 
   @Transactional
@@ -252,7 +251,6 @@ public class ChallengeService {
       c.setFlagHash(encoder.encode(r.flag().trim()));
     c.setArtifactPath(normalizeArtifactPath(r.artifactPath()));
     c.setHintText(r.hintText() == null || r.hintText().isBlank() ? null : r.hintText().trim());
-    c.setHintCost(r.hintCost());
     c.setActive(r.active());
   }
 

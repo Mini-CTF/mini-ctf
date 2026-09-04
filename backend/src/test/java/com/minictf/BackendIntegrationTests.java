@@ -18,8 +18,6 @@ import com.minictf.social.DirectMessageRepository;
 import com.minictf.social.FriendshipRepository;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
-import com.minictf.vault.VaultMissionCompletionRepository;
-import com.minictf.vault.VaultOwnedCosmeticRepository;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -58,14 +56,10 @@ class BackendIntegrationTests {
   @Autowired FriendshipRepository friendships;
   @Autowired DirectMessageRepository directMessages;
   @Autowired AttendanceCheckinRepository attendanceCheckins;
-  @Autowired VaultMissionCompletionRepository vaultMissionCompletions;
-  @Autowired VaultOwnedCosmeticRepository vaultOwnedCosmetics;
 
   @BeforeEach
   void cleanDatabase() {
     securityEvents.deleteAll();
-    vaultMissionCompletions.deleteAll();
-    vaultOwnedCosmetics.deleteAll();
     attendanceCheckins.deleteAll();
     directMessages.deleteAll();
     friendships.deleteAll();
@@ -80,7 +74,7 @@ class BackendIntegrationTests {
   }
 
   @Test
-  void vaultIsRemovedAndHintsAreFree() throws Exception {
+  void hintsAreFree() throws Exception {
     mvc.perform(get("/api/vault")).andExpect(status().isUnauthorized());
     User learner = user("signal_runner", "USER");
     Challenge challenge = challenge(true, "CTF{signal}");
@@ -93,8 +87,7 @@ class BackendIntegrationTests {
                 .header("Authorization", bearer(token)))
         .andExpect(status().isOk())
         .andExpect(
-            jsonPath("$.data.hint").value("Decode the payload before changing its representation."))
-        .andExpect(jsonPath("$.data.remainingCredits").value(0));
+            jsonPath("$.data.hint").value("Decode the payload before changing its representation."));
     mvc.perform(
             post("/api/challenges/{id}/hint", challenge.getId())
                 .header("Authorization", bearer(token)))

@@ -1,7 +1,5 @@
 package com.minictf.attendance;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public final class AttendanceDtos {
@@ -28,10 +26,6 @@ public final class AttendanceDtos {
       long totalDays,
       int currentStreak,
       String avatarUrl,
-      String equippedFrame,
-      String equippedAccessory,
       String equippedTitle,
       String tier) {}
-
-  public record TitleRequest(@NotBlank @Size(max = 40) String titleId) {}
 }

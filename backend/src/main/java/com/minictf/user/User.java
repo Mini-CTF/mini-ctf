@@ -48,33 +48,6 @@ public class User {
   @Column(name = "avatar_path", length = 500)
   private String avatarPath;
 
-  @Column(name = "attendance_title", length = 40)
-  private String attendanceTitle;
-
-  @Column(name = "cipher_gems", nullable = false)
-  private int cipherGems;
-
-  @Column(name = "vault_fragments", nullable = false)
-  private int vaultFragments;
-
-  @Column(name = "equipped_frame", length = 50)
-  private String equippedFrame;
-
-  @Column(name = "equipped_accessory", length = 50)
-  private String equippedAccessory;
-
-  @Column(name = "equipped_vault_title", length = 50)
-  private String equippedVaultTitle;
-
-  @Column(name = "hidden_vault_unlocked", nullable = false)
-  private boolean hiddenVaultUnlocked;
-
-  @Column(name = "hidden_vault_rewarded", nullable = false)
-  private boolean hiddenVaultRewarded;
-
-  @Column(name = "hint_credits", nullable = false)
-  private int hintCredits;
-
   @Column(name = "deleted_original_username", length = 50)
   private String deletedOriginalUsername;
 
@@ -206,78 +179,6 @@ public class User {
 
   public void setAvatarPath(String value) {
     avatarPath = value;
-  }
-
-  public String getAttendanceTitle() {
-    return attendanceTitle;
-  }
-
-  public void setAttendanceTitle(String value) {
-    attendanceTitle = value;
-  }
-
-  public int getCipherGems() {
-    return cipherGems;
-  }
-
-  public void setCipherGems(int value) {
-    cipherGems = value;
-  }
-
-  public int getVaultFragments() {
-    return vaultFragments;
-  }
-
-  public void setVaultFragments(int value) {
-    vaultFragments = value;
-  }
-
-  public String getEquippedFrame() {
-    return equippedFrame;
-  }
-
-  public void setEquippedFrame(String value) {
-    equippedFrame = value;
-  }
-
-  public String getEquippedAccessory() {
-    return equippedAccessory;
-  }
-
-  public void setEquippedAccessory(String value) {
-    equippedAccessory = value;
-  }
-
-  public String getEquippedVaultTitle() {
-    return equippedVaultTitle;
-  }
-
-  public void setEquippedVaultTitle(String value) {
-    equippedVaultTitle = value;
-  }
-
-  public boolean isHiddenVaultUnlocked() {
-    return hiddenVaultUnlocked;
-  }
-
-  public void setHiddenVaultUnlocked(boolean value) {
-    hiddenVaultUnlocked = value;
-  }
-
-  public boolean isHiddenVaultRewarded() {
-    return hiddenVaultRewarded;
-  }
-
-  public void setHiddenVaultRewarded(boolean value) {
-    hiddenVaultRewarded = value;
-  }
-
-  public int getHintCredits() {
-    return hintCredits;
-  }
-
-  public void setHintCredits(int value) {
-    hintCredits = value;
   }
 
   public String getDeletedOriginalUsername() {

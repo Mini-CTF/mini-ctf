@@ -42,9 +42,6 @@ public class Challenge {
   @Column(name = "hint_text", columnDefinition = "TEXT")
   private String hintText;
 
-  @Column(name = "hint_cost", nullable = false)
-  private int hintCost = 1;
-
   @Column(name = "is_active", nullable = false)
   private boolean active = true;
 
@@ -140,14 +137,6 @@ public class Challenge {
 
   public void setHintText(String v) {
     hintText = v;
-  }
-
-  public int getHintCost() {
-    return hintCost;
-  }
-
-  public void setHintCost(int v) {
-    hintCost = v;
   }
 
   public boolean isActive() {

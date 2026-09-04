@@ -120,8 +120,6 @@ public class UserProfileService {
         solves.countByActiveUser(user.getId()),
         user.getStatusMessage(),
         avatarUrl(user),
-        null,
-        null,
         displayTitle(user),
         friendships.findAcceptedForUser(user.getId()).stream()
             .map(
@@ -135,8 +133,6 @@ public class UserProfileService {
                         friend.getUsername(),
                         friend.getNickname(),
                         avatarUrl(friend),
-                        null,
-                        null,
                         displayTitle(friend)))
             .toList(),
         solveActivity.entrySet().stream()
@@ -171,8 +167,6 @@ public class UserProfileService {
         solves.countByActiveUser(user.getId()),
         user.getStatusMessage(),
         avatarUrl(user),
-        null,
-        null,
         displayTitle(user),
         UserTier.forScore(user.getScore()).id());
   }

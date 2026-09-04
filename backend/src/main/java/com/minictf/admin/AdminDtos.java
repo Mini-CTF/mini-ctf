@@ -29,9 +29,6 @@ public final class AdminDtos {
   public record ScoreAdjustmentRequest(
       @Min(-1_000_000) @Max(1_000_000) int amount, @NotBlank @Size(max = 500) String reason) {}
 
-  public record CosmeticGrantRequest(
-      @NotBlank @Size(max = 50) String cosmeticId, boolean granted) {}
-
   public record IpBanRequest(
       @NotBlank @Size(max = 45) String ipAddress, @NotBlank @Size(max = 500) String reason) {}
 

@@ -87,13 +87,6 @@ public class AttendanceService {
         dates.stream().map(LocalDate::toString).toList());
   }
 
-  @Transactional
-  public AttendanceDtos.Summary selectTitle(User user, AttendanceDtos.TitleRequest request) {
-    if (!"ADMIN".equals(user.getRole()) || !SUPER_USER.equals(request.titleId()))
-      throw new IllegalArgumentException("Only administrators can use the Super User title");
-    return summary(user);
-  }
-
   @Transactional(readOnly = true)
   public List<AttendanceDtos.RankingRow> ranking() {
     List<AttendanceDtos.RankingRow> rows = new ArrayList<>();
@@ -111,8 +104,6 @@ public class AttendanceService {
               row.getTotalDays(),
               currentStreak(dates, today()),
               avatarUrl(row.getUsername(), row.getAvatarPath()),
-              null,
-              null,
               roleTitle(row.getRole()),
               UserTier.forScore(row.getScore()).id()));
       previousTotal = row.getTotalDays();

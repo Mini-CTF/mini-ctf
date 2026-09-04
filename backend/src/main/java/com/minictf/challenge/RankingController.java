@@ -36,8 +36,6 @@ public class RankingController {
               u.getScore(),
               solves.countByUser(u.getId()),
               titleForRole(u.getRole()),
-              null,
-              null,
               avatarUrl(u),
               UserTier.forScore(u.getScore()).id()));
       previousScore = u.getScore();
@@ -52,8 +50,6 @@ public class RankingController {
       int score,
       long solvedCount,
       String equippedTitle,
-      String equippedFrame,
-      String equippedAccessory,
       String avatarUrl,
       String tier) {}
 

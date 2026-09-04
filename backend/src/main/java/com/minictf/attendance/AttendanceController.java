@@ -3,7 +3,6 @@ package com.minictf.attendance;
 import com.minictf.common.ApiResponse;
 import com.minictf.user.User;
 import com.minictf.user.UserRepository;
-import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -29,12 +28,6 @@ public class AttendanceController {
   @ResponseStatus(HttpStatus.CREATED)
   public ApiResponse<AttendanceDtos.Summary> checkIn(Authentication auth) {
     return ApiResponse.ok(service.checkIn(user(auth)));
-  }
-
-  @PutMapping("/title")
-  public ApiResponse<AttendanceDtos.Summary> selectTitle(
-      @Valid @RequestBody AttendanceDtos.TitleRequest request, Authentication auth) {
-    return ApiResponse.ok(service.selectTitle(user(auth), request));
   }
 
   @GetMapping("/ranking")

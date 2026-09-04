@@ -17,8 +17,6 @@ public final class UserDtos {
       long solvedCount,
       String statusMessage,
       String avatarUrl,
-      String equippedFrame,
-      String equippedAccessory,
       String equippedTitle,
       String tier) {}
 
@@ -26,8 +24,6 @@ public final class UserDtos {
       String username,
       String nickname,
       String avatarUrl,
-      String equippedFrame,
-      String equippedAccessory,
       String equippedTitle) {}
 
   public record ProfileUpdateRequest(
@@ -40,8 +36,6 @@ public final class UserDtos {
       long solvedCount,
       String statusMessage,
       String avatarUrl,
-      String equippedFrame,
-      String equippedAccessory,
       String equippedTitle,
       List<PublicFriend> friends,
       List<SolveActivity> solveActivity,
