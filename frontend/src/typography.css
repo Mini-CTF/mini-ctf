@@ -1100,3 +1100,122 @@ html[lang='en'] .hero-banner-content h1 { letter-spacing: -.048em; }
 .page-number.active { border-color: var(--accent); background: var(--accent); color: #071522; box-shadow: 0 7px 18px color-mix(in srgb, var(--accent) 25%, transparent); }
 html[data-theme='light'] .page-number.active { color: #fff; }
 @media (max-width: 620px) { .challenge-count { align-items: flex-start; flex-direction: column; gap: 5px; } .challenge-pagination { justify-content: flex-start; } .challenge-solve-count { font-size: 11px; } }
+
+/* Compact navigation and landing view for phone-sized screens only. */
+.mobile-home-start,
+.mobile-friends {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  .site-header {
+    min-height: 64px;
+  }
+  .brand {
+    top: 16px;
+    left: 16px;
+    font-size: 19px;
+  }
+  .brand img {
+    width: 28px;
+    height: 28px;
+  }
+  .menu-toggle {
+    top: 14px !important;
+    right: 10px !important;
+  }
+  .header-actions {
+    position: fixed;
+    top: 13px;
+    right: 54px;
+    z-index: 10;
+    display: flex !important;
+    gap: 4px;
+    align-items: center;
+  }
+  .header-actions .language-toggle {
+    min-height: 28px;
+    padding-right: 5px;
+    font-size: 10px;
+  }
+  .header-actions .theme-toggle {
+    min-height: 28px;
+    padding: 3px;
+  }
+  .header-actions .header-login {
+    display: block;
+    padding: 5px 3px;
+    font-size: 11px;
+  }
+  .header-actions .header-identity,
+  .primary-nav .mobile-language,
+  .primary-nav .mobile-auth {
+    display: none;
+  }
+  .mobile-friends {
+    display: block;
+  }
+  .primary-nav {
+    top: 64px;
+  }
+  .home-page .hero-banner {
+    display: none;
+  }
+  .mobile-home-start {
+    display: grid;
+    gap: 18px;
+    padding: 44px 20px 28px;
+  }
+  .mobile-home-start h1 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(38px, 11vw, 48px);
+    letter-spacing: -.06em;
+    line-height: 1;
+  }
+  .mobile-home-start .button {
+    width: min(180px, 100%);
+    min-height: 48px;
+    padding: 10px 16px;
+    font-size: 15px;
+  }
+  .home-page .featured-section {
+    width: calc(100% - 32px);
+  }
+  .ranking-content-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .ranking-podium-card {
+    order: 1;
+    min-height: 390px;
+  }
+  .ranking-panel {
+    order: 2;
+  }
+  .podium {
+    height: 280px;
+  }
+  .podium-place-1 .podium-block {
+    height: 124px;
+  }
+  .podium-place-2 .podium-block {
+    height: 88px;
+  }
+  .podium-place-3 .podium-block {
+    height: 60px;
+  }
+  .tier-guide {
+    position: static;
+    margin-top: 18px;
+    padding: 17px;
+  }
+  .tier-guide h2 {
+    font-size: 18px;
+  }
+  .tier-guide > p,
+  .tier-guide small {
+    font-size: 11px;
+  }
+}
