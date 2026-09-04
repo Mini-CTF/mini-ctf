@@ -1264,3 +1264,43 @@ html[data-theme='light'] .page-number.active { color: #fff; }
     min-width: 0;
   }
 }
+
+@media (max-width: 620px) {
+  /* Show the podium and tier reference before the full ranking list. */
+  .ranking-page {
+    display: flex;
+    flex-direction: column;
+  }
+  .ranking-page > .page-intro {
+    order: 0;
+  }
+  .ranking-page > .ranking-tabs {
+    order: 1;
+  }
+  .ranking-page > .tier-guide {
+    order: 2;
+    margin-top: 18px;
+  }
+  .ranking-page > .ranking-content-layout {
+    order: 3;
+  }
+
+  /* Two compact challenge cards fit across a phone viewport. */
+  .challenge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .challenge-card {
+    min-width: 0;
+    padding: 13px;
+  }
+  .challenge-card h3 {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
+  .challenge-card > p,
+  .challenge-card .card-bottom,
+  .challenge-card .badge {
+    font-size: 10px;
+  }
+}
