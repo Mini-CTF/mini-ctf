@@ -267,4 +267,21 @@ export const api = {
     link.click()
     URL.revokeObjectURL(url)
   },
+  async artifact(id: number) {
+    const token = getAuthToken()
+    const response = await fetch(`${baseUrl}/challenges/${id}/artifact`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => null)
+      throw new Error(body?.error?.message ?? 'Artifact download failed.')
+    }
+    const disposition = response.headers.get('Content-Disposition') ?? ''
+    const named = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)
+    return {
+      blob: await response.blob(),
+      filename: decodeURIComponent(named?.[1] ?? `challenge-${id}-artifact`),
+      contentType: response.headers.get('Content-Type') ?? '',
+    }
+  },
 }

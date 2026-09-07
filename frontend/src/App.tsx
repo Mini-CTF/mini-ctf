@@ -20,6 +20,7 @@ import './App.css'
 import './typography.css'
 
 const challengeCategories = ['WEB', 'FORENSIC', 'REVERSING', 'CRYPTO', 'MISC'] as const
+const mobileTextArtifactExtensions = new Set(['txt', 'log', 'json', 'xml', 'csv', 'md', 'yaml', 'yml', 'js', 'jsx', 'ts', 'tsx', 'py', 'java', 'kt', 'kts', 'c', 'cpp', 'h', 'hpp', 'cs', 'go', 'rs', 'php', 'html', 'css', 'sql', 'sh', 'bat', 'ps1', 'properties', 'ini', 'conf'])
 type ChallengeCategory = (typeof challengeCategories)[number]
 type Filter = 'ALL' | ChallengeCategory
 type DifficultyFilter = 'ALL' | 'BEGINNER' | 'EASY' | 'NORMAL' | 'ADVANCED' | 'EXPERT'
@@ -1057,6 +1058,50 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
     target.append(button)
     return () => { button.removeEventListener('click', click); button.remove() }
   }, [item, loggedIn])
+  useEffect(() => {
+    if (!item?.artifactAvailable || !window.matchMedia('(max-width: 620px)').matches) return
+    const file = document.querySelector('.detail-page .artifact-file')
+    if (!(file instanceof HTMLElement)) return
+    const action = document.createElement('button')
+    action.type = 'button'
+    action.className = 'button secondary artifact-mobile-open'
+    action.textContent = '파일 내용 보기'
+    const openArtifact = async () => {
+      try {
+        if (action.dataset.binary === 'true') {
+          await api.downloadArtifact(item.id)
+          return
+        }
+        action.disabled = true
+        action.textContent = '파일 여는 중...'
+        const artifact = await api.artifact(item.id)
+        const extension = artifact.filename.split('.').pop()?.toLowerCase() ?? ''
+        const isText = mobileTextArtifactExtensions.has(extension) || /^text\//i.test(artifact.contentType) || /(?:json|xml|javascript)/i.test(artifact.contentType)
+        if (!isText || artifact.blob.size > 1024 * 1024) {
+          action.disabled = false
+          action.textContent = '다운로드'
+          action.dataset.binary = 'true'
+          return
+        }
+        const viewer = document.createElement('div')
+        viewer.className = 'artifact-mobile-viewer'
+        const label = document.createElement('strong')
+        label.textContent = artifact.filename
+        const content = document.createElement('pre')
+        content.tabIndex = 0
+        content.textContent = await artifact.blob.text()
+        viewer.append(label, content)
+        file.replaceChildren(viewer)
+      } catch (cause) {
+        action.disabled = false
+        action.textContent = '파일 내용 보기'
+        setError(cause instanceof Error ? cause.message : 'Could not open the artifact.')
+      }
+    }
+    action.addEventListener('click', openArtifact)
+    file.append(action)
+    return () => { action.removeEventListener('click', openArtifact); action.remove() }
+  }, [item])
   if (loadError) return <div className="page"><p className="alert error">{loadError}</p><button type="button" className="button secondary" onClick={onBack}>← Back to challenges</button></div>
   if (!item) return <div className="page"><LoadingState label="Opening challenge..." /></div>
   const guide = guideForChallenge(item.title, item.category, item.difficulty)

@@ -1307,3 +1307,110 @@ html[data-theme='light'] .page-number.active { color: #fff; }
     display: none;
   }
 }
+
+@media (max-width: 620px) {
+  /* Phone-only guardrails: preserve the desktop canvas while preventing viewport overflow. */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+  .page,
+  .page-intro,
+  .detail-header,
+  .detail-layout,
+  .panel,
+  .submit-panel,
+  .challenge-card,
+  .ranking-row,
+  .artifact-file {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .page:not(.home-page) {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+  .page-intro h1,
+  .detail-header h1,
+  .problem-panel h2,
+  .submit-panel h2,
+  .auth-card h1,
+  .policy-card h1,
+  .community-detail h1 {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-size: clamp(22px, 7vw, 32px);
+    line-height: 1.18;
+  }
+
+  /* Let the mobile hero escape page padding without changing its desktop geometry. */
+  .home-page .hero-banner {
+    width: 100vw;
+    max-width: 100vw;
+    margin-right: calc(50% - 50vw);
+    margin-left: calc(50% - 50vw);
+  }
+
+  /* The native download remains desktop-only; phones first inspect supported text files. */
+  .artifact-file > .button:not(.artifact-mobile-open) {
+    display: none;
+  }
+  .artifact-mobile-open {
+    flex: 0 0 auto;
+  }
+  .artifact-mobile-viewer {
+    width: 100%;
+    min-width: 0;
+  }
+  .artifact-mobile-viewer strong {
+    display: block;
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+  }
+  .artifact-mobile-viewer pre {
+    max-width: 100%;
+    max-height: 320px;
+    margin: 0;
+    padding: 12px;
+    overflow: auto;
+    white-space: pre;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .24);
+    font: 12px/1.55 var(--mono);
+  }
+
+  /* `display: contents` changes only the mobile visual flow: podium → tier → rows. */
+  .ranking-page > .ranking-content-layout {
+    display: contents;
+  }
+  .ranking-page .ranking-podium-card {
+    order: 2;
+    width: 100%;
+  }
+  .ranking-page > .tier-guide {
+    order: 3;
+    width: 100%;
+  }
+  .ranking-page .ranking-panel {
+    order: 4;
+    width: 100%;
+  }
+
+  .site-footer {
+    margin-top: 28px;
+    padding: 14px 16px;
+    min-height: 0;
+  }
+  .site-footer::before,
+  .site-footer .footer-brand p {
+    display: none;
+  }
+  .site-footer .footer-bottom {
+    margin-top: 8px;
+  }
+}
