@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent, type ReactNode, type WheelEvent } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { adminAccountChangedEvent, api, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
+import { adminAccountChangedEvent, api, getCachedPinnedNotices, prefetchPinnedNotices, rankingChangedEvent, sessionExpiredEvent, sessionExpiredMessage } from './api/client'
 import { clearAuthToken, getAuthToken, setAuthToken } from './api/session'
 import { subscribeToSocialUpdates } from './api/realtime'
 import GettingStartedTutorial from './onboarding'
@@ -139,7 +139,7 @@ const englishToKorean: Record<string, string> = {
   'You have credits left.': '남은 크레딧을 확인하세요.', 'Opening challenge...': '문제를 여는 중...', 'Could not load this challenge.': '문제를 불러오지 못했어요.', 'Not enough hint credits.': '힌트 크레딧이 부족해요.',
   'All levels': '모든 난이도', 'Solved': '해결 완료', 'SOLVED': '해결 완료', 'Open': '문제 열기', 'pts': '점',
   'Pick your next challenge.': '어떤 문제부터 풀어볼까요?', 'Read the brief, then follow the guide one step at a time.': '문제를 읽고, 풀이 가이드를 따라 한 단계씩 시도해 보세요.',
-  '📚 Study guide — concept · tools · steps ': '📚 학습 가이드 — 개념·도구·풀이 순서 ', 'Collapse ▲': '접기 ▲', 'Expand ▼': '펼치기 ▼',
+  '📚 Study guide — concept · tools · steps ': '📚 학습 가이드 — 개념·도구·풀이 순서 ', '📚 Study guide — concept · analysis direction ': '📚 학습 가이드 — 개념·분석 방향 ', 'Analysis direction': '분석 방향', 'Inspect the file format and verifier first, then design the inverse operations yourself. If you get stuck, reveal the hint below.': '파일 형식과 검증 과정을 먼저 정리한 뒤, 필요한 역연산을 직접 설계해 보세요. 막히면 아래 힌트를 확인할 수 있습니다.', 'Collapse ▲': '접기 ▲', 'Expand ▼': '펼치기 ▼',
   'The concept': '이 문제의 콘셉트', 'Tools you need': '준비물 · 도구', 'Step-by-step approach': '이렇게 순서대로 풀어 보세요',
   'Concepts first.': '개념부터 차근차근.', 'Read the key concepts before you solve.': '문제를 풀기 전에 핵심 개념을 살펴보세요.',
   '← Back to learn': '← 학습 목록으로', '✅ Quick self-check': '✅ 스스로 확인하기',
@@ -360,6 +360,9 @@ function AppShell() {
     }
     // The tutorial and its static banner should not wait for every live API request.
     // Render immediately, then fill each independent data area as it arrives.
+    // Pinned community notices are prefetched here so the community page —
+    // including the tutorial spotlight — shows them instantly on arrival.
+    prefetchPinnedNotices()
     const initialLoad = window.setTimeout(() => void refresh(), 0)
     return () => window.clearTimeout(initialLoad)
   }, [refresh])
@@ -1079,12 +1082,12 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
   const [error, setError] = useState('')
   const [hintBusy, setHintBusy] = useState(false)
   const [awarded, setAwarded] = useState<number | null>(null)
-  const [guideOpen, setGuideOpen] = useState(true)
+  const [guideOpen, setGuideOpen] = useState(false)
   const [bookmarked, setBookmarked] = useState(false)
   const [bookmarkBusy, setBookmarkBusy] = useState(false)
   useEffect(() => {
     let active = true
-    api.challenge(id).then((next) => { if (active) setItem(next) }).catch((cause) => { if (active) setLoadError(cause instanceof Error ? cause.message : 'Could not load this challenge.') })
+    api.challenge(id).then((next) => { if (active) { setItem(next); setGuideOpen(next.difficulty === 'BEGINNER') } }).catch((cause) => { if (active) setLoadError(cause instanceof Error ? cause.message : 'Could not load this challenge.') })
     return () => { active = false }
   }, [id])
   useEffect(() => {
@@ -1210,7 +1213,9 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
     try { setHintBusy(true); setError(''); const result = await api.challengeHint(item.id); setHint(result.hint) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reveal the hint.') } finally { setHintBusy(false) }
   }
   const download = async () => { try { await api.downloadArtifact(item.id) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Download failed.') } }
-  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>📚 Study guide — concept · tools · steps {guideOpen ? 'Collapse ▲' : 'Expand ▼'}</button>{guideOpen && <><div className="guide-block"><strong>The concept</strong><p>{guide.concept}</p></div><div className="guide-block"><strong>Tools you need</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>Step-by-step approach</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>힌트는 무료로 제공됩니다.</small></div><button type="button" className="button secondary" disabled={hintBusy || hint !== null} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>브라우저에서 먼저 분석하고, 필요할 때만 다운로드하세요.</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div><ChallengeWorkbench challengeId={item.id} category={item.category} artifactAvailable={item.artifactAvailable} onError={setError} /></div>
+  const showDetailedGuide = ['BEGINNER', 'EASY'].includes(item.difficulty)
+  const guideLabel = showDetailedGuide ? '📚 Study guide — concept · tools · steps ' : '📚 Study guide — concept · analysis direction '
+  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>{guideLabel}{guideOpen ? 'Collapse ▲' : 'Expand ▼'}</button>{guideOpen && <><div className="guide-block"><strong>The concept</strong><p>{guide.concept}</p></div>{showDetailedGuide ? <><div className="guide-block"><strong>Tools you need</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>Step-by-step approach</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></> : <div className="guide-block"><strong>Analysis direction</strong><p>Inspect the file format and verifier first, then design the inverse operations yourself. If you get stuck, reveal the hint below.</p></div>}</>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>힌트는 무료로 제공됩니다.</small></div><button type="button" className="button secondary" disabled={hintBusy || hint !== null} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>브라우저에서 먼저 분석하고, 필요할 때만 다운로드하세요.</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div><ChallengeWorkbench challengeId={item.id} category={item.category} artifactAvailable={item.artifactAvailable} onError={setError} /></div>
 }
 
 function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; onSubmitted: () => void }) {
@@ -2574,7 +2579,7 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   const location = useLocation()
   const [category, setCategory] = useState<CommunityCategory | undefined>(() => communityCategoryFromSearch(location.search))
   const [posts, setPosts] = useState<PostSummary[]>([])
-  const [notices, setNotices] = useState<PostSummary[]>([])
+  const [notices, setNotices] = useState<PostSummary[]>(() => getCachedPinnedNotices())
   const [error, setError] = useState('')
   const communityRequest = useRef(0)
   const routerNavigate = useNavigate()

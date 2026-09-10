@@ -142,6 +142,64 @@ async function performRequest<T>(path: string, init: ApiRequestInit, token: stri
   throw lastError instanceof Error ? lastError : new Error('Request failed. Please try again.')
 }
 
+// Pinned notices (admin-written NOTICE posts) are shown at the top of the
+// community page. They are prefetched at app startup and cached so the
+// community view — including the tutorial spotlight — renders them instantly
+// instead of waiting for a fresh request after every navigation.
+const pinnedNoticesKey = 'flagbox-pinned-notices-v1'
+const pinnedNoticesTtlMs = 60_000
+let pinnedNoticeCache: { at: number; items: PostSummary[] } | null = null
+
+function isPinnedNotice(item: unknown): item is PostSummary {
+  return typeof item === 'object'
+    && item !== null
+    && typeof (item as PostSummary).id === 'number'
+    && typeof (item as PostSummary).title === 'string'
+}
+
+function cachePinnedNotices(items: PostSummary[]) {
+  pinnedNoticeCache = { at: Date.now(), items }
+  try {
+    sessionStorage.setItem(pinnedNoticesKey, JSON.stringify(items))
+  } catch {
+    // A fresh API response still renders when browser storage is unavailable.
+  }
+}
+
+function clearPinnedNoticeCache() {
+  pinnedNoticeCache = null
+  try {
+    sessionStorage.removeItem(pinnedNoticesKey)
+  } catch {
+    // Storage may be unavailable in private browsing; the next fetch refills.
+  }
+}
+
+export function getCachedPinnedNotices(): PostSummary[] {
+  if (pinnedNoticeCache && Date.now() - pinnedNoticeCache.at < pinnedNoticesTtlMs) {
+    return pinnedNoticeCache.items
+  }
+  try {
+    const parsed: unknown = JSON.parse(sessionStorage.getItem(pinnedNoticesKey) ?? '[]')
+    if (!Array.isArray(parsed)) return []
+    const items = parsed.filter(isPinnedNotice)
+    pinnedNoticeCache = { at: Date.now(), items }
+    return items
+  } catch {
+    return []
+  }
+}
+
+export function prefetchPinnedNotices(): void {
+  try {
+    void request<PageView<PostSummary>>('/community/posts?category=NOTICE')
+      .then((page) => cachePinnedNotices(page.content))
+      .catch(() => undefined)
+  } catch {
+    // Prefetch must never break app startup.
+  }
+}
+
 export const api = {
   assistantChat: (payload: { message: string; challengeId?: number; language: 'ko' | 'en'; history?: { role: 'assistant' | 'user'; content: string }[] }) =>
     request<AssistantReply>('/assistant/chat', { method: 'POST', body: JSON.stringify(payload), timeoutMs: 30_000 }),
@@ -177,8 +235,11 @@ export const api = {
   challengeActivity: (id: number, type: 'OPENED' | 'FOCUS_LOST' | 'FOCUS_RESTORED') =>
     request<void>(`/challenges/${id}/activity`, { method: 'POST', body: JSON.stringify({ type }) }),
   challengeHint: (id: number) => request<{ hint: string }>(`/challenges/${id}/hint`, { method: 'POST' }),
-  communityPosts: (category?: CommunityCategory) =>
-    request<PageView<PostSummary>>(`/community/posts${category ? `?category=${category}` : ''}`),
+  communityPosts: (category?: CommunityCategory) => {
+    const pending = request<PageView<PostSummary>>(`/community/posts${category ? `?category=${category}` : ''}`)
+    if (category === 'NOTICE') void pending.then((page) => cachePinnedNotices(page.content)).catch(() => undefined)
+    return pending
+  },
   communityPost: (id: number) => request<PostDetail>(`/community/posts/${id}`),
   createPost: (payload: { title: string; content: string; category: CommunityCategory }) =>
     request<PostDetail>('/community/posts', { method: 'POST', body: JSON.stringify(payload) }),
@@ -203,10 +264,13 @@ export const api = {
   adminPosts: () => request<AdminPost[]>('/admin/community/posts'),
   adminComments: () => request<AdminComment[]>('/admin/community/comments'),
   publishNotice: (payload: { title: string; content: string }) =>
-    request<AdminPost>('/admin/notices', { method: 'POST', body: JSON.stringify(payload) }),
+    request<AdminPost>('/admin/notices', { method: 'POST', body: JSON.stringify(payload) })
+      .then((post) => { clearPinnedNoticeCache(); return post }),
   publishModeratorNotice: (payload: { title: string; content: string }) =>
-    request<AdminPost>('/moderation/notices', { method: 'POST', body: JSON.stringify(payload) }),
-  deleteAdminPost: (id: number) => request<void>(`/admin/community/posts/${id}`, { method: 'DELETE' }),
+    request<AdminPost>('/moderation/notices', { method: 'POST', body: JSON.stringify(payload) })
+      .then((post) => { clearPinnedNoticeCache(); return post }),
+  deleteAdminPost: (id: number) => request<void>(`/admin/community/posts/${id}`, { method: 'DELETE' })
+    .then((result) => { clearPinnedNoticeCache(); return result }),
   deleteAdminComment: (id: number) => request<void>(`/admin/community/comments/${id}`, { method: 'DELETE' }),
   updateAdminUser: async (id: number, nickname: string) => {
     const result = await request<AdminUser>(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ nickname }) })

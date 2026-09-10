@@ -166,6 +166,17 @@ export function GettingStartedTutorial({
     let scrolledToTarget = false
     let observedElement: Element | null = null
     let resizeObserver: ResizeObserver | null = null
+    let mutationObserver: MutationObserver | null = null
+    const setRectIfChanged = (next: { top: number; left: number; width: number; height: number; bottom: number }) => {
+      setRect((prev) => (
+        prev
+        && prev.top === next.top
+        && prev.left === next.left
+        && prev.width === next.width
+        && prev.height === next.height
+        && prev.bottom === next.bottom
+      ) ? prev : next)
+    }
     const attempt = () => {
       const s = steps[step]
       const el = s?.selector ? document.querySelector(s.selector) : null
@@ -187,7 +198,7 @@ export function GettingStartedTutorial({
           return
         }
         if (isVisible) {
-          setRect({ top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom })
+          setRectIfChanged({ top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom })
           return
         }
       }
@@ -198,9 +209,16 @@ export function GettingStartedTutorial({
     timer = window.setTimeout(attempt, 80)
     window.addEventListener('resize', attempt)
     window.addEventListener('scroll', attempt, true)
+    // Late-arriving content (e.g. pinned admin notices) shifts targets without
+    // resizing them, so re-measure whenever the page subtree changes.
+    mutationObserver = new MutationObserver(() => {
+      window.requestAnimationFrame(attempt)
+    })
+    mutationObserver.observe(document.body, { childList: true, subtree: true })
     return () => {
       window.clearTimeout(timer)
       resizeObserver?.disconnect()
+      mutationObserver?.disconnect()
       window.removeEventListener('resize', attempt)
       window.removeEventListener('scroll', attempt, true)
     }
