@@ -1,5 +1,6 @@
 import type {
   AuthResponse,
+  AccountLog,
   AdminComment,
   ChallengeDetail,
   ChallengeSummary,
@@ -76,9 +77,29 @@ function notifyAdminAccountChanged(user?: AdminUser): void {
 }
 
 type ApiRequestInit = RequestInit & { timeoutMs?: number }
+const inFlightGets = new Map<string, Promise<unknown>>()
 
-async function request<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
+function request<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
+  const method = (init.method ?? 'GET').toUpperCase()
   const token = getAuthToken()
+  const dedupeKey = method === 'GET' ? `${token ?? 'public'}:${path}` : null
+  if (dedupeKey) {
+    const pending = inFlightGets.get(dedupeKey)
+    if (pending) return pending as Promise<T>
+  }
+
+  const pending = performRequest<T>(path, init, token)
+  if (dedupeKey) {
+    inFlightGets.set(dedupeKey, pending)
+    const clear = () => {
+      if (inFlightGets.get(dedupeKey) === pending) inFlightGets.delete(dedupeKey)
+    }
+    void pending.then(clear, clear)
+  }
+  return pending
+}
+
+async function performRequest<T>(path: string, init: ApiRequestInit, token: string | null): Promise<T> {
   const headers = new Headers(init.headers)
   if (init.body) headers.set('Content-Type', 'application/json')
   if (token) headers.set('Authorization', `Bearer ${token}`)
@@ -147,16 +168,15 @@ export const api = {
   ranking: () => request<RankingRow[]>('/ranking'),
   attendance: () => request<AttendanceSummary>('/attendance'),
   checkIn: () => request<AttendanceSummary>('/attendance/check-in', { method: 'POST' }),
-  selectAttendanceTitle: (titleId: string) => request<AttendanceSummary>('/attendance/title', { method: 'PUT', body: JSON.stringify({ titleId }) }),
   attendanceRanking: () => request<AttendanceRankingRow[]>('/attendance/ranking'),
   submitFlag: (id: number, flag: string) =>
-    request<{ result: string; awardedScore: number; awardedGems: number }>(`/challenges/${id}/submit`, {
+    request<{ result: string; awardedScore: number }>(`/challenges/${id}/submit`, {
       method: 'POST',
       body: JSON.stringify({ flag }),
     }),
   challengeActivity: (id: number, type: 'OPENED' | 'FOCUS_LOST' | 'FOCUS_RESTORED') =>
     request<void>(`/challenges/${id}/activity`, { method: 'POST', body: JSON.stringify({ type }) }),
-  challengeHint: (id: number) => request<{ hint: string; remainingCredits: number }>(`/challenges/${id}/hint`, { method: 'POST' }),
+  challengeHint: (id: number) => request<{ hint: string }>(`/challenges/${id}/hint`, { method: 'POST' }),
   communityPosts: (category?: CommunityCategory) =>
     request<PageView<PostSummary>>(`/community/posts${category ? `?category=${category}` : ''}`),
   communityPost: (id: number) => request<PostDetail>(`/community/posts/${id}`),
@@ -176,14 +196,25 @@ export const api = {
   pinPostReply: (postId: number, commentId: number) =>
     request<PostComment>(`/community/posts/${postId}/comments/${commentId}/pin`, { method: 'PATCH' }),
   adminDashboard: () => request<AdminDashboard>('/admin/dashboard', { cache: 'no-store' }),
+  moderationUsers: () => request<AdminUser[]>('/moderation/users', { cache: 'no-store' }),
+  adminAccountLogs: (id: number) => request<AccountLog[]>(`/admin/users/${id}/logs`, { cache: 'no-store' }),
+  moderationAccountLogs: (id: number) => request<AccountLog[]>(`/moderation/users/${id}/logs`, { cache: 'no-store' }),
+  moderationNotices: () => request<AdminPost[]>('/moderation/notices', { cache: 'no-store' }),
   adminPosts: () => request<AdminPost[]>('/admin/community/posts'),
   adminComments: () => request<AdminComment[]>('/admin/community/comments'),
   publishNotice: (payload: { title: string; content: string }) =>
     request<AdminPost>('/admin/notices', { method: 'POST', body: JSON.stringify(payload) }),
+  publishModeratorNotice: (payload: { title: string; content: string }) =>
+    request<AdminPost>('/moderation/notices', { method: 'POST', body: JSON.stringify(payload) }),
   deleteAdminPost: (id: number) => request<void>(`/admin/community/posts/${id}`, { method: 'DELETE' }),
   deleteAdminComment: (id: number) => request<void>(`/admin/community/comments/${id}`, { method: 'DELETE' }),
   updateAdminUser: async (id: number, nickname: string) => {
     const result = await request<AdminUser>(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ nickname }) })
+    notifyAdminAccountChanged(result)
+    return result
+  },
+  updateModeratorRole: async (id: number, role: 'USER' | 'MODERATOR') => {
+    const result = await request<AdminUser>(`/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) })
     notifyAdminAccountChanged(result)
     return result
   },
@@ -192,16 +223,21 @@ export const api = {
     notifyAdminAccountChanged(result)
     return result
   },
+  adjustModeratorUserScore: (id: number, amount: number, reason: string) =>
+    request<AdminUser>(`/moderation/users/${id}/score`, { method: 'POST', body: JSON.stringify({ amount, reason }) }),
   suspendUser: async (id: number, reason: string) => {
     const result = await request<AdminUser>(`/admin/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) })
     notifyAdminAccountChanged(result)
     return result
   },
+  suspendModeratorUser: (id: number, reason: string) =>
+    request<AdminUser>(`/moderation/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) }),
   reinstateUser: async (id: number) => {
     const result = await request<AdminUser>(`/admin/users/${id}/reinstate`, { method: 'POST' })
     notifyAdminAccountChanged(result)
     return result
   },
+  reinstateModeratorUser: (id: number) => request<AdminUser>(`/moderation/users/${id}/reinstate`, { method: 'POST' }),
   deactivateUser: async (id: number) => {
     const result = await request<AdminUser>(`/admin/users/${id}`, { method: 'DELETE' })
     notifyAdminAccountChanged(result)
@@ -283,5 +319,33 @@ export const api = {
       filename: decodeURIComponent(named?.[1] ?? `challenge-${id}-artifact`),
       contentType: response.headers.get('Content-Type') ?? '',
     }
+  },
+  async previewArtifact(id: number) {
+    const token = getAuthToken()
+    const response = await fetch(`${baseUrl}/challenges/${id}/artifact`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => null)
+      throw new Error(body?.error?.message ?? 'Artifact preview failed.')
+    }
+    const disposition = response.headers.get('Content-Disposition') ?? ''
+    const named = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)
+    let filename = named?.[1] ?? `challenge-${id}-artifact`
+    try { filename = decodeURIComponent(filename) } catch { /* Keep the server-provided name. */ }
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    const limit = Math.min(bytes.length, 24 * 1024)
+    const sample = bytes.slice(0, limit)
+    const controlBytes = sample.reduce((count, byte) => count + (byte < 32 && byte !== 9 && byte !== 10 && byte !== 13 ? 1 : 0), 0)
+    const binary = sample.length > 0 && controlBytes / sample.length > 0.04
+    const text = new TextDecoder().decode(sample)
+    const rows: string[] = []
+    for (let offset = 0; offset < sample.length; offset += 16) {
+      const row = sample.slice(offset, offset + 16)
+      const hex = Array.from(row, (byte) => byte.toString(16).padStart(2, '0')).join(' ').padEnd(47, ' ')
+      const ascii = Array.from(row, (byte) => byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.').join('')
+      rows.push(`${offset.toString(16).padStart(8, '0')}  ${hex}  |${ascii}|`)
+    }
+    return { filename, sizeBytes: bytes.length, text, hexDump: rows.join('\n'), binary, truncated: bytes.length > limit }
   },
 }

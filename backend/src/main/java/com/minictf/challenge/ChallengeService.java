@@ -57,9 +57,12 @@ public class ChallengeService {
   @Transactional(readOnly = true)
   public List<ChallengeDtos.Summary> list(String username) {
     Set<Long> solvedIds = solvedIds(username);
-    List<Challenge> active = challenges.findByActiveTrueOrderByIdAsc();
+    List<ChallengeRepository.PublicListRow> active = challenges.findActivePublicList();
     Set<Long> ids =
-        active.stream().map(Challenge::getId).collect(java.util.stream.Collectors.toSet());
+        active.stream()
+            .map(ChallengeRepository.PublicListRow::getId)
+            .collect(java.util.stream.Collectors.toSet());
+    Map<Long, Long> solveCounts = solveCounts(ids);
     Map<Long, Long> likeCounts = likeCounts(ids);
     Set<Long> likedIds =
         username == null ? Set.of() : likes.findChallengeIdsByUserId(userId(username));
@@ -69,7 +72,7 @@ public class ChallengeService {
                 summary(
                     c,
                     solvedIds.contains(c.getId()),
-                    solves.countByChallengeId(c.getId()),
+                    solveCounts.getOrDefault(c.getId(), 0L),
                     likeCounts.getOrDefault(c.getId(), 0L),
                     likedIds.contains(c.getId())))
         .toList();
@@ -311,11 +314,19 @@ public class ChallengeService {
   }
 
   private boolean hasArtifact(Challenge c) {
-    return c.getArtifactPath() != null && !c.getArtifactPath().isBlank();
+    return hasArtifact(c.getArtifactPath());
+  }
+
+  private boolean hasArtifact(String artifactPath) {
+    return artifactPath != null && !artifactPath.isBlank();
   }
 
   private ChallengeDtos.Summary summary(
-      Challenge c, boolean solved, long solveCount, long likeCount, boolean liked) {
+      ChallengeRepository.PublicListRow c,
+      boolean solved,
+      long solveCount,
+      long likeCount,
+      boolean liked) {
     return new ChallengeDtos.Summary(
         c.getId(),
         c.getTitle(),
@@ -323,7 +334,7 @@ public class ChallengeService {
         c.getDifficulty(),
         c.getScore(),
         solved,
-        hasArtifact(c),
+        hasArtifact(c.getArtifactPath()),
         solveCount,
         likeCount,
         liked);
@@ -333,6 +344,14 @@ public class ChallengeService {
     if (challengeIds.isEmpty()) return Map.of();
     Map<Long, Long> result = new HashMap<>();
     for (Object[] row : likes.countByChallengeIds(challengeIds))
+      result.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+    return result;
+  }
+
+  private Map<Long, Long> solveCounts(Set<Long> challengeIds) {
+    if (challengeIds.isEmpty()) return Map.of();
+    Map<Long, Long> result = new HashMap<>();
+    for (Object[] row : solves.countByChallengeIds(challengeIds))
       result.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
     return result;
   }

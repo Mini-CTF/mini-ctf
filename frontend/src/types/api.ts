@@ -21,7 +21,7 @@ export type ChallengeSummary = {
   liked: boolean
 }
 
-export type ChallengeDetail = ChallengeSummary & { description: string; hintAvailable: boolean; hintCost: number }
+export type ChallengeDetail = ChallengeSummary & { description: string; hintAvailable: boolean }
 
 export type PopularChallenge = {
   challengeId: number
@@ -40,8 +40,9 @@ export type RankingRow = {
   score: number
   solvedCount: number
   equippedTitle: string | null
-  equippedFrame: string | null
-  equippedAccessory: string | null
+  /** Retained as optional fields so cached legacy ranking payloads still render safely. */
+  equippedFrame?: string | null
+  equippedAccessory?: string | null
   avatarUrl: string | null
   tier: string
 }
@@ -76,8 +77,6 @@ export type AttendanceRankingRow = {
   totalDays: number
   currentStreak: number
   avatarUrl: string | null
-  equippedFrame: string | null
-  equippedAccessory: string | null
   equippedTitle: string | null
   tier: string
 }
@@ -152,6 +151,12 @@ export type AdminUser = {
   suspendedAt: string | null
 }
 
+export type AccountLog = {
+  type: string
+  detail: string | null
+  occurredAt: string
+}
+
 export type AdminDashboard = {
   users: AdminUser[]
   recentSubmissions: { username: string; challengeTitle: string; correct: boolean; submittedAt: string }[]
@@ -201,8 +206,6 @@ export type Profile = User & {
   solvedCount: number
   statusMessage: string | null
   avatarUrl: string | null
-  equippedFrame: string | null
-  equippedAccessory: string | null
   equippedTitle: string | null
   tier: string
 }
@@ -211,8 +214,6 @@ export type PublicProfileFriend = {
   username: string
   nickname: string
   avatarUrl: string | null
-  equippedFrame: string | null
-  equippedAccessory: string | null
   equippedTitle: string | null
 }
 
@@ -223,11 +224,10 @@ export type PublicProfile = {
   solvedCount: number
   statusMessage: string | null
   avatarUrl: string | null
-  equippedFrame: string | null
-  equippedAccessory: string | null
   equippedTitle: string | null
   friends: PublicProfileFriend[]
   solveActivity: { date: string; count: number }[]
+  attendanceDates: string[]
   tier: string
 }
 

@@ -12,6 +12,7 @@ type FloatingQuickMenuProps = {
   onAiMode: () => void
   onFeedback: () => void
   onBookmarks: () => void
+  tutorialMenuOpen?: boolean
 }
 
 const copy = {
@@ -47,9 +48,10 @@ const copy = {
   },
 } as const
 
-export default function FloatingQuickMenu({ language, assistantOpen, onAssistantToggle, onPopular, onAiMode, onFeedback, onBookmarks }: FloatingQuickMenuProps) {
+export default function FloatingQuickMenu({ language, assistantOpen, onAssistantToggle, onPopular, onAiMode, onFeedback, onBookmarks, tutorialMenuOpen = false }: FloatingQuickMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const labels = copy[language]
+  const isOpen = tutorialMenuOpen || menuOpen
 
   const closeMenu = () => setMenuOpen(false)
   const openAiMode = () => {
@@ -59,21 +61,21 @@ export default function FloatingQuickMenu({ language, assistantOpen, onAssistant
 
   return (
     <div className="floating-tools">
-      <div id="quick-menu" className={`quick-menu ${menuOpen ? 'is-open' : ''}`} aria-label={labels.menu}>
+      <div id="quick-menu" className={`quick-menu ${isOpen ? 'is-open' : ''}`} aria-label={labels.menu}>
         <QuickMenuButton label={labels.bookmarks} icon={<Bookmark />} onClick={() => { closeMenu(); onBookmarks() }} />
         <QuickMenuButton label={labels.popular} icon={<Heart />} accent onClick={() => { closeMenu(); onPopular() }} />
         <QuickMenuButton label={labels.aiMode} icon={<Sparkles />} accent onClick={openAiMode} />
         <QuickMenuButton label={labels.feedback} icon={<MessageSquarePlus />} onClick={() => { closeMenu(); onFeedback() }} />
       </div>
       <button
-        className={`floating-menu-trigger ${menuOpen ? 'is-open' : ''}`}
+        className={`floating-menu-trigger ${isOpen ? 'is-open' : ''}`}
         type="button"
-        aria-expanded={menuOpen}
+        aria-expanded={isOpen}
         aria-controls="quick-menu"
-        aria-label={assistantOpen ? labels.aiCloseLabel : menuOpen ? labels.closeMenu : labels.openMenu}
+        aria-label={assistantOpen ? labels.aiCloseLabel : isOpen ? labels.closeMenu : labels.openMenu}
         onClick={() => assistantOpen ? (closeMenu(), onAssistantToggle()) : setMenuOpen((open) => !open)}
       >
-        {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+        {isOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
       </button>
     </div>
   )

@@ -14,7 +14,8 @@ import { Pencil, X } from 'lucide-react'
 import ClickSpark from './components/ClickSpark'
 import GlobalSpecularButtons from './components/GlobalSpecularButtons'
 import FloatingQuickMenu from './components/FloatingQuickMenu'
-import type { AdminComment, AdminDashboard, AdminPost, AdminUser, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, LearningBookmark, LearningOverview, PopularChallenge, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User } from './types/api'
+import ChallengeWorkbench from './components/ChallengeWorkbench'
+import type { AccountLog, AdminComment, AdminDashboard, AdminPost, AdminUser, AssistantFeedback, AttendanceRankingRow, AttendanceSummary, ChallengeDetail, ChallengeSummary, CommunityCategory, DirectMessage, Friend, LearningBookmark, LearningOverview, PopularChallenge, PostComment, PostDetail, PostSummary, Profile, PublicProfile, RankingRow, Stats, User } from './types/api'
 import flagBoxLogo from './assets/flagbox-logo-cutout.png'
 import './App.css'
 import './typography.css'
@@ -28,6 +29,32 @@ const difficultyOrder: Record<string, number> = { BEGINNER: 0, EASY: 1, NORMAL: 
 const byDifficulty = (a: ChallengeSummary, b: ChallengeSummary) => (difficultyOrder[a.difficulty] ?? 9) - (difficultyOrder[b.difficulty] ?? 9) || a.score - b.score
 
 const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
+const challengeCacheKey = 'flagbox-challenges-v1'
+
+function cachedChallenges(): ChallengeSummary[] {
+  try {
+    const parsed: unknown = JSON.parse(sessionStorage.getItem(challengeCacheKey) ?? '[]')
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (item): item is ChallengeSummary =>
+        typeof item === 'object'
+        && item !== null
+        && typeof (item as ChallengeSummary).id === 'number'
+        && typeof (item as ChallengeSummary).title === 'string',
+    )
+  } catch {
+    return []
+  }
+}
+
+function cacheChallenges(challenges: ChallengeSummary[]) {
+  try {
+    sessionStorage.setItem(challengeCacheKey, JSON.stringify(challenges))
+  } catch {
+    // A fresh API response still renders when browser storage is unavailable.
+  }
+}
+
 function oauthErrorMessage(code: string | null) {
   return code
     ? code === 'authorization_request_not_found'
@@ -45,7 +72,22 @@ const oauthBaseUrl = import.meta.env.VITE_OAUTH_BASE_URL ?? 'http://localhost:80
 const publicSiteUrl = 'https://flagbox.vercel.app'
 const publicProfileEvent = 'flagbox:open-public-profile'
 const attendanceChangedEvent = 'flagbox:attendance-changed'
+const koreaOffsetMs = 9 * 60 * 60 * 1000
 function openPublicProfile(username: string) { window.dispatchEvent(new CustomEvent<string>(publicProfileEvent, { detail: username })) }
+function memberTutorialProgressKey(username: string) { return `flagbox-authenticated-onboarding-v4-step:${username}` }
+function memberTutorialSeenKey(username: string) { return `flagbox-authenticated-onboarding-v4-seen:${username}` }
+
+function millisecondsUntilNextKoreanMidnight() {
+  const now = Date.now()
+  const koreanNow = new Date(now + koreaOffsetMs)
+  const nextMidnight = Date.UTC(koreanNow.getUTCFullYear(), koreanNow.getUTCMonth(), koreanNow.getUTCDate() + 1) - koreaOffsetMs
+  return Math.max(1_000, nextMidnight - now)
+}
+
+function koreanDateKey() {
+  const koreanNow = new Date(Date.now() + koreaOffsetMs)
+  return `${koreanNow.getUTCFullYear()}-${String(koreanNow.getUTCMonth() + 1).padStart(2, '0')}-${String(koreanNow.getUTCDate()).padStart(2, '0')}`
+}
 
 const uiCopy = {
   ko: { home: '홈', learn: '학습', wargame: '워게임', ranking: '랭킹', community: '커뮤니티', profile: '마이 페이지', shop: '상점', admin: '관리', login: '로그인', logout: '로그아웃', language: '영어로 변경', footer: '안전하게 배우고, 직접 풀어보세요.', status: '학습 플랫폼 정상 운영 중' },
@@ -99,8 +141,8 @@ const englishToKorean: Record<string, string> = {
   'Pick your next challenge.': '어떤 문제부터 풀어볼까요?', 'Read the brief, then follow the guide one step at a time.': '문제를 읽고, 풀이 가이드를 따라 한 단계씩 시도해 보세요.',
   '📚 Study guide — concept · tools · steps ': '📚 학습 가이드 — 개념·도구·풀이 순서 ', 'Collapse ▲': '접기 ▲', 'Expand ▼': '펼치기 ▼',
   'The concept': '이 문제의 콘셉트', 'Tools you need': '준비물 · 도구', 'Step-by-step approach': '이렇게 순서대로 풀어 보세요',
-  'Concepts first.': '개념부터 차근차근.', 'Read before you solve — each article is a 5–9 minute read.': '문제를 풀기 전에 읽으면 이해가 달라져요. 각 글은 5~9분이면 읽혀요.',
-  'min read': '분 소요', '← Back to learn': '← 학습 목록으로', '✅ Quick self-check': '✅ 스스로 확인하기',
+  'Concepts first.': '개념부터 차근차근.', 'Read the key concepts before you solve.': '문제를 풀기 전에 핵심 개념을 살펴보세요.',
+  '← Back to learn': '← 학습 목록으로', '✅ Quick self-check': '✅ 스스로 확인하기',
   'Concepts ready? Time to solve!': '개념이 준비됐다면, 이제 직접 풀어볼 시간!', 'Go to wargames': '워게임으로 이동',
   'Welcome to security learning at FlagBox': 'FlagBox의 보안 학습에 오신 걸 환영해요',
   'No special gear or hacking background needed — this is a space to learn by solving wargames one step at a time.': '여기는 특별한 장비나 해킹 지식이 필요하지 않아요. 워게임 문제를 한 단계씩 풀어 나가는 학습 공간입니다.',
@@ -179,7 +221,7 @@ function AppShell() {
   const isPasswordResetLink = location.pathname === '/login' && new URLSearchParams(location.search).has('resetToken')
   const [user, setUser] = useState<User | null>(null)
   const [, setStats] = useState<Stats>(emptyStats)
-  const [challenges, setChallenges] = useState<ChallengeSummary[]>([])
+  const [challenges, setChallenges] = useState<ChallengeSummary[]>(cachedChallenges)
   const [ranking, setRanking] = useState<RankingRow[]>([])
   const [attendanceRanking, setAttendanceRanking] = useState<AttendanceRankingRow[]>([])
   const [category, setCategory] = useState<Filter>('ALL')
@@ -193,10 +235,24 @@ function AppShell() {
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const localizationVersion = useRef(0)
   const [showIntro, setShowIntro] = useState(() => !isPasswordResetLink && sessionStorage.getItem('flagbox-intro-seen') !== 'true')
-  const [showTutorial, setShowTutorial] = useState(false)
   const [showMemberTutorial, setShowMemberTutorial] = useState(false)
+  const [tutorialDismissedForSession, setTutorialDismissedForSession] = useState(false)
+  const [tutorialSkippedForSession, setTutorialSkippedForSession] = useState(false)
+  const [tutorialQuickMenuOpen, setTutorialQuickMenuOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [assistantFeedbackOpen, setAssistantFeedbackOpen] = useState(false)
+  const [headerAttendance, setHeaderAttendance] = useState<AttendanceSummary | null>(null)
+  const [headerCheckInAvailable, setHeaderCheckInAvailable] = useState(false)
+  const [checkInFinishing, setCheckInFinishing] = useState(false)
+  const authenticatedUsername = user?.username
+  const memberTutorialCompleted = authenticatedUsername
+    ? localStorage.getItem(memberTutorialSeenKey(authenticatedUsername)) === 'true'
+    : false
+  const memberTutorialInitialStep = useMemo(() => {
+    if (!authenticatedUsername) return 0
+    const savedStep = Number.parseInt(localStorage.getItem(memberTutorialProgressKey(authenticatedUsername)) ?? '0', 10)
+    return Number.isFinite(savedStep) && savedStep >= 0 ? savedStep : 0
+  }, [authenticatedUsername])
 
   useEffect(() => {
     const page = location.pathname.startsWith('/challenges')
@@ -226,7 +282,6 @@ function AppShell() {
     if (!isPasswordResetLink) return
     const timer = window.setTimeout(() => {
       setShowIntro(false)
-      setShowTutorial(false)
       setShowMemberTutorial(false)
     }, 0)
     return () => window.clearTimeout(timer)
@@ -240,16 +295,10 @@ function AppShell() {
     return () => window.clearTimeout(timer)
   }, [showIntro])
   useEffect(() => {
-    if (isPasswordResetLink || showIntro || user || sessionStorage.getItem('flagbox-tutorial-seen') === 'true') return
-    if (sessionStorage.getItem('flagbox-intro-seen') !== 'true') return
-    const timer = window.setTimeout(() => setShowTutorial(true), 240)
+    if (!user || isPasswordResetLink || showIntro || tutorialDismissedForSession || memberTutorialCompleted) return
+    const timer = window.setTimeout(() => setShowMemberTutorial(true), 1200)
     return () => window.clearTimeout(timer)
-  }, [isPasswordResetLink, showIntro, user])
-  useEffect(() => {
-    if (!user || showIntro || showTutorial || sessionStorage.getItem('flagbox-member-tutorial-seen') === 'true') return
-    const timer = window.setTimeout(() => setShowMemberTutorial(true), 380)
-    return () => window.clearTimeout(timer)
-  }, [user, showIntro, showTutorial])
+  }, [user, isPasswordResetLink, showIntro, tutorialDismissedForSession, memberTutorialCompleted])
   useEffect(() => {
     document.documentElement.classList.toggle('flagbox-intro-active', showIntro)
     return () => document.documentElement.classList.remove('flagbox-intro-active')
@@ -258,15 +307,14 @@ function AppShell() {
   const refresh = useCallback(async () => {
     setError('')
     const [statsResult, challengesResult, rankingResult, attendanceRankingResult] = await Promise.allSettled([
-      api.stats(),
-      api.challenges(),
-      api.ranking(),
-      api.attendanceRanking(),
+      api.stats().then(setStats),
+      api.challenges().then((nextChallenges) => {
+        setChallenges(nextChallenges)
+        cacheChallenges(nextChallenges)
+      }),
+      api.ranking().then(setRanking),
+      api.attendanceRanking().then(setAttendanceRanking),
     ])
-    if (statsResult.status === 'fulfilled') setStats(statsResult.value)
-    if (challengesResult.status === 'fulfilled') setChallenges(challengesResult.value)
-    if (rankingResult.status === 'fulfilled') setRanking(rankingResult.value)
-    if (attendanceRankingResult.status === 'fulfilled') setAttendanceRanking(attendanceRankingResult.value)
 
     const failures = [statsResult, challengesResult, rankingResult, attendanceRankingResult].filter(
       (result) => result.status === 'rejected',
@@ -286,6 +334,10 @@ function AppShell() {
       const message = event instanceof CustomEvent && typeof event.detail === 'string' ? event.detail : sessionExpiredMessage
       clearAuthToken()
       setUser(null)
+      setShowMemberTutorial(false)
+      setTutorialDismissedForSession(false)
+      setTutorialSkippedForSession(false)
+      setHeaderCheckInAvailable(false)
       setError(message)
       routerNavigate('/login?sessionExpired=1', { replace: true })
     }
@@ -297,7 +349,6 @@ function AppShell() {
     const timer = window.setInterval(() => { void api.me().catch(() => undefined) }, 10_000)
     return () => window.clearInterval(timer)
   }, [user])
-
   useEffect(() => {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('token')
     if (token) {
@@ -320,6 +371,28 @@ function AppShell() {
     }, 15000)
     return () => window.clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (!authenticatedUsername) return
+    let active = true
+    const syncAttendance = () => void api.attendance().then((summary) => {
+      if (active) setHeaderAttendance(summary)
+    }).catch(() => undefined)
+    let midnightTimer: number
+    const refreshAtKoreanMidnight = () => {
+      syncAttendance()
+      window.dispatchEvent(new Event(attendanceChangedEvent))
+      midnightTimer = window.setTimeout(refreshAtKoreanMidnight, millisecondsUntilNextKoreanMidnight())
+    }
+    syncAttendance()
+    midnightTimer = window.setTimeout(refreshAtKoreanMidnight, millisecondsUntilNextKoreanMidnight())
+    window.addEventListener(attendanceChangedEvent, syncAttendance)
+    return () => {
+      active = false
+      window.clearTimeout(midnightTimer)
+      window.removeEventListener(attendanceChangedEvent, syncAttendance)
+    }
+  }, [authenticatedUsername])
 
   useEffect(() => {
     const refreshRankings = () => {
@@ -415,12 +488,32 @@ function AppShell() {
   const completeAuth = (result: { token: string; user: User }) => {
     setAuthToken(result.token)
     setUser(result.user)
-    go('/challenges')
+    go('/')
     void refresh()
   }
+  const checkInFromHeader = async () => {
+    if (checkInFinishing || headerAttendance?.checkedInToday) return
+    try {
+      const summary = await api.checkIn()
+      setHeaderAttendance(summary)
+      setCheckInFinishing(true)
+      setHeaderCheckInAvailable(false)
+      window.dispatchEvent(new Event(attendanceChangedEvent))
+      window.setTimeout(() => setCheckInFinishing(false), 900)
+    } catch {
+      // The global check-in popup and My Page expose recoverable attendance errors.
+    }
+  }
+  const handleCheckInPopupOpen = useCallback(() => setHeaderCheckInAvailable(false), [])
+  const handleCheckInPopupDefer = useCallback(() => setHeaderCheckInAvailable(true), [])
   const logout = () => {
     clearAuthToken()
     setUser(null)
+    setShowMemberTutorial(false)
+    setTutorialDismissedForSession(false)
+    setTutorialSkippedForSession(false)
+    setHeaderCheckInAvailable(false)
+    setTutorialQuickMenuOpen(false)
     go('/')
     void refresh()
   }
@@ -433,8 +526,7 @@ function AppShell() {
   const guarded = (node: ReactNode) => loading ? <div className="page"><LoadingState label="Loading live platform data..." /></div> : node
   return <div className="app-shell">
     {showIntro && <FlagBoxIntro onSkip={dismissIntro} />}
-      {showTutorial && <GettingStartedTutorial onClose={() => { setShowTutorial(false); sessionStorage.setItem('flagbox-tutorial-seen', 'true') }} onNavigate={go} firstChallengeId={challenges[0]?.id} lang={language} />}
-      {showMemberTutorial && <GettingStartedTutorial scope="member" onClose={() => { setShowMemberTutorial(false); sessionStorage.setItem('flagbox-member-tutorial-seen', 'true') }} onNavigate={go} lang={language} />}
+      {showMemberTutorial && user && <GettingStartedTutorial scope="authenticated" initialStep={memberTutorialInitialStep} onClose={() => { setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(false); setTutorialQuickMenuOpen(false) }} onSkip={() => { setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(true); setTutorialQuickMenuOpen(false); go('/') }} onComplete={() => { localStorage.setItem(memberTutorialSeenKey(user.username), 'true'); localStorage.removeItem(memberTutorialProgressKey(user.username)); setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(false); setTutorialQuickMenuOpen(false); go('/') }} onStepChange={(step, index) => { localStorage.setItem(memberTutorialProgressKey(user.username), String(index)); setTutorialQuickMenuOpen(step.quickMenu === 'content') }} onNavigate={go} firstChallengeId={challenges[0]?.id} lang={language} />}
     <header className="site-header">
       <button className="brand" type="button" onClick={() => go('/')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
@@ -447,11 +539,11 @@ function AppShell() {
         <NavButton active={path.startsWith('/profile')} onClick={() => go('/profile')}>{text.profile}</NavButton>
         {user && <NavButton active={path.startsWith('/friends')} onClick={() => go('/friends')}>Friends</NavButton>}
         {!user && <button className="nav-button mobile-friends" type="button" onClick={() => go('/friends')}>친구</button>}
-        {user?.role === 'ADMIN' && <NavButton active={path.startsWith('/admin')} onClick={() => go('/admin')}>{text.admin}</NavButton>}
+        {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && <NavButton active={path.startsWith('/admin')} onClick={() => go('/admin')}>{text.admin}</NavButton>}
         <button className="nav-button mobile-language" type="button" onClick={toggleLanguage} aria-label={text.language}><GlobeIcon /> {language === 'ko' ? 'EN' : 'KO'}</button>
         {user ? <button className="nav-button mobile-auth" type="button" onClick={logout}>{text.logout}</button> : <button className="nav-button mobile-auth" type="button" onClick={() => go('/login')}>{text.login}</button>}
       </nav>
-      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={toggleLanguage}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button></> : <button className="header-login" type="button" onClick={() => go('/login')}>{text.login}</button>}</div>
+      <div className="header-actions"><button className={`language-toggle ${language === 'en' ? 'is-english' : ''}`} type="button" aria-pressed={language === 'en'} aria-label={text.language} onClick={toggleLanguage}><span className="language-toggle-track" aria-hidden="true"><span className="language-toggle-thumb"><GlobeIcon /></span></span><span>{language === 'ko' ? 'KO' : 'EN'}</span></button><button className={`theme-toggle ${theme === 'light' ? 'is-light' : ''}`} type="button" aria-pressed={theme === 'light'} aria-label={theme === 'dark' ? '라이트 테마로 변경' : '다크 테마로 변경'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb">{theme === 'dark' ? '☾' : '☀'}</span></span></button>{user ? <><span className="header-login header-identity">{user.nickname || user.username}</span><button className="header-login" type="button" onClick={logout}>{text.logout}</button>{headerAttendance && <span className="header-streak" aria-live="polite">🔥 {language === 'ko' ? `${headerAttendance.currentStreak}일 연속` : `${headerAttendance.currentStreak}-day streak`}</span>}{headerCheckInAvailable && headerAttendance && (!headerAttendance.checkedInToday || checkInFinishing) && <button className={`header-check-in${checkInFinishing ? ' is-complete' : ''}`} type="button" onClick={() => void checkInFromHeader()}>{checkInFinishing ? (language === 'ko' ? '출석 완료' : 'Checked in') : (language === 'ko' ? '출석체크하기' : 'Check in')}</button>}</> : <button className="header-login" type="button" onClick={() => go('/login')}>{text.login}</button>}</div>
     </header>
     <main>
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
@@ -474,17 +566,17 @@ function AppShell() {
         <Route path="/safe-learning" element={<PolicyView language={language} kind="safe-learning" />} />
         <Route path="/guide" element={<HelpView language={language} kind="guide" />} />
         <Route path="/faq" element={<HelpView language={language} kind="faq" />} />
-        <Route path="/admin" element={user?.role === 'ADMIN' ? guarded(<AdminConsole language={language} />) : <Navigate to="/" replace />} />
+        <Route path="/admin" element={user?.role === 'ADMIN' || user?.role === 'MODERATOR' ? guarded(<AdminConsole language={language} limited={user.role === 'MODERATOR'} operatorUsername={user.username} />) : <Navigate to="/" replace />} />
         <Route path="/login" element={<LoginView onBack={() => go('/')} onAuth={completeAuth} language={language} />} />
         <Route path="/auth/callback" element={<CallbackRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </main>
     <PublicProfileDialog />
-    <GlobalCheckInPopup user={user} />
+    <GlobalCheckInPopup user={user} paused={showIntro || isPasswordResetLink || Boolean(user && !memberTutorialCompleted && !tutorialSkippedForSession)} onOpen={handleCheckInPopupOpen} onDefer={handleCheckInPopupDefer} />
     <FloatingAssistant open={assistantOpen} onOpenChange={setAssistantOpen} user={user} language={language} path={path} onLogin={() => go('/login')} />
     {assistantFeedbackOpen && <AssistantFeedbackDialog user={user} language={language} onClose={() => setAssistantFeedbackOpen(false)} onLogin={() => go('/login')} />}
-    <FloatingQuickMenu language={language} assistantOpen={assistantOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} onBookmarks={() => go(user ? '/bookmarks' : '/login')} onPopular={() => go(user ? '/popular' : '/login')} />
+    <FloatingQuickMenu language={language} assistantOpen={assistantOpen} tutorialMenuOpen={tutorialQuickMenuOpen} onAssistantToggle={() => setAssistantOpen((current) => !current)} onAiMode={() => setAssistantOpen(true)} onFeedback={() => setAssistantFeedbackOpen(true)} onBookmarks={() => go(user ? '/bookmarks' : '/login')} onPopular={() => go(user ? '/popular' : '/login')} />
     <footer className="site-footer">
       <div className="footer-brand"><strong>FlagBox</strong><p>{language === 'ko' ? '보안을 처음 배우는 사람을 위한 쉽고 안전한 워게임 학습 플랫폼' : 'A safe, beginner-friendly wargame learning platform.'}</p></div>
       <div className="footer-links"><div><b>{language === 'ko' ? '서비스' : 'Services'}</b><nav className="footer-service-links" aria-label={language === 'ko' ? '서비스 바로가기' : 'Service shortcuts'}><button type="button" onClick={() => go('/challenges')}>{language === 'ko' ? '워게임' : 'Wargames'}</button><button type="button" onClick={() => go('/learn')}>{language === 'ko' ? '학습' : 'Learn'}</button><button type="button" onClick={() => go('/ranking')}>{language === 'ko' ? '랭킹' : 'Rankings'}</button><button type="button" onClick={() => go('/community')}>{language === 'ko' ? '커뮤니티' : 'Community'}</button></nav></div><div><b>{language === 'ko' ? '도움말' : 'Help'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '도움말 바로가기' : 'Help shortcuts'}><a href="/guide">{language === 'ko' ? '이용 안내' : 'Guide'}</a><a href="/faq">{language === 'ko' ? '자주 묻는 질문' : 'FAQ'}</a><button className="footer-text-link" data-no-specular type="button" onClick={() => setAssistantFeedbackOpen(true)}>{language === 'ko' ? '피드백' : 'Feedback'}</button></nav><a href="mailto:flagbox.contact@gmail.com">{language === 'ko' ? '문의하기: flagbox.contact@gmail.com' : 'Contact: flagbox.contact@gmail.com'}</a></div><div><b>{language === 'ko' ? '정책' : 'Policies'}</b><nav className="footer-policy-links" aria-label={language === 'ko' ? '정책 바로가기' : 'Policy shortcuts'}><a href="/terms">{language === 'ko' ? '이용약관' : 'Terms'}</a><a href="/privacy">{language === 'ko' ? '개인정보처리방침' : 'Privacy'}</a><a href="/safe-learning">{language === 'ko' ? '안전한 학습 가이드' : 'Safe learning guide'}</a></nav></div></div>
@@ -678,7 +770,7 @@ function FlagBoxIntro({ onSkip }: { onSkip: () => void }) {
   return <div className="flagbox-intro flagbox-stroke-intro" role="status" aria-label="FlagBox is loading.">
     <Beams className="flagbox-stroke-intro__beams" beamWidth={2} beamHeight={42} beamNumber={18} rotation={90} />
     <button type="button" className="flagbox-intro-skip" onClick={onSkip}>Skip</button>
-    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={265} letterSpacing={-7} characterOffsets={{ 5: -6, 6: -6 }} strokeColor="#f8fafc" fillColor="#f8fafc" strokeWidth={1.7} drawDuration={2.2} fillDelay={0.28} fillDuration={0.45} onFillComplete={showKeywords} />
+    <StrokeText text="FlagBox" className="flagbox-stroke-intro__wordmark" fontSize={265} letterSpacing={-7} characterOffsets={{ 5: -6, 6: -6 }} simpleFirstStroke strokeColor="#ffffff" fillColor="#ffffff" strokeWidth={2} drawDuration={2.2} fillDelay={0.28} fillDuration={0.45} onFillComplete={showKeywords} />
     <p className={fillComplete ? 'flagbox-stroke-intro__copy is-visible' : 'flagbox-stroke-intro__copy'}>LEARN · ANALYZE · CAPTURE</p>
   </div>
 }
@@ -691,8 +783,8 @@ function LearnView({ lang, loggedIn }: { lang: 'ko' | 'en'; loggedIn: boolean })
   return (
     <div className="page">
       <LearningSnapshot lang={lang} loggedIn={loggedIn} />
-      <PageIntro eyebrow="LEARN" title={lang === 'ko' ? '개념부터 차근차근' : 'Concepts first.'} description={lang === 'ko' ? '문제를 풀기 전에 읽으면 이해가 달라져요. 각 글은 5~9분이면 읽혀요.' : 'Read before you solve — each article is a 5–9 minute read.'} />
-      <div className="filter-tabs" aria-label="학습 분야">
+      <PageIntro eyebrow="LEARN" title={lang === 'ko' ? '개념부터 차근차근' : 'Concepts first.'} description={lang === 'ko' ? '문제를 풀기 전에 핵심 개념을 살펴보세요.' : 'Read the key concepts before you solve.'} />
+      <div className="filter-tabs learn-filter-tabs" aria-label="학습 분야">
         {LEARN_FIELDS.map((item) => (
           <button key={item.key} type="button" className={field === item.key ? 'filter-tab active' : 'filter-tab'} onClick={() => setField(item.key)}>
             {lang === 'ko' ? (item.key === 'ALL' ? '전체' : item.label) : item.key === 'ALL' ? 'All' : item.key}
@@ -705,7 +797,6 @@ function LearnView({ lang, loggedIn }: { lang: 'ko' | 'en'; loggedIn: boolean })
             <span className={`badge ${article.field.toLowerCase()}`}>{lang === 'ko' ? ({ WEB: '웹', FORENSIC: '포렌식', REVERSING: '리버싱' } as Record<string, string>)[article.field] ?? article.field : article.field}</span>
             <strong>{lang === 'ko' ? article.title : learnEn[article.slug]?.title ?? article.title}</strong>
             <small>{lang === 'ko' ? article.summary : learnEn[article.slug]?.summary ?? article.summary}</small>
-            <span className="learn-minutes">⏱ {article.minutes}{lang === 'ko' ? '분 소요' : ' min read'}</span>
           </button>
         ))}
       </div>
@@ -820,7 +911,7 @@ function LearnArticleRoute({ lang }: { lang: 'ko' | 'en' }) {
         ← Back to learn
       </button>
       <article className="learn-article">
-        <p className="eyebrow">{article.field} · {article.minutes}{lang === 'ko' ? '분' : ' min read'}</p>
+        <p className="eyebrow">{article.field}</p>
         <h1>{lang === 'ko' ? article.title : learnEn[article.slug]?.title ?? article.title}</h1>
         <p className="learn-summary">{lang === 'ko' ? article.summary : learnEn[article.slug]?.summary ?? article.summary}</p>{lang === 'en' && <p className="learn-notice">Article bodies are currently provided in Korean.</p>}
         {article.sections.map((section) => (
@@ -896,6 +987,11 @@ function difficultyLabel(difficulty: string) {
   return (labels as Record<string, string>)[difficulty] ?? difficulty
 }
 function isSuperUserTitle(title: string | null | undefined) { return title?.toLowerCase() === 'super_user' }
+function isSubAdminTitle(title: string | null | undefined) { return title?.toLowerCase() === 'sub_admin' }
+function administratorTitle(title: string | null | undefined) {
+  if (isSuperUserTitle(title)) return 'Super User'
+  return isSubAdminTitle(title) ? 'Sub-admin' : null
+}
 function ChallengeRow({ item, onOpen }: { item: ChallengeSummary; onOpen: (item: ChallengeSummary) => void }) { return <button className="challenge-row" type="button" onClick={() => onOpen(item)}><span className={`category-mark ${item.category.toLowerCase()}`} /><span className="row-main"><strong>{item.title}</strong><small>{item.category} · {item.difficulty}</small></span><span className="row-meta"><b>{item.score} pts</b>{item.solved && <span className="solved">SOLVED</span>}</span></button> }
 
 function ChallengesProgress({ items, total }: { items: ChallengeSummary[]; total: number }) {
@@ -983,7 +1079,7 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
   const [error, setError] = useState('')
   const [hintBusy, setHintBusy] = useState(false)
   const [awarded, setAwarded] = useState<number | null>(null)
-  const [guideOpen, setGuideOpen] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(true)
   const [bookmarked, setBookmarked] = useState(false)
   const [bookmarkBusy, setBookmarkBusy] = useState(false)
   useEffect(() => {
@@ -1114,7 +1210,7 @@ function ChallengeDetailView({ challengeId, loggedIn, onBack, onLogin, onSubmitt
     try { setHintBusy(true); setError(''); const result = await api.challengeHint(item.id); setHint(result.hint) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not reveal the hint.') } finally { setHintBusy(false) }
   }
   const download = async () => { try { await api.downloadArtifact(item.id) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Download failed.') } }
-  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>📚 Study guide — concept · tools · steps {guideOpen ? 'Collapse ▲' : 'Expand ▼'}</button>{guideOpen && <><div className="guide-block"><strong>The concept</strong><p>{guide.concept}</p></div><div className="guide-block"><strong>Tools you need</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>Step-by-step approach</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>힌트는 무료로 제공됩니다.</small></div><button type="button" className="button secondary" disabled={hintBusy || hint !== null} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>Protected download from the API</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div></div>
+  return <div className="page detail-page"><button className="back-link" type="button" onClick={onBack}>← Back to challenges</button><div className="detail-header"><div><div className="badge-line"><Badge tone={item.category}>{item.category}</Badge><Badge tone={item.difficulty}>{difficultyLabel(item.difficulty)}</Badge></div><h1>{item.title}</h1><p>{item.description}</p></div><div className="detail-score"><span>REWARD</span><strong>{item.score}</strong><small>points</small></div></div><div className="detail-layout"><div><section className="panel problem-panel"><div className="panel-heading"><span>THE BRIEF</span></div><h2>Analyze carefully.</h2><p>{item.description}</p>{guide && <div className="guide-panel"><button type="button" className="guide-toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>📚 Study guide — concept · tools · steps {guideOpen ? 'Collapse ▲' : 'Expand ▼'}</button>{guideOpen && <><div className="guide-block"><strong>The concept</strong><p>{guide.concept}</p></div><div className="guide-block"><strong>Tools you need</strong><ul>{guide.tools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div><div className="guide-block"><strong>Step-by-step approach</strong><ol>{guide.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></div></>}</div>}{loggedIn && item.hintAvailable && <div className="hint-panel"><div><strong>Need a nudge?</strong><small>힌트는 무료로 제공됩니다.</small></div><button type="button" className="button secondary" disabled={hintBusy || hint !== null} onClick={() => void revealHint()}>{hint ? 'Hint revealed' : 'Reveal hint'}</button>{hint && <p>{hint}</p>}</div>}</section>{item.artifactAvailable && <section className="panel artifact-panel"><div className="panel-heading"><span>ARTIFACT</span></div><div className="artifact-file"><div><strong>Challenge artifact</strong><small>브라우저에서 먼저 분석하고, 필요할 때만 다운로드하세요.</small></div><button type="button" className="button secondary" onClick={download}>Download</button></div></section>}</div><aside className="submit-panel"><div className="submit-kicker">SUBMIT FLAG</div><h2>What did you find?</h2>{loggedIn ? <form onSubmit={submit}><label htmlFor="flag">Flag value</label><div className="flag-input"><input id="flag" value={flag} onChange={(event) => setFlag(event.target.value)} placeholder="CTF{...}" required maxLength={200} autoComplete="off" /></div><button className="button primary submit-button" type="submit">Submit flag</button></form> : <button className="button primary submit-button" type="button" onClick={onLogin}>Sign in to submit</button>}{message && <p className="feedback success">{message}{awarded !== null && <> +{awarded} <span>points</span></>}</p>}{error && <p className="feedback error">{error}</p>}</aside></div><ChallengeWorkbench challengeId={item.id} category={item.category} artifactAvailable={item.artifactAvailable} onError={setError} /></div>
 }
 
 function ChallengeDetailRoute({ loggedIn, onSubmitted }: { loggedIn: boolean; onSubmitted: () => void }) {
@@ -1161,12 +1257,13 @@ function EnhancedRankingView({ rows, attendanceRows }: { rows: RankingRow[]; att
   ] as const
   const rankLabel = (rank: number) => rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : `${rank}위`
   const valueLabel = (row: RankingRow | AttendanceRankingRow) => section === 'score' ? `${(row as RankingRow).score} pt` : `${(row as AttendanceRankingRow).currentStreak}일`
-  return <div className="page ranking-page"><PageIntro eyebrow="RANKING" title="함께 쌓아가는 기록" description={section === 'score' ? '문제를 해결하며 쌓은 점수와 기록이에요.' : '매일 학습을 이어온 꾸준한 기록이에요.'} /><div className="filter-tabs ranking-tabs"><button type="button" className={section === 'score' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('score')}>점수 랭킹</button><button type="button" className={section === 'attendance' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('attendance')}>출석 랭킹</button></div><div className="ranking-content-layout"><section className="panel ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>{section === 'score' ? '해결' : '누적'}</span><span>{section === 'score' ? '점수' : '연속'}</span></div>{visibleRows.map((row) => <div className={`ranking-row ${section === 'score' ? (row as RankingRow).solvedCount === 0 ? 'is-empty-ranking' : '' : (row as AttendanceRankingRow).totalDays === 0 ? 'is-empty-ranking' : ''}`} key={row.username}><strong className={`rank-number rank-${row.rank}`} aria-label={`${row.rank}위`}>{rankLabel(row.rank)}</strong><RankIdentity row={row} /><span>{section === 'score' ? (row as RankingRow).solvedCount : `${(row as AttendanceRankingRow).totalDays}일`}</span><b>{section === 'score' ? (row as RankingRow).score : `${(row as AttendanceRankingRow).currentStreak}일`}</b></div>)}{visibleRows.length === 0 && <EmptyState />}</section><aside className="ranking-podium-card"><div className="podium-heading"><span className="vault-kicker">TOP 3</span><h2>이번 주의 리더</h2><p>{section === 'score' ? '가장 높은 점수를 기록한 학습자' : '가장 꾸준히 학습을 이어온 학습자'}</p></div><div className="podium" aria-label="상위 3명 시상대">{[2, 1, 3].map((rank) => { const row = podiumRows.find((candidate) => candidate.rank === rank); return <div className={`podium-place podium-place-${rank}`} key={rank}>{row ? <><div className="podium-user"><strong>{rankLabel(row.rank)}</strong><span className="podium-avatar">{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><b>{row.nickname || row.username}</b><small>{valueLabel(row)}</small></div><div className="podium-block"><span>{row.rank}</span></div></> : <div className="podium-empty" />}</div> })}</div><div className="podium-legend">상위 3명은 메달로 표시됩니다.</div></aside></div><div className="tier-guide"><span className="vault-kicker">TIER GUIDE</span><h2>티어 기준</h2><p>점수가 오르면 다음 티어로 자동 승급해요.</p><div>{tierGuide.slice().reverse().map(([tier, threshold]) => <span key={tier}><TierEmblem tier={tier} /><small>{threshold}</small></span>)}</div></div></div>
+  return <div className="page ranking-page"><PageIntro eyebrow="RANKING" title="함께 쌓아가는 기록" description={section === 'score' ? '문제를 해결하며 쌓은 점수와 기록이에요.' : '매일 학습을 이어온 꾸준한 기록이에요.'} /><div className="filter-tabs ranking-tabs"><button type="button" className={section === 'score' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('score')}>점수 랭킹</button><button type="button" className={section === 'attendance' ? 'filter-tab active' : 'filter-tab'} onClick={() => setSection('attendance')}>출석 랭킹</button></div><div className="ranking-content-layout"><section className="panel ranking-panel"><div className="ranking-head"><span>순위</span><span>학습자</span><span>{section === 'score' ? '해결' : '누적'}</span><span>{section === 'score' ? '점수' : '연속'}</span></div>{visibleRows.map((row) => <div className={`ranking-row ${section === 'score' ? (row as RankingRow).solvedCount === 0 ? 'is-empty-ranking' : '' : (row as AttendanceRankingRow).totalDays === 0 ? 'is-empty-ranking' : ''}`} key={row.username}><strong className={`rank-number rank-${row.rank}`} aria-label={`${row.rank}위`}>{rankLabel(row.rank)}</strong><RankIdentity row={row} /><span>{section === 'score' ? (row as RankingRow).solvedCount : `${(row as AttendanceRankingRow).totalDays}일`}</span><b>{section === 'score' ? (row as RankingRow).score : `${(row as AttendanceRankingRow).currentStreak}일`}</b></div>)}{visibleRows.length === 0 && <EmptyState />}</section><aside className="ranking-podium-column"><section className="ranking-podium-card"><div className="podium-heading"><span className="vault-kicker">TOP 3</span><h2>이번 주의 리더</h2><p>{section === 'score' ? '가장 높은 점수를 기록한 학습자' : '가장 꾸준히 학습을 이어온 학습자'}</p></div><div className="podium" aria-label="상위 3명 시상대">{[2, 1, 3].map((rank) => { const row = podiumRows.find((candidate) => candidate.rank === rank); return <div className={`podium-place podium-place-${rank}`} key={rank}>{row ? <><div className="podium-user"><strong>{rankLabel(row.rank)}</strong><span className="podium-avatar">{(row.nickname || row.username).slice(0, 2).toUpperCase()}</span><b>{row.nickname || row.username}</b><small>{valueLabel(row)}</small></div><div className="podium-block"><span>{row.rank}</span></div></> : <div className="podium-empty" />}</div> })}</div><div className="podium-legend">상위 3명은 메달로 표시됩니다.</div></section><div className="tier-guide"><span className="vault-kicker">TIER GUIDE</span><h2>티어 기준</h2><p>점수가 오르면 다음 티어로 자동 승급해요.</p><div>{tierGuide.slice().reverse().map(([tier, threshold]) => <span key={tier}><TierEmblem tier={tier} /><small>{threshold}</small></span>)}</div></div></aside></div></div>
 }
 
-function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' | 'avatarUrl' | 'equippedFrame' | 'equippedAccessory' | 'equippedTitle' | 'tier'> }) {
+function RankIdentity({ row }: { row: Pick<RankingRow, 'username' | 'nickname' | 'avatarUrl' | 'equippedTitle' | 'tier'> }) {
   const name = row.nickname || row.username
-  return <button className="operator public-profile-trigger" type="button" onClick={() => openPublicProfile(row.username)} aria-label={`${name} profile`}><span className="mini-avatar ranking-avatar">{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}</strong><TierEmblem tier={row.tier} />{isSuperUserTitle(row.equippedTitle) && <small className="ranking-title super-user-title">Super User</small>}</span></button>
+  const title = administratorTitle(row.equippedTitle)
+  return <button className="operator public-profile-trigger" type="button" onClick={() => openPublicProfile(row.username)} aria-label={`${name} profile`}><span className="mini-avatar ranking-avatar">{row.avatarUrl ? <img src={row.avatarUrl} alt="" /> : name.slice(0, 2).toUpperCase()}</span><span className="ranking-identity"><strong>{name}</strong><TierEmblem tier={row.tier} />{title && <small className="ranking-title super-user-title">{title}</small>}</span></button>
 }
 
 function TierEmblem({ tier }: { tier: string }) {
@@ -1281,9 +1378,8 @@ function BklitStyleRadar({ items, metrics }: { items: ChallengeSummary[]; metric
   }
   const polygon = (value: number) => metrics.map((_, index) => point(index, value).join(',')).join(' ')
   const values = data[0].values
-  const area = metrics.map((metric, index) => point(index, values[metric] as number).join(',')).join(' ')
   const ariaLabel = metrics.map((metric) => `${metric} ${values[metric]}%`).join(', ')
-  return <section className="combined-field-radar bklit-radar" aria-label="분야별 성취율 레이더 차트"><div className="combined-field-radar-copy"><span className="vault-kicker">ALL FIELDS</span><h2>분야별 성취율 종합</h2><p>각 축은 문제 분야이고, 해결 비율이 바깥쪽에 가까울수록 높습니다.</p></div><div className="radar-layout"><svg className="field-radar bklit-radar-chart" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={ariaLabel} onMouseLeave={() => setHoveredIndex(null)}>{[20, 40, 60, 80, 100].map((level) => <polygon key={level} points={polygon(level)} className="field-radar-grid bklit-radar-grid" />)}{metrics.map((metric, index) => { const outer = point(index, 100); const label = point(index, 122); const dot = point(index, values[metric] as number); const active = hoveredIndex === index; return <g key={metric} className={active ? 'bklit-radar-metric active' : 'bklit-radar-metric'} onMouseEnter={() => setHoveredIndex(index)}><line x1={center} y1={center} x2={outer[0]} y2={outer[1]} className="field-radar-axis" /><circle cx={dot[0]} cy={dot[1]} r={active ? 8 : 6} fill={categoryColors[index % categoryColors.length]} className="field-radar-dot" /><text x={label[0]} y={label[1]} className="field-radar-label" tabIndex={0} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}>{metric}</text></g>})}<polygon points={area} className="field-radar-area bklit-radar-area" /></svg><div className="field-radar-legend">{metrics.map((metric, index) => <button key={metric} type="button" className={hoveredIndex === index ? 'active' : ''} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}><i style={{ background: categoryColors[index % categoryColors.length] }} />{metric}<b>{values[metric]}%</b></button>)}</div></div></section>
+  return <section className="combined-field-radar bklit-radar" aria-label="분야별 성취율 레이더 차트"><div className="combined-field-radar-copy"><span className="vault-kicker">ALL FIELDS</span><h2>분야별 성취율 종합</h2><p>각 축은 문제 분야이고, 해결 비율이 바깥쪽에 가까울수록 높습니다.</p></div><div className="radar-layout"><svg className="field-radar bklit-radar-chart" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={ariaLabel} onMouseLeave={() => setHoveredIndex(null)}>{[20, 40, 60, 80, 100].map((level) => <polygon key={level} points={polygon(level)} className="field-radar-grid bklit-radar-grid" />)}{metrics.map((metric, index) => { const nextIndex = (index + 1) % metrics.length; const current = point(index, values[metric] as number); const next = point(nextIndex, values[metrics[nextIndex]] as number); return <polygon key={`${metric}-segment`} points={`${center},${center} ${current.join(',')} ${next.join(',')}`} fill={categoryColors[index % categoryColors.length]} className="bklit-radar-segment" /> })}{metrics.map((metric, index) => { const outer = point(index, 100); const label = point(index, 122); const dot = point(index, values[metric] as number); const active = hoveredIndex === index; return <g key={metric} className={active ? 'bklit-radar-metric active' : 'bklit-radar-metric'} onMouseEnter={() => setHoveredIndex(index)}><line x1={center} y1={center} x2={outer[0]} y2={outer[1]} className="field-radar-axis" /><circle cx={dot[0]} cy={dot[1]} r={active ? 8 : 6} fill={categoryColors[index % categoryColors.length]} className="field-radar-dot" /><text x={label[0]} y={label[1]} className="field-radar-label" tabIndex={0} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}>{metric}</text></g>})}</svg><div className="field-radar-legend">{metrics.map((metric, index) => <button key={metric} type="button" className={hoveredIndex === index ? 'active' : ''} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}><i style={{ background: categoryColors[index % categoryColors.length] }} />{metric}<b>{values[metric]}%</b></button>)}</div></div></section>
 }
 
 function LegacyContributionHeatmap({
@@ -1509,6 +1605,7 @@ function PublicProfilePage() {
   const { username = "" } = useParams();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [error, setError] = useState("");
   useEffect(() => {
     void api
@@ -1572,6 +1669,13 @@ function PublicProfilePage() {
           </span>
         </div>
       </section>
+      <StreakCalendar
+        streak={profile.attendanceDates.map((date) => ({ periodStart: date, periodEnd: date }))}
+        solveActivity={profile.solveActivity}
+        month={calendarMonth}
+        onMonthChange={setCalendarMonth}
+        className="public-profile-calendar"
+      />
     </div>
   );
 }
@@ -1580,27 +1684,30 @@ void LegacyChallengeDetailView;
 void LegacyRankingView;
 void RankingView;
 
-function GlobalCheckInPopup({ user }: { user: User | null }) {
+function GlobalCheckInPopup({ user, paused, onOpen, onDefer }: { user: User | null; paused: boolean; onOpen: () => void; onDefer: () => void }) {
   const [attendance, setAttendance] = useState<AttendanceSummary | null>(null);
   const [popupFor, setPopupFor] = useState<string | null>(null);
   const [justCompleted, setJustCompleted] = useState(false);
   const username = user?.username;
   useEffect(() => {
-    if (!username) return;
+    if (!username || paused) return;
     let active = true;
-    void api.attendance().then((summary) => {
+    const loadAttendance = () => void api.attendance().then((summary) => {
       if (!active) return;
       setAttendance(summary);
       if (summary.checkedInToday) return;
-      const day = new Date().toLocaleDateString("en-CA");
+      const day = koreanDateKey();
       const storageKey = `flagbox-check-in-popup-${username}-${day}`;
       if (sessionStorage.getItem(storageKey)) return;
       sessionStorage.setItem(storageKey, "shown");
+      onOpen();
       setPopupFor(username);
       setJustCompleted(false);
     }).catch(() => undefined);
-    return () => { active = false; };
-  }, [username]);
+    const timer = window.setTimeout(loadAttendance, 1500);
+    window.addEventListener(attendanceChangedEvent, loadAttendance);
+    return () => { active = false; window.clearTimeout(timer); window.removeEventListener(attendanceChangedEvent, loadAttendance); };
+  }, [onOpen, paused, username]);
   const completeCheckIn = async () => {
     try {
       const summary = await api.checkIn();
@@ -1635,7 +1742,7 @@ function GlobalCheckInPopup({ user }: { user: User | null }) {
         })}
       </div>
       <div className="check-in-modal__stats"><span><b>{attendance.currentStreak}</b>현재 연속</span><span><b>{attendance.totalDays}</b>누적 출석</span></div>
-      <div className="check-in-modal__actions">{justCompleted ? <button className="button primary" type="button" onClick={() => setPopupFor(null)}>확인</button> : <><button className="button ghost" type="button" onClick={() => setPopupFor(null)}>나중에</button><button className="button primary" type="button" onClick={() => void completeCheckIn()}>출석하기</button></>}</div>
+      <div className="check-in-modal__actions">{justCompleted ? <button className="button primary" type="button" onClick={() => setPopupFor(null)}>확인</button> : <><button className="button ghost" type="button" onClick={() => { setPopupFor(null); onDefer() }}>나중에</button><button className="button primary" type="button" onClick={() => void completeCheckIn()}>출석하기</button></>}</div>
     </section>
   </div>;
 }
@@ -1797,8 +1904,6 @@ function ProfileView({
     solvedCount: 0,
     statusMessage: null,
     avatarUrl: null,
-    equippedFrame: null,
-    equippedAccessory: null,
     equippedTitle: null,
     tier: "beginner",
   };
@@ -1925,7 +2030,7 @@ function ProfileView({
   return (
     <div className="page profile-page">
       <div
-        className={current.role === "ADMIN" ? "profile-hero super-user-profile" : "profile-hero"}
+        className={current.role === "ADMIN" || current.role === "MODERATOR" ? "profile-hero super-user-profile" : "profile-hero"}
       >
         <button
           className="profile-avatar avatar-large avatar-picker"
@@ -1959,7 +2064,7 @@ function ProfileView({
               </form>
             ) : <><h1>{current.nickname || current.username} <TierEmblem tier={current.tier} /></h1><button className="profile-edit-button" type="button" onClick={() => setProfileEdit("nickname")} aria-label="표시 이름 수정"><Pencil size={16} /></button></>}
           </div>
-          {current.role === "ADMIN" && <p className="profile-title">Super User</p>}
+          {(current.role === "ADMIN" || current.role === "MODERATOR") && <p className="profile-title">{current.role === "ADMIN" ? "Super User" : "Sub-admin"}</p>}
           <p className="muted">@{current.username}</p>
           <div className="profile-edit-line profile-edit-line--status">
             {profileEdit === "status" ? (
@@ -2471,13 +2576,18 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [notices, setNotices] = useState<PostSummary[]>([])
   const [error, setError] = useState('')
+  const communityRequest = useRef(0)
   const routerNavigate = useNavigate()
   const refresh = useCallback(async () => {
+    const request = ++communityRequest.current
+    setError('')
     try {
       const [nextPosts, nextNotices] = await Promise.all([api.communityPosts(category), api.communityPosts('NOTICE')])
+      if (request !== communityRequest.current) return
       setPosts(category === 'NOTICE' ? [] : nextPosts.content.filter((post) => post.category !== 'NOTICE'))
       setNotices(nextNotices.content)
     } catch (cause) {
+      if (request !== communityRequest.current) return
       setError(cause instanceof Error ? cause.message : 'Could not load community posts.')
     }
   }, [category])
@@ -2489,7 +2599,7 @@ function EnhancedCommunityView({ user, onLogin }: { user: User | null; onLogin: 
   const visiblePosts = category === 'NOTICE' ? notices : posts
   return <div className="page community-page"><PageIntro eyebrow="COMMUNITY" title="Learn together." description="Ask questions, share safe write-ups, and discuss the Mini CTF training labs." />
     {category !== 'NOTICE' && notices.length > 0 && <section className="pinned-notices"><div className="pinned-notices-heading"><p className="eyebrow">PINNED NOTICES</p><span>{notices.length}</span></div>{notices.map((notice) => <button type="button" className="pinned-notice" key={notice.id} onClick={() => openPost(notice.id)}><Badge tone="NOTICE">NOTICE</Badge><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleDateString()}</small></button>)}</section>}
-    <div className="community-toolbar"><div className="filter-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0, likeCount: 0, dislikeCount: 0, recommendCount: 0, viewerReactions: [] }, ...current]); routerNavigate(`/community/${post.id}`) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>
+    <div className="community-toolbar"><div className="filter-tabs community-category-tabs">{(['FREE', 'QUESTION', 'CTF', 'NOTICE'] as CommunityCategory[]).map((item) => <button key={item} type="button" className={category === item ? 'filter-tab active' : 'filter-tab'} onClick={() => setCategory(category === item ? undefined : item)}>{item}</button>)}</div>{user ? <CommunityWriter onCreated={(post) => { setPosts((current) => [{ ...post, commentCount: 0, likeCount: 0, dislikeCount: 0, recommendCount: 0, viewerReactions: [] }, ...current]); routerNavigate(`/community/${post.id}`) }} /> : <button type="button" className="button primary" onClick={onLogin}>Sign in to write</button>}</div>
     {error && <p className="alert error">{error}</p>}<div className="community-list">{visiblePosts.map((post) => <button type="button" className="community-post-row" key={post.id} onClick={() => openPost(post.id)}><Badge tone={post.category}>{post.category}</Badge><strong>{post.title}</strong><span data-profile-username={post.author}>{post.authorNickname || post.author}{isSuperUserTitle(post.authorTitle) && <small className="community-title">Super User</small>}</span><small>{post.commentCount} comments · {post.likeCount} likes · {new Date(post.createdAt).toLocaleDateString()}</small></button>)}{visiblePosts.length === 0 && <EmptyState />}</div>
   </div>
 }
@@ -2606,32 +2716,61 @@ function CommentWriter({ postId, onCreated }: { postId: number; onCreated: (comm
 
 type AdminTab = 'overview' | 'accounts' | 'content' | 'notices' | 'security' | 'logs' | 'ai-feedback'
 
-function AdminConsole({ language }: { language: Language }) {
+function AdminConsole({ language, limited, operatorUsername }: { language: Language; limited: boolean; operatorUsername: string }) {
   const ko = language === 'ko'
+  const accountLogLabel = (type: string) => {
+    const labels: Record<string, [string, string]> = {
+      SUBMISSION_CORRECT: ['정답 제출', 'Correct submission'],
+      SUBMISSION_INCORRECT: ['오답 제출', 'Incorrect submission'],
+      SOLVED: ['문제 해결', 'Challenge solved'],
+      CHECK_IN: ['출석 체크', 'Daily check-in'],
+      SECURITY_ACCOUNT_REGISTERED: ['계정 생성', 'Account registered'],
+      SECURITY_LOGIN_SUCCESS: ['로그인 성공', 'Login successful'],
+      SECURITY_OAUTH_LOGIN: ['소셜 로그인', 'OAuth login'],
+      SECURITY_OAUTH_LOGIN_SUCCESS: ['소셜 로그인 성공', 'OAuth login successful'],
+      ADMIN_ADJUST_SCORE: ['점수 조정', 'Score adjusted'],
+      ADMIN_SUSPEND_USER: ['계정 정지', 'Account suspended'],
+      ADMIN_REINSTATE_USER: ['계정 복구', 'Account reinstated'],
+      ADMIN_UPDATE_USER: ['계정 정보 수정', 'Account updated'],
+      ADMIN_UPDATE_MODERATOR_ROLE: ['관리자 권한 변경', 'Moderator role changed'],
+    }
+    const label = labels[type]
+    return label ? label[ko ? 0 : 1] : type.replaceAll('_', ' ')
+  }
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [comments, setComments] = useState<AdminComment[]>([])
   const [assistantFeedback, setAssistantFeedback] = useState<AssistantFeedback[]>([])
   const [contentLoaded, setContentLoaded] = useState(false)
   const [feedbackLoaded, setFeedbackLoaded] = useState(false)
-  const [tab, setTab] = useState<AdminTab>('overview')
+  const [tab, setTab] = useState<AdminTab>(limited ? 'accounts' : 'overview')
   const [accountQuery, setAccountQuery] = useState('')
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
   const [accountPage, setAccountPage] = useState(1)
+  const [accountLogs, setAccountLogs] = useState<{ userId: number; entries: AccountLog[] } | null>(null)
   const [error, setError] = useState('')
 
   const refresh = useCallback(async () => {
     setError('')
     try {
-      setDashboard(await api.adminDashboard())
+      if (limited) {
+        const users = await api.moderationUsers()
+        setDashboard({ users, recentSubmissions: [], antiCheatEvents: [], auditLogs: [], securityEvents: [] })
+      } else setDashboard(await api.adminDashboard())
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load administrator data.')
     }
-  }, [])
+  }, [limited])
 
   const loadContent = useCallback(async () => {
     try {
       setError('')
+      if (limited) {
+        setPosts(await api.moderationNotices())
+        setComments([])
+        setContentLoaded(true)
+        return
+      }
       const [nextPosts, nextComments] = await Promise.all([api.adminPosts(), api.adminComments()])
       setPosts(nextPosts)
       setComments(nextComments)
@@ -2639,7 +2778,7 @@ function AdminConsole({ language }: { language: Language }) {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load moderation data.')
     }
-  }, [])
+  }, [limited])
 
   const loadAssistantFeedback = useCallback(async () => {
     try {
@@ -2658,11 +2797,11 @@ function AdminConsole({ language }: { language: Language }) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      if (tab === 'content' || tab === 'notices') void loadContent()
+      if ((!limited && (tab === 'content' || tab === 'notices')) || (limited && tab === 'notices')) void loadContent()
       if (tab === 'ai-feedback') void loadAssistantFeedback()
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [tab, loadAssistantFeedback, loadContent])
+  }, [tab, limited, loadAssistantFeedback, loadContent])
 
   const applyAccountChange = (next: AdminUser) => {
     setDashboard((current) => current
@@ -2675,13 +2814,19 @@ function AdminConsole({ language }: { language: Language }) {
     if (!next) return
     try { applyAccountChange(await api.updateAdminUser(id, next)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update the account.') }
   }
+  const updateModeratorRole = async (account: AdminUser) => {
+    const role = account.role === 'MODERATOR' ? 'USER' : 'MODERATOR'
+    const action = role === 'MODERATOR' ? 'grant limited administrator access to' : 'remove administrator access from'
+    if (!window.confirm(`${action} @${account.username}?`)) return
+    try { applyAccountChange(await api.updateModeratorRole(account.id, role)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not update administrator access.') }
+  }
   const suspend = async (id: number) => {
     const reason = window.prompt('Suspension reason (shown to the user)')
     if (!reason) return
-    try { applyAccountChange(await api.suspendUser(id, reason)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not suspend the account.') }
+    try { applyAccountChange(limited ? await api.suspendModeratorUser(id, reason) : await api.suspendUser(id, reason)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not suspend the account.') }
   }
   const reinstate = async (id: number) => {
-    try { applyAccountChange(await api.reinstateUser(id)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not restore the account.') }
+    try { applyAccountChange(limited ? await api.reinstateModeratorUser(id) : await api.reinstateUser(id)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not restore the account.') }
   }
   const deactivate = async (id: number, username: string) => {
     if (!window.confirm(`Delete @${username}? Their score, ranking, solves, profile, and community activity will be hidden. The account can be restored later.`)) return
@@ -2692,6 +2837,11 @@ function AdminConsole({ language }: { language: Language }) {
     try { await api.permanentlyDeleteUser(id); setDashboard((current) => current ? { ...current, users: current.users.filter((item) => item.id !== id) } : current); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not permanently delete the account.') }
   }
   const adjustScore = async (id: number, direction: 1 | -1) => {
+    window.alert(
+      ko
+        ? `점수 ${direction < 0 ? '차감' : '추가'} 안내\n입력 범위: 1 ~ 1,000,000점\n적용 후 점수 범위: 0 ~ 1,000,000점`
+        : `Score ${direction < 0 ? 'deduction' : 'addition'} guide\nInput range: 1 to 1,000,000\nResulting score range: 0 to 1,000,000`,
+    )
     const rawAmount = window.prompt(
       ko
         ? direction < 0 ? '차감할 점수를 입력하세요. 숫자만 입력하면 자동으로 차감됩니다.' : '추가할 점수를 입력하세요. 숫자만 입력해 주세요.'
@@ -2702,11 +2852,23 @@ function AdminConsole({ language }: { language: Language }) {
     const normalizedAmount = rawAmount.trim().replaceAll(',', '')
     if (!/^\d+$/.test(normalizedAmount)) { setError(ko ? '점수는 0보다 큰 정수로 입력해 주세요.' : 'Enter a positive whole number.'); return }
     const magnitude = Number(normalizedAmount)
-    if (!Number.isSafeInteger(magnitude) || magnitude === 0) return
+    if (!Number.isSafeInteger(magnitude) || magnitude === 0 || magnitude > 1_000_000) {
+      setError(ko ? '점수는 1부터 1,000,000점 사이로 입력해 주세요.' : 'Enter a score between 1 and 1,000,000.')
+      return
+    }
     const amount = direction * magnitude
     const reason = window.prompt(ko ? '점수 조정 사유를 입력하세요.' : 'Reason for this point adjustment')?.trim()
     if (!reason) return
-    try { applyAccountChange(await api.adjustAdminUserScore(id, amount, reason)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not adjust score.') }
+    try { applyAccountChange(limited ? await api.adjustModeratorUserScore(id, amount, reason) : await api.adjustAdminUserScore(id, amount, reason)); void refresh() } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not adjust score.') }
+  }
+  const loadAccountLogs = async (account: AdminUser) => {
+    try {
+      setError('')
+      const entries = limited ? await api.moderationAccountLogs(account.id) : await api.adminAccountLogs(account.id)
+      setAccountLogs({ userId: account.id, entries })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not load account activity.')
+    }
   }
   const removePost = async (id: number, title: string) => {
     if (!window.confirm(`Delete “${title}”?`)) return
@@ -2720,7 +2882,8 @@ function AdminConsole({ language }: { language: Language }) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     try {
-      await api.publishNotice({ title: String(form.get('title')).trim(), content: String(form.get('content')).trim() })
+      if (limited) await api.publishModeratorNotice({ title: String(form.get('title')).trim(), content: String(form.get('content')).trim() })
+      else await api.publishNotice({ title: String(form.get('title')).trim(), content: String(form.get('content')).trim() })
       event.currentTarget.reset()
       await Promise.all([refresh(), loadContent()])
     } catch (cause) {
@@ -2752,7 +2915,21 @@ function AdminConsole({ language }: { language: Language }) {
   const visibleAccountPage = Math.min(accountPage, accountPageCount)
   const visibleAccounts = filteredAccounts.slice((visibleAccountPage - 1) * accountsPerPage, visibleAccountPage * accountsPerPage)
   const selectedAccount = filteredAccounts.find((item) => item.id === selectedAccountId) ?? null
-  const tabs: { id: AdminTab; label: string; count?: number }[] = [
+  const canModerateSelectedAccount = Boolean(
+    selectedAccount
+      && selectedAccount.status !== 'DELETED'
+      && (limited ? selectedAccount.role === 'USER' : selectedAccount.role !== 'ADMIN'),
+  )
+  const canAdjustSelectedAccount = Boolean(
+    selectedAccount
+      && selectedAccount.status === 'ACTIVE'
+      && (limited ? selectedAccount.role === 'USER' : selectedAccount.role !== 'ADMIN' || selectedAccount.username === operatorUsername),
+  )
+  const tabs: { id: AdminTab; label: string; count?: number }[] = limited ? [
+    { id: 'accounts', label: 'Accounts', count: dashboard.users.length },
+    { id: 'notices', label: 'Notices', count: contentLoaded ? notices.length : undefined },
+    { id: 'ai-feedback', label: 'AI feedback', count: feedbackLoaded ? assistantFeedback.length : undefined },
+  ] : [
     { id: 'overview', label: 'Overview' },
     { id: 'accounts', label: 'Accounts', count: dashboard.users.length },
     { id: 'content', label: 'Content', count: contentLoaded ? posts.length + comments.length : undefined },
@@ -2783,17 +2960,31 @@ function AdminConsole({ language }: { language: Language }) {
       <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">RECENT ACTIVITY</p><h2>Recent submissions</h2></div><button type="button" className="text-button" onClick={() => setTab('security')}>View all</button></div><AdminSubmissionList items={dashboard.recentSubmissions.slice(0, 5)} /></section>
     </div>}
 
-    {tab === 'accounts' && <section className="admin-section admin-card"><div className="admin-section-heading admin-account-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>Account controls</h2></div><label className="admin-account-search"><span className="sr-only">Search accounts</span><input value={accountQuery} onChange={(event) => { setAccountQuery(event.target.value); setAccountPage(1) }} placeholder={ko ? '아이디 또는 닉네임 검색' : 'Search ID or nickname'} /></label></div><div className="admin-account-grid">{visibleAccounts.map((item) => <button type="button" key={item.id} className={`admin-account-tile ${item.status === 'SUSPENDED' ? 'suspended' : item.status === 'DELETED' ? 'deleted' : ''} ${selectedAccount?.id === item.id ? 'active' : ''}`} onClick={() => setSelectedAccountId(item.id)} title={`@${item.username}`}><span>{item.nickname || item.username}</span>{item.status === 'SUSPENDED' && <b className="admin-account-status suspended">{ko ? '정지' : 'Suspended'}</b>}{item.status === 'DELETED' && <b className="admin-account-status deleted">{ko ? '삭제됨' : 'Deleted'}</b>}</button>)}</div>{filteredAccounts.length === 0 && <p className="muted admin-account-empty">{ko ? '검색 결과가 없습니다.' : 'No matching accounts.'}</p>}{accountPageCount > 1 && <nav className="admin-account-pagination" aria-label="Account pages">{Array.from({ length: accountPageCount }, (_, index) => index + 1).map((page) => <button type="button" key={page} className={visibleAccountPage === page ? 'active' : ''} onClick={() => setAccountPage(page)} aria-current={visibleAccountPage === page ? 'page' : undefined}>{page}</button>)}</nav>}{selectedAccount && <div className="admin-account-controls"><div><strong>{selectedAccount.nickname || selectedAccount.username}</strong><small>@{selectedAccount.username} · {selectedAccount.score} pts · {selectedAccount.role} · {selectedAccount.status}</small>{selectedAccount.suspensionReason && <small className="danger-text">Suspension reason: {selectedAccount.suspensionReason}</small>}</div><div className="inline-actions">{selectedAccount.status !== 'DELETED' && selectedAccount.role !== 'ADMIN' && <button type="button" className="button secondary" onClick={() => void editUser(selectedAccount.id, selectedAccount.nickname)}>Edit name</button>}{selectedAccount.status === 'ACTIVE' && <><button type="button" className="button secondary" onClick={() => void adjustScore(selectedAccount.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost" onClick={() => void adjustScore(selectedAccount.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button></>}{selectedAccount.role !== 'ADMIN' && (selectedAccount.status === 'DELETED' ? <><button type="button" className="button secondary" onClick={() => void reinstate(selectedAccount.id)}>Restore account</button><button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(selectedAccount.id, selectedAccount.username)}>Permanent delete</button></> : <><button type="button" className="button secondary" onClick={() => void (selectedAccount.status === 'ACTIVE' ? suspend(selectedAccount.id) : reinstate(selectedAccount.id))}>{selectedAccount.status === 'ACTIVE' ? 'Suspend' : 'Restore'}</button><button type="button" className="text-button danger-text" onClick={() => void deactivate(selectedAccount.id, selectedAccount.username)}>Delete account</button></>)}</div></div>}</section>}
+    {tab === 'accounts' && <section className="admin-section admin-card">
+      <div className="admin-section-heading admin-account-heading"><div><p className="eyebrow">ACCOUNT MANAGEMENT</p><h2>{limited ? 'Limited account moderation' : 'Account controls'}</h2></div><label className="admin-account-search"><span className="sr-only">Search accounts</span><input value={accountQuery} onChange={(event) => { setAccountQuery(event.target.value); setAccountPage(1) }} placeholder={ko ? '아이디 또는 닉네임 검색' : 'Search ID or nickname'} /></label></div>
+      <div className="admin-account-grid">{visibleAccounts.map((item) => <button type="button" key={item.id} className={`admin-account-tile ${item.status === 'SUSPENDED' ? 'suspended' : item.status === 'DELETED' ? 'deleted' : ''} ${selectedAccount?.id === item.id ? 'active' : ''}`} onClick={() => setSelectedAccountId(item.id)} title={`@${item.username}`}><span>{item.nickname || item.username}</span>{item.status === 'SUSPENDED' && <b className="admin-account-status suspended">{ko ? '정지' : 'Suspended'}</b>}{item.status === 'DELETED' && <b className="admin-account-status deleted">{ko ? '삭제됨' : 'Deleted'}</b>}</button>)}</div>
+      {filteredAccounts.length === 0 && <p className="muted admin-account-empty">{ko ? '검색 결과가 없습니다.' : 'No matching accounts.'}</p>}
+      {accountPageCount > 1 && <nav className="admin-account-pagination" aria-label="Account pages">{Array.from({ length: accountPageCount }, (_, index) => index + 1).map((page) => <button type="button" key={page} className={visibleAccountPage === page ? 'active' : ''} onClick={() => setAccountPage(page)} aria-current={visibleAccountPage === page ? 'page' : undefined}>{page}</button>)}</nav>}
+      {selectedAccount && <div className="admin-account-controls"><div><strong>{selectedAccount.nickname || selectedAccount.username}</strong><small>@{selectedAccount.username} · {selectedAccount.score} pts · {selectedAccount.role} · {selectedAccount.status}</small>{selectedAccount.suspensionReason && <small className="danger-text">Suspension reason: {selectedAccount.suspensionReason}</small>}</div><div className="inline-actions">
+        {!limited && selectedAccount.status !== 'DELETED' && selectedAccount.role !== 'ADMIN' && <button type="button" className="button secondary" onClick={() => void editUser(selectedAccount.id, selectedAccount.nickname)}>Edit name</button>}
+        {!limited && selectedAccount.status !== 'DELETED' && selectedAccount.role !== 'ADMIN' && <button type="button" className="button secondary" onClick={() => void updateModeratorRole(selectedAccount)}>{selectedAccount.role === 'MODERATOR' ? (ko ? '관리자 권한 해제' : 'Remove admin access') : (ko ? '관리자 권한 부여' : 'Grant admin access')}</button>}
+        {canAdjustSelectedAccount && <><button type="button" className="button secondary" onClick={() => void adjustScore(selectedAccount.id, 1)}>{ko ? '점수 추가' : 'Add points'}</button><button type="button" className="button ghost" onClick={() => void adjustScore(selectedAccount.id, -1)}>{ko ? '점수 차감' : 'Deduct points'}</button></>}
+        {canModerateSelectedAccount && <button type="button" className="button secondary" onClick={() => void (selectedAccount.status === 'ACTIVE' ? suspend(selectedAccount.id) : reinstate(selectedAccount.id))}>{selectedAccount.status === 'ACTIVE' ? 'Suspend' : 'Restore'}</button>}
+        <button type="button" className="button ghost" onClick={() => void loadAccountLogs(selectedAccount)}>{ko ? '활동 로그 보기' : 'View activity log'}</button>
+        {!limited && selectedAccount.role !== 'ADMIN' && (selectedAccount.status === 'DELETED' ? <><button type="button" className="button secondary" onClick={() => void reinstate(selectedAccount.id)}>Restore account</button><button type="button" className="text-button danger-text" onClick={() => void permanentlyDelete(selectedAccount.id, selectedAccount.username)}>Permanent delete</button></> : <button type="button" className="text-button danger-text" onClick={() => void deactivate(selectedAccount.id, selectedAccount.username)}>Delete account</button>)}
+      </div></div>}
+      {selectedAccount && accountLogs?.userId === selectedAccount.id && <section className="admin-account-log"><div className="admin-section-heading"><div><p className="eyebrow">ACCOUNT ACTIVITY</p><h3>{ko ? '최근 활동 로그' : 'Recent activity log'}</h3></div><small>{accountLogs.entries.length} records</small></div><div className="admin-table">{accountLogs.entries.length === 0 ? <p className="muted">{ko ? '저장된 활동 로그가 없습니다.' : 'No activity records yet.'}</p> : accountLogs.entries.map((entry, index) => <div className="admin-row" key={`${entry.type}-${entry.occurredAt}-${index}`}><div><strong>{accountLogLabel(entry.type)}</strong><small>{entry.detail || (ko ? '추가 정보 없음' : 'No additional detail')} · {new Date(entry.occurredAt).toLocaleString()}</small></div></div>)}</div></section>}
+    </section>}
 
     {tab === 'content' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMUNITY POSTS</p><h2>Post management</h2></div><small>Latest {posts.length}</small></div><div className="admin-table">{posts.filter((post) => post.category !== 'NOTICE').map((post) => <div className="admin-row" key={post.id}><div><strong>{post.title}</strong><small><Badge tone={post.category}>{post.category}</Badge> @{post.authorNickname || post.author} · {post.commentCount} comments · {new Date(post.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removePost(post.id, post.title)}>Delete</button></div>)}</div></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">COMMENTS</p><h2>Comment management</h2></div><small>Latest {comments.length}</small></div><div className="admin-table">{comments.map((comment) => <div className="admin-row" key={comment.id}><div><strong>{comment.content}</strong><small>“{comment.postTitle}” · @{comment.authorNickname || comment.author} · {new Date(comment.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removeComment(comment.id)}>Delete</button></div>)}</div></section></div>}
 
-    {tab === 'notices' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">PUBLISH NOTICE</p><h2>Write a new notice</h2></div></div><form className="community-editor admin-notice-form" onSubmit={(event) => void publishNotice(event)}><input name="title" placeholder="Notice title" maxLength={200} required /><textarea name="content" placeholder="Write the notice content" maxLength={20000} required /><div><button className="button primary" type="submit">Publish notice</button></div></form></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">PUBLISHED</p><h2>Published notices</h2></div><small>{notices.length} total</small></div><div className="admin-table">{notices.map((notice) => <div className="admin-row" key={notice.id}><div><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleString()}</small></div><button type="button" className="button ghost danger-button" onClick={() => void removePost(notice.id, notice.title)}>Delete</button></div>)}</div></section></div>}
+    {tab === 'notices' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">PUBLISH NOTICE</p><h2>Write a new notice</h2></div></div><form className="community-editor admin-notice-form" onSubmit={(event) => void publishNotice(event)}><input name="title" placeholder="Notice title" maxLength={200} required /><textarea name="content" placeholder="Write the notice content" maxLength={20000} required /><div><button className="button primary" type="submit">Publish notice</button></div></form></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">PUBLISHED</p><h2>Published notices</h2></div><small>{notices.length} total</small></div><div className="admin-table">{notices.map((notice) => <div className="admin-row" key={notice.id}><div><strong>{notice.title}</strong><small>{new Date(notice.createdAt).toLocaleString()}</small></div>{!limited && <button type="button" className="button ghost danger-button" onClick={() => void removePost(notice.id, notice.title)}>Delete</button>}</div>)}</div></section></div>}
 
     {tab === 'security' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">ANTI-CHEAT</p><h2>Security events</h2></div><small>Latest {dashboard.antiCheatEvents.length}</small></div><AdminEventList items={dashboard.antiCheatEvents} /></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">CHALLENGE ACTIVITY</p><h2>Submission history</h2></div><small>Latest {dashboard.recentSubmissions.length}</small></div><AdminSubmissionList items={dashboard.recentSubmissions} /></section></div>}
 
     {tab === 'logs' && <div className="admin-panel-grid"><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">SECURITY LOG</p><h2>Login and account events</h2></div></div><LogList items={dashboard.securityEvents.map((event) => ({ id: event.id, title: `${event.eventType} · ${event.username || event.subject || 'unknown'}`, detail: event.detail || '', date: event.createdAt }))} onControl={(id, hide) => void controlLog('security', id, hide)} /></section><section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">AUDIT TRAIL</p><h2>Administrator activity</h2></div></div><LogList items={dashboard.auditLogs.map((log) => ({ id: log.id, title: `${log.action} · ${log.adminUsername}`, detail: log.detail, date: log.createdAt }))} onControl={(id, hide) => void controlLog('audit', id, hide)} /></section></div>}
 
-    {tab === 'ai-feedback' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">AI LEARNING HELPER</p><h2>AI feedback</h2></div><small>Only administrators can view these responses.</small></div><div className="admin-table">{assistantFeedback.length === 0 ? <p className="muted">No AI feedback yet.</p> : assistantFeedback.map((item) => <div className="admin-row" key={item.id}><div><strong>{'★'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)} · @{item.nickname || item.username}</strong><small>{item.comment || 'No written comment'} · {new Date(item.createdAt).toLocaleString()}</small></div></div>)}</div></section>}
+    {tab === 'ai-feedback' && <section className="admin-section admin-card"><div className="admin-section-heading"><div><p className="eyebrow">AI LEARNING HELPER</p><h2>AI feedback</h2></div><small>Read-only feedback list.</small></div><div className="admin-table">{assistantFeedback.length === 0 ? <p className="muted">No AI feedback yet.</p> : assistantFeedback.map((item) => <div className="admin-row" key={item.id}><div><strong>{'★'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)} · @{item.nickname || item.username}</strong><small>{item.comment || 'No written comment'} · {new Date(item.createdAt).toLocaleString()}</small></div></div>)}</div></section>}
   </div>
 }
 

@@ -19,6 +19,10 @@ public interface SolveRepository extends JpaRepository<Solve, Long> {
   @Query("select count(s) from Solve s where s.challenge.id=:challengeId")
   long countByChallengeId(@Param("challengeId") Long challengeId);
 
+  @Query(
+      "select s.challenge.id, count(s) from Solve s where s.challenge.id in :challengeIds group by s.challenge.id")
+  List<Object[]> countByChallengeIds(@Param("challengeIds") Set<Long> challengeIds);
+
   @Query("select count(s) from Solve s where s.user.id=:userId")
   long countByUser(@Param("userId") Long userId);
 
