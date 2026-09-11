@@ -9,7 +9,7 @@ import java.util.HexFormat;
 import java.util.List;
 
 /**
- * FlagBox 워게임 60문제 카탈로그.
+ * FlagBox 워게임 275문제 카탈로그.
  *
  * <p>모든 문제는 첨부 파일을 다운로드하고 분야별 기술을 적용해 플래그를 찾는 구조다. 지문에는 플래그와 그 변형을 절대 노출하지 않으며, 플래그는 실행 시점에 무작위
  * 생성되어 첨부 파일 안에 (인코딩·변환된 형태로) 심긴다.
@@ -223,18 +223,18 @@ final class FlagboxChallengeCatalog {
                     "parcel.hex",
                     flag -> txt(hex(b64(flag)) + "\n")),
                 new Seed(
-                    "w15",
+                    "w15v2",
                     "꺼져 있는 문은 잠긴 까",
                     "WEB",
                     "NORMAL",
                     300,
-                    "disabled 는 브라우저만 속여요. 요청 예시의 coupon 값을 주목!",
+                    "disabled 는 브라우저만 속여요. 성공 응답의 receipt_b64 값을 찾아 한 번 더 복원하세요.",
                     "쇼핑몰 결제 폼과 개발 중이던 응답 예시가 담긴 파일이에요. 비활성화된 쿠폰칸 뒤편에 무엇이 숣어있을까요?",
                     "checkout-sample.txt",
                     flag ->
                         txt(
-                            "폼:\n<form action=\"/checkout\" method=\"post\">\n  <input name=\"item\" value=\"pen\">\n  <input name=\"coupon\" value=\"SUMMER2026\" disabled>\n</form>\n\n응답 예시:\nPOST /checkout  item=pen&coupon=SPRINGHIDE\n200 OK { \"message\": \"쿠폰 적용!\", \"receipt\": \""
-                                + flag
+                            "폼:\n<form action=\"/checkout\" method=\"post\">\n  <input name=\"item\" value=\"pen\">\n  <input name=\"coupon\" value=\"SUMMER2026\" disabled>\n</form>\n\n응답 예시:\nPOST /checkout  item=pen&coupon=SPRINGHIDE\n200 OK { \"message\": \"쿠폰 적용!\", \"receipt_b64\": \""
+                                + b64(flag)
                                 + "\" }\n")),
 
                 // ───────────────────────────── WEB · ADVANCED (3)
@@ -309,18 +309,18 @@ final class FlagboxChallengeCatalog {
                                 + joinInts(flag.chars().map(c -> c + 3).toArray())
                                 + "\";\n")),
                 new Seed(
-                    "w20",
+                    "w20v2",
                     "관리자의 실수",
                     "WEB",
                     "EXPERT",
                     1000,
-                    "변수 이름과 주석이 판단 근거예요. SAMPLE·TEMPLATE·DEBUG 는 함정!",
-                    "배포 설정 백업 파일이 노출됐어요. 여러 개의 CTF{...} 값이 섞여 있지만 단 하나만 진짜입니다. 컨텍스트를 읽고 고르세요!",
+                    "변수 이름과 주석으로 실제 항목을 찾은 뒤, 값의 문자 집합과 패딩을 보고 한 번 더 복원하세요.",
+                    "배포 설정 백업 파일이 노출됐어요. 여러 개의 가짜 FLAG와 인코딩된 운영 값이 섞여 있습니다. 컨텍스트를 분석해 진짜 값을 복원하세요.",
                     "deploy-backup.env",
                     flag ->
                         txt(
-                            "# deploy-backup.env\nDEBUG_FLAG=CTF{this_is_a_decoy_01}\nLEGACY_TOKEN=CTF{old_token_retired_99}\nAPP_ENV=production\n\n# 2026-08-01 운영 배포 최종본 (real)\nAPP_REAL_FLAG="
-                                + flag
+                            "# deploy-backup.env\nDEBUG_FLAG=CTF{this_is_a_decoy_01}\nLEGACY_TOKEN=CTF{old_token_retired_99}\nAPP_ENV=production\n\n# 2026-08-01 운영 배포 최종본 (real, transport encoding applied)\nAPP_REAL_FLAG_B64="
+                                + b64(flag)
                                 + "\n\nSAMPLE_FLAG=CTF{example_only_do_not_submit}\nTEMPLATE_FLAG=CTF{replace_me_before_release}\n")),
 
                 // ───────────────────────────── FORENSIC · BEGINNER (5)
@@ -514,12 +514,12 @@ final class FlagboxChallengeCatalog {
                     "photo.bin",
                     FlagboxChallengeCatalog::jpegWithZipAppendix),
                 new Seed(
-                    "f15",
+                    "f15v2",
                     "메모리 속 문자열",
                     "FORENSIC",
                     "NORMAL",
                     300,
-                    "CTF{ 검색 결과가 여러 개면 문맥이 진짜를 가려줘요. test/template 는 버려!",
+                    "CTF{ 후보 중 test/template는 제외하세요. 실제 session note 값은 Base64로 저장되어 있습니다.",
                     "메모리 덤프에서 뽑아낸 문자열 목록이에요. 플래그 후보가 여러 개 보이지만 단 하나만 진짜랍니다.",
                     "memdump.txt",
                     flag -> memDumpArtifact(flag)),
@@ -527,19 +527,19 @@ final class FlagboxChallengeCatalog {
                 // ───────────────────────────── FORENSIC · ADVANCED (3)
 
                 new Seed(
-                    "f16",
+                    "f16v2",
                     "시간을 거슬러 간 문서",
                     "FORENSIC",
                     "ADVANCED",
                     600,
-                    "modified < created 라면 시간 조작 의심! v2 에서 '지워졌다' 는 문단을 찾으세요.",
+                    "modified < created 라면 시간 조작을 의심하세요. 삭제 문단의 승인 코드는 16진수 바이트로 남아 있습니다.",
                     "문서 버전 기록이 이상해요. 수정일이 생성일보다 과거인 파일이 있고, 그 안 어딘가에 지워진 문단이 남아있다네요.",
                     "version-report.txt",
                     flag ->
                         txt(
-                            "report-v1.docx  created 2026-08-01 09:00  modified 2026-08-01 09:00\nreport-v2.docx  created 2026-08-05 11:20  modified 2026-07-30 18:03  ← ?\n\nv2 발췌:\n... 2학기 계획은 다음과 같다.\n(v2에서 이 문단은 통째로 지워졌다: 최종 승인 코드 "
-                                + flag
-                                + " ...)\n")),
+                            "report-v1.docx  created 2026-08-01 09:00  modified 2026-08-01 09:00\nreport-v2.docx  created 2026-08-05 11:20  modified 2026-07-30 18:03  ← ?\n\nv2 발췌:\n... 2학기 계획은 다음과 같다.\n(v2에서 이 문단은 통째로 지워졌다)\napproval_code_hex="
+                                + hex(flag)
+                                + "\n(end of recovered paragraph)\n")),
                 new Seed(
                     "f17",
                     "두 로그의 교차",
@@ -559,18 +559,18 @@ final class FlagboxChallengeCatalog {
                               + "\n");
                     }),
                 new Seed(
-                    "f20",
+                    "f20v2",
                     "덮어쓴 일기장",
                     "FORENSIC",
                     "ADVANCED",
                     600,
-                    "덮어쓴 파일이 짧으면 옛 내용의 꼬리가 살아남아요. 잔여 조각을 읽으세요.",
+                    "잔여 레코드는 저장 직전에 Base64로 포장되고 문자열 순서가 뒤집혔습니다. 기록 순서를 반대로 되감으세요.",
                     "USB가 포맷됐지만 복구 도구가 이전 파일의 조각을 찾아냈어요. 새 일기장 아래 깔린 옛 일기장의 끝부분!",
                     "diary-slack.txt",
                     flag ->
                         txt(
-                            "=== 현재 파일 (diary.txt, 2026-08-24) ===\n오늘은 하루 종일 비가 왔다. 별일 없었다.\n\n=== 복구된 잔여 조각 (이전 diary.txt, 2026-08-10) ===\n...(앞부분 유실)...\n...비밀 약속 기록은 여기까지. 인증 문구: "
-                                + flag
+                            "=== 현재 파일 (diary.txt, 2026-08-24) ===\n오늘은 하루 종일 비가 왔다. 별일 없었다.\n\n=== 복구된 잔여 조각 (이전 diary.txt, 2026-08-10) ===\nrecord_pipeline=base64_then_reverse\nresidual_payload="
+                                + reverse(b64(flag))
                                 + "\n")),
 
                 // ───────────────────────────── FORENSIC · EXPERT (2)
@@ -1293,19 +1293,19 @@ final class FlagboxChallengeCatalog {
                 // ───────────────────────────── MISC · ADVANCED (3)
 
                 new Seed(
-                    "m16",
+                    "m16v2",
                     "시간이 뒤틀린 문서",
                     "MISC",
                     "ADVANCED",
                     600,
-                    "modified가 created보다 과거면 의심! v2에서 지워진 문단을 찾아보세요.",
-                    "문서 버전 기록이 이상해요. 수정일이 생성일보다 과거인 파일에서 지워진 문단을 찾아보세요!",
+                    "시간이 모순된 버전을 찾으세요. 복구된 값은 각 바이트에 위치 번호를 더한 뒤 바이트 순서를 뒤집은 결과입니다.",
+                    "문서 버전 기록에서 조작된 파일을 찾고, 그 파일에 남은 검증기 출력을 역산해 원래 확인 코드를 복원하세요.",
                     "misc-version.txt",
                     flag ->
                         txt(
-                            "v1 created 2026-08-01 modified 2026-08-01\nv2 created 2026-08-05 modified 2026-07-30\nv2 발췌: (지워진 문단: 코드 "
-                                + flag
-                                + ")\n")),
+                            "v1 created 2026-08-01 modified 2026-08-01\nv2 created 2026-08-05 modified 2026-07-30\nv3 created 2026-08-07 modified 2026-08-07\n\nv2 recovered verifier: reverse_bytes(input[i] + i)\nexpected_hex = "
+                                + reverseHexBytes(indexAddHex(flag))
+                                + "\n")),
                 new Seed(
                     "m17",
                     "찢어진 Base64",
@@ -1353,38 +1353,39 @@ final class FlagboxChallengeCatalog {
 
                 new Seed(
                     "m19",
-                    "흩어진 조각",
+                    "세 갈래 암호 조각",
                     "MISC",
                     "EXPERT",
                     1000,
-                    "조각 번호가 순서예요. 세 조각을 순서대로 합치세요!",
-                    "플래그가 세 곳에 흩어져 발견됐어요. 파일에 조각별 위치와 함께 정리되어 있어요!",
+                    "각 조각은 뒤집기 후 반복 키 XOR을 거쳤습니다. XOR을 먼저 되돌린 뒤 역순을 복원하고 original_index 순서로 합치세요.",
+                    "서로 다른 키로 변환된 세 조각과 뒤섞인 배치표가 발견됐어요. 각 조각을 복원한 뒤 원래 순서까지 찾아야 합니다.",
                     "misc-pieces.txt",
                     flag -> {
                       String[] pieces = slice(flag, 3);
                       return txt(
-                          "[조각1]\n"
-                              + pieces[0]
-                              + "\n\n[조각2]\n"
-                              + pieces[1]
-                              + "\n\n[조각3]\n"
-                              + pieces[2]
+                          "algorithm: output_hex = XOR(reverse(fragment), repeating_key)\n"
+                              + "slot=A original_index=2 key=green data="
+                              + xorHex(reverse(pieces[2]), "green")
+                              + "\nslot=B original_index=0 key=red data="
+                              + xorHex(reverse(pieces[0]), "red")
+                              + "\nslot=C original_index=1 key=blue data="
+                              + xorHex(reverse(pieces[1]), "blue")
                               + "\n");
                     }),
                 new Seed(
-                    "m20",
+                    "m20v2",
                     "최종 관문",
                     "MISC",
                     "EXPERT",
                     1000,
-                    "변수명과 주석이 단서! SAMPLE·TEMPLATE는 함정, REAL이 진짜예요.",
-                    "배포 백업 파일이 노출됐어요. 여러 CTF 값이 섞여 있지만 단 하나만 진짜 플래그예요!",
+                    "REAL_TARGET을 고른 뒤 VM 명령을 마지막부터 역산하세요. XOR은 같은 키로, ADD는 뺄셈으로 되돌립니다.",
+                    "가짜 FLAG가 섞인 배포 백업과 실제 입력 검증용 초미니 VM 출력이 발견됐어요. 진짜 대상을 식별하고 원래 입력을 복원하세요.",
                     "misc-deploy.env",
                     flag ->
                         txt(
-                            "# decoy\nDEBUG_FLAG=CTF{decoy_01}\n# real\nAPP_REAL_FLAG="
-                                + flag
-                                + "\n# template\nTEMPLATE=CTF{replace_me}\n"))));
+                            "# decoy\nDEBUG_FLAG=CTF{decoy_01}\n# template\nTEMPLATE=CTF{replace_me}\n\n# real verifier\n# 1 k: ADD k, 2 k: XOR k, 3: REVERSE bytes\nPROGRAM=1,9,3,2,47\nREAL_TARGET="
+                                + vmRun(flag, new int[] {1, 9, 3, 2, 47})
+                                + "\n"))));
     addExpandedSeeds(seeds, "WEB", "w");
     addExpandedSeeds(seeds, "FORENSIC", "f");
     addExpandedSeeds(seeds, "REVERSING", "r");
@@ -1411,12 +1412,14 @@ final class FlagboxChallengeCatalog {
         String method = methods[(number - 1) % methods.length];
         String topic = categoryTopic(category, number);
         String title = topic + " " + levelNames[level] + " " + String.format("%02d", index + 1);
-        String key = prefix + "x" + String.format("%02d", number);
-        String description =
-            "%s 자료에서 %s로 감춰진 확인 코드를 찾는 연습이에요. 파일을 열고, 설명에 나온 단서를 한 단계씩 따라가 보세요."
-                .formatted(topic, method);
-        String hint =
-            "%s 방식이에요. 파일에서 규칙에 맞는 문자열을 먼저 찾은 뒤, 변환 도구나 간단한 스크립트로 원문을 확인하세요.".formatted(method);
+        // v2 keys deliberately rotate only the generated training artifacts. The previous catalog
+        // used the same one-step encoding at every difficulty, so even EXPERT challenges could be
+        // solved with a single decoder click.
+        String key = prefix + "y" + String.format("%02d", number);
+        String description = expandedDescription(topic, method, level);
+        String hint = expandedHint(method, level, index);
+        int difficultyLevel = level;
+        int variant = index;
         seeds.add(
             new Seed(
                 key,
@@ -1427,9 +1430,34 @@ final class FlagboxChallengeCatalog {
                 hint,
                 description,
                 key + ".txt",
-                flag -> expandedArtifact(method, category, flag)));
+                flag -> expandedArtifact(method, category, flag, difficultyLevel, variant)));
       }
     }
+  }
+
+  private static String expandedDescription(String topic, String method, int level) {
+    return switch (level) {
+      case 0 -> "%s 자료에서 %s로 감춰진 확인 코드를 찾는 입문 문제예요. 표시된 변환을 한 번 적용해 보세요.".formatted(topic, method);
+      case 1 -> "%s 자료에 확인 코드가 한 단계 변환되어 있습니다. 문자열의 형태를 보고 변환 방식을 직접 판단해 보세요.".formatted(topic);
+      case 2 -> "%s 자료의 확인 코드는 서로 다른 두 겹의 표현으로 감춰져 있습니다. 바깥층부터 식별해 복원하세요.".formatted(topic);
+      case 3 ->
+          "%s 자료와 변환 의사코드를 분석해 원래 입력을 복원하세요. 위치마다 연산이 달라 단순 디코딩만으로는 풀리지 않습니다.".formatted(topic);
+      default ->
+          "%s 자료의 검증 절차를 분석해 통과 가능한 원래 입력을 구하세요. 제공된 명세를 구현하고 결과를 검증해야 합니다.".formatted(topic);
+    };
+  }
+
+  private static String expandedHint(String method, int level, int variant) {
+    return switch (level) {
+      case 0 -> "%s 버튼을 한 번 적용하면 됩니다.".formatted(method);
+      case 1 -> "문자 집합, 구분자, 패딩 여부를 먼저 관찰하면 어떤 변환인지 좁힐 수 있습니다.";
+      case 2 -> "첫 변환 결과도 평문이 아닙니다. 결과의 형태를 다시 관찰하고 두 번째 변환을 적용하세요.";
+      case 3 ->
+          variant % 2 == 0
+              ? "출력의 각 바이트에서 인덱스를 먼저 빼고, 마지막에 문자열 순서를 복원하세요."
+              : "검증기가 적용한 연산을 적은 뒤 마지막 연산부터 반대 순서로 되감으세요.";
+      default -> "예제 입력을 직접 실행해 상태 변화를 확인한 뒤, 역연산 루프를 작성하세요.";
+    };
   }
 
   private static String categoryTopic(String category, int number) {
@@ -1442,26 +1470,125 @@ final class FlagboxChallengeCatalog {
     String[] reversing = {
       "비교 함수 읽기", "문자열 테이블", "바이트 연산", "입력 검증 루틴", "간단한 난독화", "조건 분기", "변환 함수", "작은 가상 머신"
     };
+    String[] crypto = {
+      "암호문의 문자 집합", "반복 키의 흔적", "치환표 분석", "블록의 규칙", "키 스트림 복원", "고전 암호 판별", "다중 인코딩", "검증식 역산"
+    };
+    String[] misc = {
+      "조각난 단서",
+      "규칙 없는 듯한 수열",
+      "여러 형식의 메모",
+      "숨은 공백 신호",
+      "퍼즐 상자의 기록",
+      "좌표와 순서",
+      "혼합 데이터 묶음",
+      "최종 확인 코드"
+    };
     String[] source =
         switch (category) {
           case "WEB" -> web;
           case "FORENSIC" -> forensic;
-          default -> reversing;
+          case "REVERSING" -> reversing;
+          case "CRYPTO" -> crypto;
+          default -> misc;
         };
     return source[(number - 1) % source.length];
   }
 
-  private static byte[] expandedArtifact(String method, String category, String flag) {
-    String prefix = "# " + category + " training artifact\\n# 필요한 변환: " + method + "\\n\\n";
+  private static byte[] expandedArtifact(
+      String method, String category, String flag, int level, int variant) {
+    if (level == 0) {
+      String prefix = expandedHeader(category, "BEGINNER") + "# 필요한 변환: " + method + "\n\n";
+      return oneStepArtifact(method, flag, prefix);
+    }
+    if (level == 1) {
+      return oneStepArtifact(method, flag, expandedHeader(category, "EASY") + "\n");
+    }
+    if (level == 2) {
+      String payload =
+          switch (variant % 4) {
+            case 0 -> hex(b64(flag));
+            case 1 -> reverse(b64(flag));
+            case 2 -> hex(rot13(flag));
+            default -> b64(reverse(flag));
+          };
+      String observation =
+          switch (variant % 4) {
+            case 0 -> "outer alphabet: 0-9, a-f / inner layer has padding";
+            case 1 -> "the padding marker appears at the wrong end";
+            case 2 -> "outer alphabet: 0-9, a-f / inner text still looks shifted";
+            default -> "outer layer has padding / inner text reads backwards";
+          };
+      return txt(
+          expandedHeader(category, "NORMAL")
+              + "observation = "
+              + observation
+              + "\npayload = "
+              + payload
+              + "\n");
+    }
+    if (level == 3) {
+      if (variant % 2 == 0) {
+        return txt(
+            expandedHeader(category, "ADVANCED")
+                + "# verifier pseudocode\n"
+                + "# out = reverse_bytes([input[i] + i for i in range(len(input))])\n"
+                + "expected_hex = "
+                + reverseHexBytes(indexAddHex(flag))
+                + "\n");
+      }
+      return txt(
+          expandedHeader(category, "ADVANCED")
+              + "# verifier pseudocode\n"
+              + "# for round in range(2): byte = (byte XOR key[(i+round)%len(key)]) + 5 + round*3\n"
+              + "key = gate7\nexpected = "
+              + joinInts(twoRoundTransform(flag, "gate7"))
+              + "\n");
+    }
+    if (variant % 2 == 0) {
+      long seed = 20260910L + variant * 97L;
+      return txt(
+          expandedHeader(category, "EXPERT")
+              + "# reproduce the keystream, then XOR it with the ciphertext\n"
+              + "x0 = "
+              + seed
+              + "\nx(n+1) = (x(n) * 1103515245 + 12345) mod 67108864\n"
+              + "keystream_byte = x mod 256\ncipher_hex = "
+              + xorBytesHex(flag, lcgStream(seed, flag.length()))
+              + "\n");
+    }
+    int[] program = {1, 7 + variant, 3, 2, 41 + variant};
+    return txt(
+        expandedHeader(category, "EXPERT")
+            + "# tiny VM: execute left to right; recover the input by reversing the program\n"
+            + "# 1 k: ADD k (mod 256), 2 k: XOR k, 3: REVERSE bytes\nprogram = "
+            + joinInts(program)
+            + "\noutput = "
+            + vmRun(flag, program)
+            + "\n");
+  }
+
+  private static String expandedHeader(String category, String difficulty) {
+    String source =
+        switch (category) {
+          case "WEB" -> "browser request / response capture";
+          case "FORENSIC" -> "incident evidence extraction report";
+          case "REVERSING" -> "program verifier and target output";
+          case "CRYPTO" -> "cipher analyst worksheet";
+          default -> "mixed puzzle evidence bundle";
+        };
+    return "# FlagBox " + category + " " + difficulty + "\n# source: " + source + "\n";
+  }
+
+  private static byte[] oneStepArtifact(String method, String flag, String prefix) {
     return switch (method) {
-      case "Base64" -> txt(prefix + "payload = " + b64(flag) + "\\n");
-      case "16진수" -> txt(prefix + "payload_hex = " + hex(flag) + "\\n");
-      case "문자 뒤집기" -> txt(prefix + "payload_reversed = " + reverse(flag) + "\\n");
-      case "ROT13" -> txt(prefix + "payload_rot13 = " + rot13(flag) + "\\n");
-      case "HTML 엔터티" -> txt(prefix + "payload_entity = " + htmlEntities(flag) + "\\n");
-      case "XOR 7" -> txt(prefix + "key = '7' (0x37)\\npayload_hex = " + xorHex(flag, "7") + "\\n");
-      case "줄 끝 공백" -> spaceStego(flag);
-      default -> txt(prefix + "character_codes = " + joinInts(charCodes(flag)) + "\\n");
+      case "Base64" -> txt(prefix + "payload = " + b64(flag) + "\n");
+      case "16진수" -> txt(prefix + "payload_hex = " + hex(flag) + "\n");
+      case "문자 뒤집기" -> txt(prefix + "payload_reversed = " + reverse(flag) + "\n");
+      case "ROT13" -> txt(prefix + "payload_rot13 = " + rot13(flag) + "\n");
+      case "HTML 엔터티" -> txt(prefix + "payload_entity = " + htmlEntities(flag) + "\n");
+      case "XOR 7" -> txt(prefix + "key = '7' (0x37)\npayload_hex = " + xorHex(flag, "7") + "\n");
+      case "줄 끝 공백" -> concat(txt(prefix), spaceStego(flag));
+      default -> txt(prefix + "character_codes = " + joinInts(charCodes(flag)) + "\n");
     };
   }
 
@@ -1597,6 +1724,16 @@ final class FlagboxChallengeCatalog {
     byte[] raw = utf8(value);
     for (int i = 0; i < raw.length; i++) {
       raw[i] = (byte) (raw[i] + i);
+    }
+    return HexFormat.of().formatHex(raw);
+  }
+
+  private static String reverseHexBytes(String value) {
+    byte[] raw = HexFormat.of().parseHex(value);
+    for (int left = 0, right = raw.length - 1; left < right; left++, right--) {
+      byte swap = raw[left];
+      raw[left] = raw[right];
+      raw[right] = swap;
     }
     return HexFormat.of().formatHex(raw);
   }
@@ -1822,12 +1959,12 @@ final class FlagboxChallengeCatalog {
         user_session opened for guest1
         %s
         C:\\Windows\\System32\\cmd.exe
-        session note saved: %s
+        session note saved (base64): %s
         default_password=changeme123
         %s
         heap block 0x00A4 size=128
         """
-            .formatted(decoyA, flag, decoyB);
+            .formatted(decoyA, b64(flag), decoyB);
     return utf8(content);
   }
 

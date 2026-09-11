@@ -87,7 +87,8 @@ class BackendIntegrationTests {
                 .header("Authorization", bearer(token)))
         .andExpect(status().isOk())
         .andExpect(
-            jsonPath("$.data.hint").value("Decode the payload before changing its representation."));
+            jsonPath("$.data.hint")
+                .value("Decode the payload before changing its representation."));
     mvc.perform(
             post("/api/challenges/{id}/hint", challenge.getId())
                 .header("Authorization", bearer(token)))

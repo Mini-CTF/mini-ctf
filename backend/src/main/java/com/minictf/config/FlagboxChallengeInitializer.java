@@ -20,7 +20,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * FlagBox 워게임 60문제 시더.
+ * FlagBox 워게임 275문제 시더.
  *
  * <p>{@link FlagboxChallengeCatalog}의 정의를 읽어 부팅 시점에 등록한다. 플래그는 {@code .mvp-flags.properties}에 실행별로
  * 저장되며 저장소(Git)에는 절대 커밋하지 않는다. 같은 제목의 문제가 이미 있으면 건너뛰므로 재시작해도 중복되지 않는다.
@@ -52,7 +52,8 @@ public class FlagboxChallengeInitializer {
         String storedFlag = flags.getProperty(seed.key());
         if (existing != null
             && (storedFlag == null || storedFlag.isBlank())
-            && existing.getArtifactData() != null) {
+            && existing.getArtifactData() != null
+            && artifactPath.equals(existing.getArtifactPath())) {
           syncExisting(existing, seed, artifactPath, null, encoder);
           challenges.save(existing);
           continue;

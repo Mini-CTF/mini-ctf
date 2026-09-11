@@ -71,23 +71,23 @@ const fallbackTools: Record<string, Partial<Record<string, ToolKind[]>>> = {
   },
 }
 
-function toolsForChallenge(category: string, difficulty: string, title: string, description: string) {
-  const source = `${title} ${description}`.toLowerCase()
+function toolsForChallenge(category: string, difficulty: string, title: string, description: string, artifact: string) {
+  const source = `${title} ${description} ${artifact}`.toLowerCase()
   const detected: ToolKind[] = []
   const add = (tool: ToolKind, pattern: RegExp) => { if (pattern.test(source)) detected.push(tool) }
   add('base64url', /base64url|jwt/)
-  add('base64', /base64(?!url)/)
-  add('hex', /\bhex\b|16진수|헥사/)
+  add('base64', /base64(?!url)|padding|(?:^|[=:\s])[a-z0-9+/]{20,}={0,2}(?:\s|$)/im)
+  add('hex', /\bhex\b|payload_hex|expected_hex|cipher_hex|16진수|헥사/)
   add('url', /url 인코딩|percent encoding|퍼센트 인코딩/)
-  add('html', /html entity|html 엔터티|문자 엔터티/)
-  add('ascii', /ascii|아스키|문자 코드/)
+  add('html', /html entity|html 엔터티|문자 엔터티|payload_entity/)
+  add('ascii', /ascii|아스키|문자 코드|character_codes/)
   add('binary', /2진수|binary encoding|바이너리 코드/)
-  add('rot13', /rot13/)
-  add('reverse', /뒤집|reverse|역순 문자열/)
+  add('rot13', /rot13|text still looks shifted/)
+  add('reverse', /뒤집|reverse|역순 문자열|wrong end|reads backwards/)
   add('caesar', /caesar|시저|알파벳.*밀/)
-  add('xor', /xor/)
+  add('xor', /xor|key\s*=/)
   add('strings', /문자열 추출|strings|메모리 덤프/)
-  add('spaces', /줄 끝 공백|공백 스테가노|trailing space/)
+  add('spaces', /줄 끝 공백|공백 스테가노|trailing space| +$/m)
   const unique = [...new Set(detected)]
   return source.trim() ? unique : fallbackTools[category]?.[difficulty] ?? fallbackTools.MISC.BEGINNER ?? []
 }
@@ -195,8 +195,8 @@ export default function ChallengeWorkbench({
   const modes = solvingModes[category] ?? solvingModes.MISC
   const previewContent = useMemo(() => preview ? (preview.binary ? preview.hexDump : preview.text) : '', [preview])
   const enabledTools = useMemo(
-    () => contextReady ? toolsForChallenge(category, challengeContext.difficulty, challengeContext.title, challengeContext.description) : [],
-    [category, challengeContext, contextReady],
+    () => contextReady ? toolsForChallenge(category, challengeContext.difficulty, challengeContext.title, challengeContext.description, previewContent) : [],
+    [category, challengeContext, contextReady, previewContent],
   )
   const toolEnabled = (tool: ToolKind) => enabledTools.includes(tool)
   const showScriptWorkspace = contextReady && (['ADVANCED', 'EXPERT'].includes(challengeContext.difficulty)
@@ -207,7 +207,9 @@ export default function ChallengeWorkbench({
     let active = true
     api.challenge(challengeId).then((challenge) => {
       const guide = guideForChallenge(challenge.title, challenge.category, challenge.difficulty)
-      const analysisText = [challenge.description, guide.concept, ...guide.tools, ...guide.steps].join(' ')
+      const analysisText = ['BEGINNER', 'EASY'].includes(challenge.difficulty)
+        ? [challenge.description, guide.concept, ...guide.tools].join(' ')
+        : challenge.description
       if (active) {
         setChallengeContext({ title: challenge.title, description: analysisText, difficulty: challenge.difficulty })
         setContextReady(true)

@@ -355,8 +355,13 @@ function AppShell() {
       setAuthToken(token)
       window.history.replaceState(null, '', window.location.pathname)
     }
-    if (getAuthToken()) {
-      api.me().then(setUser).catch(() => clearAuthToken())
+    const requestedToken = getAuthToken()
+    if (requestedToken) {
+      api.me().then((nextUser) => {
+        if (getAuthToken() === requestedToken) setUser(nextUser)
+      }).catch(() => {
+        if (getAuthToken() === requestedToken) clearAuthToken()
+      })
     }
     // The tutorial and its static banner should not wait for every live API request.
     // Render immediately, then fill each independent data area as it arrives.
@@ -369,8 +374,13 @@ function AppShell() {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      if (!getAuthToken()) return
-      void api.me().then(setUser).catch(() => undefined)
+      const requestedToken = getAuthToken()
+      if (!requestedToken) return
+      void api.me().then((nextUser) => {
+        // A request started before logout may finish afterwards. Never let that
+        // stale response restore the in-memory user after the token was removed.
+        if (getAuthToken() === requestedToken) setUser(nextUser)
+      }).catch(() => undefined)
     }, 15000)
     return () => window.clearInterval(interval)
   }, [])
@@ -413,7 +423,11 @@ function AppShell() {
 
   useEffect(() => {
     const refreshAccount = () => {
-      void api.me().then(setUser).catch(() => undefined)
+      const requestedToken = getAuthToken()
+      if (!requestedToken) return
+      void api.me().then((nextUser) => {
+        if (getAuthToken() === requestedToken) setUser(nextUser)
+      }).catch(() => undefined)
     }
     const onStorage = (event: StorageEvent) => {
       if (event.key === 'flagbox-admin-account-change') refreshAccount()

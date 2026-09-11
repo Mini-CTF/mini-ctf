@@ -21,10 +21,7 @@ public final class UserDtos {
       String tier) {}
 
   public record PublicFriend(
-      String username,
-      String nickname,
-      String avatarUrl,
-      String equippedTitle) {}
+      String username, String nickname, String avatarUrl, String equippedTitle) {}
 
   public record ProfileUpdateRequest(
       @Size(max = 80) String nickname, @Size(max = 160) String statusMessage) {}
