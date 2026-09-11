@@ -1,0 +1,17 @@
+.git
+.github
+.codex
+.gradle*
+.env*
+*.log
+backend
+challenges
+docker
+docs
+fastapi
+profiles
+reports
+scripts
+frontend/.vercel
+frontend/dist
+frontend/node_modules
