@@ -539,19 +539,19 @@ function AppShell() {
   const logout = () => {
     clearAuthToken()
     setUser(null)
-    setChallenges((current) => {
-      const publicChallenges = withoutChallengeProgress(current)
-      cacheChallenges(publicChallenges)
-      return publicChallenges
-    })
+    setChallenges([])
     setShowMemberTutorial(false)
     setTutorialDismissedForSession(false)
     setTutorialSkippedForSession(false)
     setHeaderAttendance(null)
     setHeaderCheckInAvailable(false)
     setTutorialQuickMenuOpen(false)
-    go('/')
-    void refresh()
+    try {
+      sessionStorage.removeItem(challengeCacheKey)
+    } catch {
+      // Reloading still clears all in-memory account progress when storage is unavailable.
+    }
+    window.location.replace('/')
   }
   const dismissIntro = () => {
     setShowIntro(false)
