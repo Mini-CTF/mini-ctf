@@ -495,19 +495,27 @@ function AppShell() {
     setLanguage(next)
   }
 
+  // Never render account-owned solve state unless both parts of the client session exist.
+  // This is the final display boundary: stale caches or late authenticated responses cannot
+  // paint solved cards, progress bars, or charts after logout.
+  const sessionChallenges = useMemo(
+    () => user && getAuthToken() ? challenges : withoutChallengeProgress(challenges),
+    [challenges, user],
+  )
+
   const featuredChallenges = useMemo(
-    () => [...challenges].sort((a, b) => Number(a.solved) - Number(b.solved) || byDifficulty(a, b)).slice(0, 3),
-    [challenges],
+    () => [...sessionChallenges].sort((a, b) => Number(a.solved) - Number(b.solved) || byDifficulty(a, b)).slice(0, 3),
+    [sessionChallenges],
   )
   const visibleChallenges = useMemo(
     () => {
-      const filtered = challenges
+      const filtered = sessionChallenges
         .filter((item) => category === 'ALL' || item.category === category)
         .filter((item) => difficulty === 'ALL' || item.difficulty === difficulty)
         .filter((item) => item.title.toLocaleLowerCase().includes(challengeSearch.trim().toLocaleLowerCase()))
       return filtered.sort(byDifficulty)
     },
-    [category, difficulty, challengeSearch, challenges],
+    [category, difficulty, challengeSearch, sessionChallenges],
   )
   const go = useCallback((path: string) => {
     setMobileNavOpen(false)
@@ -562,7 +570,7 @@ function AppShell() {
   const guarded = (node: ReactNode) => loading ? <div className="page"><LoadingState label="Loading live platform data..." /></div> : node
   return <div className="app-shell">
     {showIntro && <FlagBoxIntro onSkip={dismissIntro} />}
-      {showMemberTutorial && user && <GettingStartedTutorial scope="authenticated" initialStep={memberTutorialInitialStep} onClose={() => { setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(false); setTutorialQuickMenuOpen(false) }} onSkip={() => { setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(true); setTutorialQuickMenuOpen(false); go('/') }} onComplete={() => { localStorage.setItem(memberTutorialSeenKey(user.username), 'true'); localStorage.removeItem(memberTutorialProgressKey(user.username)); setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(false); setTutorialQuickMenuOpen(false); go('/') }} onStepChange={(step, index) => { localStorage.setItem(memberTutorialProgressKey(user.username), String(index)); setTutorialQuickMenuOpen(step.quickMenu === 'content') }} onNavigate={go} firstChallengeId={challenges[0]?.id} lang={language} />}
+      {showMemberTutorial && user && <GettingStartedTutorial scope="authenticated" initialStep={memberTutorialInitialStep} onClose={() => { setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(false); setTutorialQuickMenuOpen(false) }} onSkip={() => { setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(true); setTutorialQuickMenuOpen(false); go('/') }} onComplete={() => { localStorage.setItem(memberTutorialSeenKey(user.username), 'true'); localStorage.removeItem(memberTutorialProgressKey(user.username)); setShowMemberTutorial(false); setTutorialDismissedForSession(true); setTutorialSkippedForSession(false); setTutorialQuickMenuOpen(false); go('/') }} onStepChange={(step, index) => { localStorage.setItem(memberTutorialProgressKey(user.username), String(index)); setTutorialQuickMenuOpen(step.quickMenu === 'content') }} onNavigate={go} firstChallengeId={sessionChallenges[0]?.id} lang={language} />}
     <header className="site-header">
       <button className="brand" type="button" onClick={() => go('/')} aria-label="FlagBox 홈으로 이동"><img src={flagBoxLogo} alt="" /><span>FlagBox</span></button>
       {compactLayout && <button className="menu-toggle" type="button" onClick={() => setMobileNavOpen((open) => !open)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" style={{ display: 'block', position: 'fixed', top: '21px', right: '20px', zIndex: 10 }}>Menu<span className="sr-only"> navigation</span></button>}
@@ -585,7 +593,7 @@ function AppShell() {
       {error && <div className="page"><div className="inline-alert"><p className="alert error">{error}</p><button type="button" className="button secondary" onClick={() => void refresh()}>Retry</button></div></div>}
       <Routes>
         <Route path="/" element={guarded(<Home language={language} challenges={featuredChallenges} onExplore={() => go('/challenges')} onCommunity={() => go('/community')} onRanking={() => go('/ranking')} onOpen={(item) => go(`/challenges/${item.id}`)} />)} />
-        <Route path="/challenges" element={guarded(<div className="page challenges-page"><ChallengesProgress items={challenges} total={challenges.length} /><CategoryProgressChart items={challenges} /><CombinedFieldRadar items={challenges} /><ChallengesView key={`${category}-${difficulty}`} items={visibleChallenges} total={challenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} challengeSearch={challengeSearch} onSearchChange={setChallengeSearch} onOpen={(item) => go(`/challenges/${item.id}`)} /></div>)} />
+        <Route path="/challenges" element={guarded(<div className="page challenges-page"><ChallengesProgress items={sessionChallenges} total={sessionChallenges.length} /><CategoryProgressChart items={sessionChallenges} /><CombinedFieldRadar items={sessionChallenges} /><ChallengesView key={`${category}-${difficulty}`} items={visibleChallenges} total={sessionChallenges.length} category={category} onCategory={setCategory} difficulty={difficulty} onDifficulty={setDifficulty} challengeSearch={challengeSearch} onSearchChange={setChallengeSearch} onOpen={(item) => go(`/challenges/${item.id}`)} /></div>)} />
         <Route path="/challenges/:challengeId" element={guarded(<ChallengeDetailRoute loggedIn={Boolean(user)} onSubmitted={() => { void refresh() }} />)} />
         <Route path="/learn" element={<LearnView lang={language} loggedIn={Boolean(user)} />} />
         <Route path="/ranking" element={guarded(<EnhancedRankingView rows={ranking} attendanceRows={attendanceRanking} />)} />
