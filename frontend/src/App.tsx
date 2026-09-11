@@ -31,17 +31,23 @@ const byDifficulty = (a: ChallengeSummary, b: ChallengeSummary) => (difficultyOr
 const emptyStats: Stats = { challenges: 0, solves: 0, users: 0 }
 const challengeCacheKey = 'flagbox-challenges-v1'
 
+function withoutChallengeProgress(challenges: ChallengeSummary[]): ChallengeSummary[] {
+  return challenges.map((challenge) =>
+    challenge.solved ? { ...challenge, solved: false } : challenge,
+  )
+}
+
 function cachedChallenges(): ChallengeSummary[] {
   try {
     const parsed: unknown = JSON.parse(sessionStorage.getItem(challengeCacheKey) ?? '[]')
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
+    return withoutChallengeProgress(parsed.filter(
       (item): item is ChallengeSummary =>
         typeof item === 'object'
         && item !== null
         && typeof (item as ChallengeSummary).id === 'number'
         && typeof (item as ChallengeSummary).title === 'string',
-    )
+    ))
   } catch {
     return []
   }
@@ -49,7 +55,7 @@ function cachedChallenges(): ChallengeSummary[] {
 
 function cacheChallenges(challenges: ChallengeSummary[]) {
   try {
-    sessionStorage.setItem(challengeCacheKey, JSON.stringify(challenges))
+    sessionStorage.setItem(challengeCacheKey, JSON.stringify(withoutChallengeProgress(challenges)))
   } catch {
     // A fresh API response still renders when browser storage is unavailable.
   }
@@ -306,9 +312,11 @@ function AppShell() {
 
   const refresh = useCallback(async () => {
     setError('')
+    const requestedToken = getAuthToken()
     const [statsResult, challengesResult, rankingResult, attendanceRankingResult] = await Promise.allSettled([
       api.stats().then(setStats),
       api.challenges().then((nextChallenges) => {
+        if (getAuthToken() !== requestedToken) return
         setChallenges(nextChallenges)
         cacheChallenges(nextChallenges)
       }),
@@ -334,6 +342,11 @@ function AppShell() {
       const message = event instanceof CustomEvent && typeof event.detail === 'string' ? event.detail : sessionExpiredMessage
       clearAuthToken()
       setUser(null)
+      setChallenges((current) => {
+        const publicChallenges = withoutChallengeProgress(current)
+        cacheChallenges(publicChallenges)
+        return publicChallenges
+      })
       setShowMemberTutorial(false)
       setTutorialDismissedForSession(false)
       setTutorialSkippedForSession(false)
@@ -526,9 +539,15 @@ function AppShell() {
   const logout = () => {
     clearAuthToken()
     setUser(null)
+    setChallenges((current) => {
+      const publicChallenges = withoutChallengeProgress(current)
+      cacheChallenges(publicChallenges)
+      return publicChallenges
+    })
     setShowMemberTutorial(false)
     setTutorialDismissedForSession(false)
     setTutorialSkippedForSession(false)
+    setHeaderAttendance(null)
     setHeaderCheckInAvailable(false)
     setTutorialQuickMenuOpen(false)
     go('/')
