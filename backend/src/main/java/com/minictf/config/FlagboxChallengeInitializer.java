@@ -46,7 +46,11 @@ public class FlagboxChallengeInitializer {
       Properties flags = loadFlags(root);
 
       for (FlagboxChallengeCatalog.Seed seed : FlagboxChallengeCatalog.SEEDS) {
-        var existing = challenges.findByTitle(seed.title()).orElse(null);
+        var existing =
+            challenges
+                .findBySeedKey(seed.key())
+                .or(() -> challenges.findByTitle(seed.title()))
+                .orElse(null);
         Path file = artifactDir.resolve(seed.key() + "-" + seed.fileName());
         String artifactPath = root.relativize(file).toString().replace('\\', '/');
         String storedFlag = flags.getProperty(seed.key());
@@ -82,6 +86,7 @@ public class FlagboxChallengeInitializer {
                     true,
                     seed.hint()));
         var challenge = challenges.findById(created.id()).orElseThrow();
+        challenge.setSeedKey(seed.key());
         challenge.setArtifactData(artifact);
         challenges.save(challenge);
       }
@@ -97,6 +102,14 @@ public class FlagboxChallengeInitializer {
       String flag,
       PasswordEncoder encoder) {
     boolean changed = false;
+    if (!seed.key().equals(existing.getSeedKey())) {
+      existing.setSeedKey(seed.key());
+      changed = true;
+    }
+    if (!seed.title().equals(existing.getTitle())) {
+      existing.setTitle(seed.title());
+      changed = true;
+    }
     if (!existing.getCategory().equals(seed.category())) {
       existing.setCategory(seed.category());
       changed = true;

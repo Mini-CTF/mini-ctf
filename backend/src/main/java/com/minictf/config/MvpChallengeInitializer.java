@@ -41,6 +41,7 @@ public class MvpChallengeInitializer {
       Files.createDirectories(mvpRoot);
       boolean hasFlagStore = Files.isRegularFile(root.resolve(".mvp-flags.properties"));
       Properties flags = loadOrCreateFlags(root);
+      assignMvpSeedKeys(challenges);
       if (!hasFlagStore && hasPersistedMvpArtifacts(challenges)) {
         reconcilePersistedSignalFlag(challenges, encoder);
         return;
@@ -49,6 +50,7 @@ public class MvpChallengeInitializer {
       seed(
           challenges,
           service,
+          "mvp-signal",
           "Signal in Plain Sight",
           "REVERSING",
           "BEGINNER",
@@ -60,6 +62,7 @@ public class MvpChallengeInitializer {
       seed(
           challenges,
           service,
+          "mvp-proxy-afterimage",
           "Proxy Afterimage",
           "FORENSIC",
           "EASY",
@@ -71,6 +74,7 @@ public class MvpChallengeInitializer {
       seed(
           challenges,
           service,
+          "mvp-orbit-gatekeeper",
           "Orbit Gatekeeper",
           "REVERSING",
           "NORMAL",
@@ -82,6 +86,7 @@ public class MvpChallengeInitializer {
       seed(
           challenges,
           service,
+          "mvp-header-hunt",
           "Header Hunt",
           "WEB",
           "ADVANCED",
@@ -93,6 +98,7 @@ public class MvpChallengeInitializer {
       seed(
           challenges,
           service,
+          "mvp-layered-evidence",
           "Layered Evidence",
           "FORENSIC",
           "EXPERT",
@@ -173,6 +179,7 @@ public class MvpChallengeInitializer {
   private static void seed(
       ChallengeRepository challenges,
       ChallengeService service,
+      String seedKey,
       String title,
       String category,
       String difficulty,
@@ -181,17 +188,45 @@ public class MvpChallengeInitializer {
       String flag,
       String artifactPath,
       PasswordEncoder encoder) {
-    var existing = challenges.findByTitle(title).orElse(null);
+    var existing =
+        challenges.findBySeedKey(seedKey).or(() -> challenges.findByTitle(title)).orElse(null);
     if (existing != null) {
+      existing.setSeedKey(seedKey);
+      existing.setTitle(title);
       if (!encoder.matches(flag, existing.getFlagHash())) {
         existing.setFlagHash(encoder.encode(flag));
-        challenges.save(existing);
       }
+      challenges.save(existing);
       return;
     }
-    service.create(
-        new ChallengeDtos.AdminRequest(
-            title, description, category, difficulty, score, flag, artifactPath, true));
+    var created =
+        service.create(
+            new ChallengeDtos.AdminRequest(
+                title, description, category, difficulty, score, flag, artifactPath, true));
+    var challenge = challenges.findById(created.id()).orElseThrow();
+    challenge.setSeedKey(seedKey);
+    challenges.save(challenge);
+  }
+
+  private static void assignMvpSeedKeys(ChallengeRepository challenges) {
+    var keys =
+        java.util.Map.of(
+            "Signal in Plain Sight", "mvp-signal",
+            "Proxy Afterimage", "mvp-proxy-afterimage",
+            "Orbit Gatekeeper", "mvp-orbit-gatekeeper",
+            "Header Hunt", "mvp-header-hunt",
+            "Layered Evidence", "mvp-layered-evidence");
+    keys.forEach(
+        (title, key) ->
+            challenges
+                .findByTitle(title)
+                .filter(challenge -> challenge.getSeedKey() == null)
+                .ifPresent(
+                    challenge -> {
+                      challenge.setSeedKey(key);
+                      challenges.save(challenge);
+                    }));
+    challenges.flush();
   }
 
   private static Properties loadOrCreateFlags(Path root) throws IOException {

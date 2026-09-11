@@ -36,8 +36,10 @@ class FlagboxChallengeInitializerIntegrationTests {
 
   @Test
   void startupPersistsEveryCatalogEntryWithItsArtifactAndMetadata() {
+    assertThat(challenges.countByActiveTrue()).isEqualTo(280);
     for (FlagboxChallengeCatalog.Seed seed : FlagboxChallengeCatalog.SEEDS) {
-      var challenge = challenges.findByTitle(seed.title()).orElseThrow();
+      var challenge = challenges.findBySeedKey(seed.key()).orElseThrow();
+      assertThat(challenge.getTitle()).isEqualTo(seed.title());
       assertThat(challenge.getCategory()).isEqualTo(seed.category());
       assertThat(challenge.getDifficulty()).isEqualTo(seed.difficulty());
       assertThat(challenge.getScore()).isEqualTo(seed.score());
@@ -62,14 +64,14 @@ class FlagboxChallengeInitializerIntegrationTests {
             .filter(candidate -> candidate.key().equals("wy01"))
             .findFirst()
             .orElseThrow();
-    var challenge = challenges.findByTitle(seed.title()).orElseThrow();
+    var challenge = challenges.findBySeedKey(seed.key()).orElseThrow();
     challenge.setArtifactPath("flagbox/wx01-wx01.txt");
     challenge.setArtifactData("legacy-one-step-artifact".getBytes());
     challenges.saveAndFlush(challenge);
 
     initializer.seedFlagboxChallenges(challenges, challengeService, encoder, root.toString()).run();
 
-    var upgraded = challenges.findByTitle(seed.title()).orElseThrow();
+    var upgraded = challenges.findBySeedKey(seed.key()).orElseThrow();
     assertThat(upgraded.getArtifactPath()).contains("flagbox/wy01-");
     assertThat(upgraded.getArtifactData()).isNotEqualTo("legacy-one-step-artifact".getBytes());
     Properties flags = new Properties();
@@ -77,5 +79,23 @@ class FlagboxChallengeInitializerIntegrationTests {
       flags.load(input);
     }
     assertThat(encoder.matches(flags.getProperty(seed.key()), upgraded.getFlagHash())).isTrue();
+  }
+
+  @Test
+  void startupMatchesBySeedKeyWhenATitleChanges() throws Exception {
+    Path root = Path.of("build/catalog-integration-artifacts").toAbsolutePath().normalize();
+    var seed = FlagboxChallengeCatalog.SEEDS.getFirst();
+    var challenge = challenges.findBySeedKey(seed.key()).orElseThrow();
+    long id = challenge.getId();
+    long count = challenges.count();
+    challenge.setTitle("temporary legacy title");
+    challenges.saveAndFlush(challenge);
+
+    initializer.seedFlagboxChallenges(challenges, challengeService, encoder, root.toString()).run();
+
+    assertThat(challenges.count()).isEqualTo(count);
+    assertThat(challenges.findBySeedKey(seed.key()).orElseThrow().getId()).isEqualTo(id);
+    assertThat(challenges.findBySeedKey(seed.key()).orElseThrow().getTitle())
+        .isEqualTo(seed.title());
   }
 }

@@ -11,6 +11,10 @@ public class Challenge {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @JsonIgnore
+  @Column(name = "seed_key", length = 80, unique = true)
+  private String seedKey;
+
   @Column(nullable = false, length = 160)
   private String title;
 
@@ -65,6 +69,14 @@ public class Challenge {
 
   public Long getId() {
     return id;
+  }
+
+  public String getSeedKey() {
+    return seedKey;
+  }
+
+  public void setSeedKey(String v) {
+    seedKey = v;
   }
 
   public String getTitle() {

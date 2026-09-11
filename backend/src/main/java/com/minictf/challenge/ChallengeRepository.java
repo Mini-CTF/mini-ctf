@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
+  java.util.Optional<Challenge> findBySeedKey(String seedKey);
+
   boolean existsByTitle(String title);
 
   java.util.Optional<Challenge> findByTitle(String title);

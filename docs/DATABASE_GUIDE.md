@@ -53,3 +53,10 @@ cd backend
 ```
 
 `spring.jpa.hibernate.ddl-auto=validate` 설정으로 JPA 엔티티와 Flyway 스키마의 불일치를 조기에 확인한다.
+
+## 시드 문제 식별
+
+- V30부터 `challenges.seed_key`가 코드에서 제공하는 문제의 영구 식별자다.
+- 문제 제목은 변경할 수 있지만 `seed_key`는 변경하지 않으며, UNIQUE 인덱스로 재배포 시 중복 생성을 방지한다.
+- 기존 제목 변경으로 남은 문제는 FK로 연결된 풀이 기록을 보존하기 위해 삭제하지 않고 비활성화한다.
+- 기본 활성 카탈로그는 FlagBox 문제 275개와 MVP 문제 5개, 총 280개다.
